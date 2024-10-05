@@ -1,12 +1,19 @@
 Friday’s section: 10/04/24 10:00-11:00 AM
 
 ATTENDANCE
+
 [X] Peter Liang
+
 [X] Qi Wu
+
 [X] Raina Kakani
+
 [X] Alex Chau
+
 [X] Sunhu Choi
+
 [X] Anushka Vijay
+
 [X] Kavi Iyer
 
 TOPICS
