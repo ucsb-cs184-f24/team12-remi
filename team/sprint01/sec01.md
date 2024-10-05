@@ -10,7 +10,7 @@ ATTENDANCE
 [X] Kavi Iyer
 
 TOPICS
-Set a meeting time for tomorrow (Sat 10/05 2PM)
-Discuss tech stack and beginnings of program outline
-Set up base repository 
-Downloading expo go for react native testing 
+- Set a meeting time for tomorrow (Sat 10/05 2PM)
+- Discuss tech stack and beginnings of program outline
+- Set up base repository 
+- Downloading expo go for react native testing 
