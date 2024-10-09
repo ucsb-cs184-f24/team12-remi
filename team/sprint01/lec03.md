@@ -1,6 +1,9 @@
-Lecture 3: 10/07/24 2:00-3:15 PM
+TIME: Lecture 3 10/07/24 2:00-3:15 PM
+TYPE: Daily Scrum
 
 ATTENDANCE
+
+[X] Kavi Iyer
 
 [X] Peter Liang
 
@@ -13,8 +16,6 @@ ATTENDANCE
 [X] Sunhu Choi
 
 [ ] Anushka Vijay (absent for GRE)
-
-[X] Kavi Iyer
 
 TOPICS
 - set up Figma edu organization and begin discussing design guidelines
