@@ -1,6 +1,9 @@
-Friday’s section: 10/04/24 10:00-11:00 AM
+TIME: Friday’s section 10/04/24 10:00-11:00 AM
+TYPE: Daily Scrum
 
 ATTENDANCE
+
+[X] Kavi Iyer
 
 [X] Peter Liang
 
@@ -13,8 +16,6 @@ ATTENDANCE
 [X] Sunhu Choi
 
 [X] Anushka Vijay
-
-[X] Kavi Iyer
 
 TOPICS
 - Set a meeting time for tomorrow (Sat 10/05 2PM)
