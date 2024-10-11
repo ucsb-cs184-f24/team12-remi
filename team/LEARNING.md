@@ -24,7 +24,7 @@ I have some small experience with Next.js, React, and React Native development, 
 ### Anushka Vijay
 I have some experience with iOS development and have written hello world for react native 3 years ago. I’m interested in working on full-stack and integrating frontend and backend as most of my experience is working with backend tech. Excited for this quarter!
 
-## section2-Project Platform Reflection
+## section2-10_11-10AM-Project Platform Reflection
 Qi Wu: I send emojis under two posts: 
 Grace Feng: 
 https://github.com/BonnierNews/react-native-3d-model-view?tab=readme-ov-file
