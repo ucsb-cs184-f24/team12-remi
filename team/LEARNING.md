@@ -44,7 +44,7 @@ Kavi Iyer posted this resource: https://www.nativewind.dev/quick-starts/expo
 
 Peter Liang reacted to resource: https://ucsb-cs184-f24.slack.com/archives/C07QZBBNBU7/p1728667592517899
 
-
+Alexander Chau reacted to this resource: https://www.youtube.com/watch?v=HY3O_wrvDsI
 ## Benefits and challenges of React Native
 ### Benefits
 Hot reloading helps with quicker development
