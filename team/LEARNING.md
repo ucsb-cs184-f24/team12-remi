@@ -24,7 +24,7 @@ I have some small experience with Next.js, React, and React Native development, 
 ### Anushka Vijay
 I have some experience with iOS development and have written hello world for react native 3 years ago. I’m interested in working on full-stack and integrating frontend and backend as most of my experience is working with backend tech. Excited for this quarter!
 
-## section2-10_11-10AM-Project Platform Reflection
+## Project Platform Reflection: section2 10/11 10AM
 Qi Wu: I send emojis under two posts: 
 Grace Feng: 
 https://github.com/BonnierNews/react-native-3d-model-view?tab=readme-ov-file
@@ -45,7 +45,10 @@ Kavi Iyer posted this resource: https://www.nativewind.dev/quick-starts/expo
 Peter Liang reacted to resource: https://ucsb-cs184-f24.slack.com/archives/C07QZBBNBU7/p1728667592517899
 
 Alexander Chau reacted to this resource: https://www.youtube.com/watch?v=HY3O_wrvDsI
-## Benefits and challenges of React Native
+
+
+
+## Benefits and challenges of React Native: section2 10/11 10AM
 ### Benefits
 Hot reloading helps with quicker development
 
