@@ -1,44 +1,90 @@
-import React, { useState } from 'react';
-import { View, Button, TextInput, Text } from 'react-native';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebaseConfig'; // Adjust the path as necessary
+import { useState } from 'react';
+import {
+	Text,
+	View,
+	StyleSheet,
+	KeyboardAvoidingView,
+	TextInput,
+	Button,
+	ActivityIndicator
+} from 'react-native';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
+import { auth } from '../firebaseConfig';
 
-const SignInScreen = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+export default function Index() {
+	const [email, setEmail] = useState('');
+	const [password, setPassword] = useState('');
+	const [loading, setLoading] = useState(false);
 
-  const handleSignIn = () => {
-    signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        // Signed in successfully
-        const user = userCredential.user;
-        console.log('Signed in as:', user.email);
-      })
-      .catch((error) => {
-        setError(error.message);
-      });
-  };
+	const signUp = async () => {
+		setLoading(true);
+		try {
+			await createUserWithEmailAndPassword(auth, email, password);
+			alert('Check your emails!');
+		} catch (e: any) {
+			const err = e as FirebaseError;
+			alert('Registration failed: ' + err.message);
+		} finally {
+			setLoading(false);
+		}
+	};
 
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <TextInput
-        placeholder="Email...."
-        value={email}
-        onChangeText={(text) => setEmail(text)}
-        style={{ width: '80%', padding: 10, marginBottom: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 5 }}
-      />
-      <TextInput
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={(text) => setPassword(text)}
-        style={{ width: '80%', padding: 10, marginBottom: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 5 }}
-      />
-      {error ? <Text style={{ color: 'red', marginBottom: 10 }}>{error}</Text> : null}
-      <Button title="Sign In" onPress={handleSignIn} />
-    </View>
-  );
-};
+	const signIn = async () => {
+		setLoading(true);
+		try {
+			await signInWithEmailAndPassword(auth, email, password);
+		} catch (e: any) {
+			const err = e as FirebaseError;
+			alert('Sign in failed: ' + err.message);
+		} finally {
+			setLoading(false);
+		}
+	};
 
-export default SignInScreen;
+	return (
+		<View style={styles.container}>
+			<KeyboardAvoidingView behavior="padding">
+				<TextInput
+					style={styles.input}
+					value={email}
+					onChangeText={setEmail}
+					autoCapitalize="none"
+					keyboardType="email-address"
+					placeholder="Email"
+				/>
+				<TextInput
+					style={styles.input}
+					value={password}
+					onChangeText={setPassword}
+					secureTextEntry
+					placeholder="Password"
+				/>
+				{loading ? (
+					<ActivityIndicator size={'small'} style={{ margin: 28 }} />
+				) : (
+					<>
+						<Button onPress={signIn} title="Login" />
+						<Button onPress={signUp} title="Create account" />
+					</>
+				)}
+			</KeyboardAvoidingView>
+		</View>
+	);
+}
+
+const styles = StyleSheet.create({
+	container: {
+		marginHorizontal: 20,
+		flex: 1,
+		justifyContent: 'center'
+	},
+	input: {
+		marginVertical: 4,
+		height: 50,
+		borderWidth: 1,
+		borderRadius: 4,
+		padding: 10,
+		backgroundColor: '#fff'
+	}
+});
