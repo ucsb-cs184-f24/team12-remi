@@ -15,6 +15,7 @@ import { auth } from '../firebaseConfig';
 import * as Font from 'expo-font';
 import AppLoading from 'expo-app-loading';
 import { useFonts, OrelegaOne_400Regular } from '@expo-google-fonts/orelega-one';
+import Ustyles from '../components/UniversalStyles';
 
 
 
@@ -57,11 +58,11 @@ export default function Index() {
 	}
 
 	return (
-		<View style={styles.background}>
-			<ImageBackground source = {require('../assets/images/background-lineart.png')} style={styles.backgroundImage}>
+		<View style={Ustyles.background}>
+			<ImageBackground source = {require('../assets/images/background-lineart.png')} style={Ustyles.backgroundImage}>
 				<View style={styles.container}>
 					<ImageBackground source = {require('../assets/images/bg-ellipse.png')} style={{ justifyContent: 'center'}} resizeMode='contain'>
-						<Text style={styles.logotext}>
+						<Text style={Ustyles.logotext}>
 							remi
 						</Text>
 					</ImageBackground>
@@ -123,29 +124,5 @@ const styles = StyleSheet.create({
 		backgroundColor: '#fff',
 		borderColor: '#0D5F13',
 
-	},
-	backgroundImage: {
-		flex: 1,
-		resizeMode: 'contain', // Or 'contain' depending on how you want the image to fit
-		justifyContent: 'center',
-	},
-	background: {
-		flex: 1,
-		backgroundColor: '#FFF9E6', // Background color behind the ImageBackground
-	
-	},
-	bgimage: {
-		flex: 1,
-		justifyContent: 'center'
-	},
-	logotext: {
-		fontFamily: 'OrelegaOne_400Regular',
-		fontSize: 50,
-		lineHeight: 100,
-		color: '#0D5F13',
-		padding: 0,
-		justifyContent: 'center',
-		alignSelf: 'center',
-		paddingBottom: 10
-	  }
+	}
 });
