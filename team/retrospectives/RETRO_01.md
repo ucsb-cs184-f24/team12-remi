@@ -10,3 +10,9 @@
 * github setting to delete branches after merge
 * bring in the focus as soon as class starts, because we have limited dedicated group time throughout the week
 * Try to make issue names clear and concise, if they repeat, add a (n of X) to show linear progress
+
+## Retro Assessment
+* For this first retrospective, we used a site called EasyRetro to set up a board of 3 columns; Start, Stop, and Continue
+* Team members put their discussion points under each column, then after 5 minutes, began voting on cards they believed were important
+* We discussed the cards with the most votes, giving everyone an opportunity to voice their opinions on them
+* My advice to the next retro leader is to maybe change the Retro format to something besides Start, Stop, and Continue as the Stop section is tough to utilize
