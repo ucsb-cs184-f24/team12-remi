@@ -16,3 +16,7 @@
 * Team members put their discussion points under each column, then after 5 minutes, began voting on cards they believed were important
 * We discussed the cards with the most votes, giving everyone an opportunity to voice their opinions on them
 * My advice to the next retro leader is to maybe change the Retro format to something besides Start, Stop, and Continue as the Stop section is tough to utilize
+
+## Retro Board
+![image](https://github.com/user-attachments/assets/f0ea2426-3a17-46a7-9491-55bc071b1ec4)
+
