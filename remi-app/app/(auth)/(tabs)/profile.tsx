@@ -1,3 +1,14 @@
+// import { Text, View } from 'react-native';
+
+// export default function Profile() {
+//   return (
+//     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+//       <Text>Profile Screen</Text>
+//     </View>
+//   );
+// }
+
+
 import {
 	Text,
 	View,
@@ -6,9 +17,9 @@ import {
 	ImageBackground
 } from 'react-native';
 import {signOut} from 'firebase/auth';
-import {auth} from '../../firebaseConfig';
-import Ustyles from '../../components/UniversalStyles';
-import Spacer from '../../components/Spacer'
+import {auth} from '../../../firebaseConfig';
+import Ustyles from '../../../components/UniversalStyles';
+import Spacer from '../../../components/Spacer'
 
 const Page = () => {
 	const user = auth.currentUser;
