@@ -13,16 +13,17 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'fire
 import { FirebaseError } from 'firebase/app';
 import { auth } from '../firebaseConfig';
 import * as Font from 'expo-font';
-import AppLoading from 'expo-app-loading';
+import * as SplashScreen from 'expo-splash-screen';
 import { useFonts, OrelegaOne_400Regular } from '@expo-google-fonts/orelega-one';
 import Ustyles from '../components/UniversalStyles';
 
 
-
+SplashScreen.preventAutoHideAsync();
 export default function Index() {
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [loading, setLoading] = useState(false);
+	const [appIsReady, setAppIsReady] = useState(false);
 
 	const signUp = async () => {
 		setLoading(true);
@@ -53,9 +54,20 @@ export default function Index() {
 		OrelegaOne_400Regular,
 	});
 
-	if (!fontsLoaded) {
-		return <AppLoading />;
-	}
+	useEffect(() => {
+        async function prepare() {
+            if (fontsLoaded) {
+                await SplashScreen.hideAsync();
+                setAppIsReady(true);
+            }
+        }
+        prepare();
+    }, [fontsLoaded]);
+
+    // Prevent rendering until fonts are ready
+    if (!appIsReady) {
+        return null;
+    }
 
 	return (
 		<View style={Ustyles.background}>
