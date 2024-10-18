@@ -1,3 +1,13 @@
+// import { Text, View } from 'react-native';
+
+// export default function Settings() {
+//   return (
+//     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+//       <Text>Settings Screen</Text>
+//     </View>
+//   );
+// }
+
 import {
 	Text,
 	View,
@@ -6,9 +16,9 @@ import {
 	ImageBackground
 } from 'react-native';
 import {signOut} from 'firebase/auth';
-import {auth} from '../../firebaseConfig';
-import Ustyles from '../../components/UniversalStyles';
-import Spacer from '../../components/Spacer'
+import {auth} from '../../../firebaseConfig';
+import Ustyles from '../../../components/UniversalStyles';
+import Spacer from '../../../components/Spacer'
 
 const Page = () => {
 	const user = auth.currentUser;
@@ -17,7 +27,7 @@ const Page = () => {
 		<View style={Ustyles.background}>
 			<Spacer size={20}/>
 			<Text style={styles.text}>
-				Welcome to auth
+				This is settings for
 			</Text>
 			<Text style={Ustyles.logotext}>
 				remi

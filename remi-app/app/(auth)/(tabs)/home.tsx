@@ -6,18 +6,18 @@ import {
 	ImageBackground
 } from 'react-native';
 import {signOut} from 'firebase/auth';
-import {auth} from '../../firebaseConfig';
-import Ustyles from '../../components/UniversalStyles';
-import Spacer from '../../components/Spacer'
+import {auth} from '../../../firebaseConfig';
+import Ustyles from '../../../components/UniversalStyles';
+import Spacer from '../../../components/Spacer'
 
 const Page = () => {
 	const user = auth.currentUser;
 
 	return (
 		<View style={Ustyles.background}>
-			<Spacer size={20}/>
+			<Spacer size={80}/>
 			<Text style={styles.text}>
-				Welcome to auth
+				Welcome to home
 			</Text>
 			<Text style={Ustyles.logotext}>
 				remi
