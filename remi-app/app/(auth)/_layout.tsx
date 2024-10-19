@@ -32,7 +32,7 @@ const AuthLayout = () => {
 		const inAuthGroup = segments && segments[0] === '(tabs)';
 		
 		if (user && !inAuthGroup) {
-		  router.replace('./(tabs)/home');
+		  router.replace('./home');
 		} else if (!user && inAuthGroup) {
 		  router.replace('/');
 		}
