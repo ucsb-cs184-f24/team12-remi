@@ -36,7 +36,8 @@ export default function Welcome() {
       // Store additional user info (username) in Firestore
       await setDoc(doc(db, 'RemiUsers', user.uid), {
         username: username,
-        email: email
+        email: email,
+        friend_list: []
       });
 
       alert('Account created successfully!');

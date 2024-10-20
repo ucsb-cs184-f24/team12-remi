@@ -35,6 +35,16 @@ const TabsLayout = () => {
       />
       {/* Tab for profile.tsx */}
       <Tabs.Screen
+        name="search"
+        options={{
+          headerTitle: "Search",
+          headerShown: false,
+          title: "Search",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="search-outline" color={color} size={size} />
+          ),
+        }} />
+      <Tabs.Screen
         name="profile"
         options={{
           headerTitle: "Profile",
@@ -45,7 +55,8 @@ const TabsLayout = () => {
           ),
         }}
       />
-    </Tabs>;
+    </Tabs>
+    ;
 }
 
 export default TabsLayout;
