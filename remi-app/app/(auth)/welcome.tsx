@@ -17,7 +17,7 @@ import React, { useState } from 'react';
 import {TextInput, ActivityIndicator } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
-import { auth, db } from '../../firebaseConfig'; // Assuming you have set up Firestore in firebaseConfig
+import { auth, db } from '../../firebaseConfig'; // Assuming you have set up Firestore in firebaseConfig 
 import { doc, setDoc } from 'firebase/firestore';
 
 export default function Welcome() {

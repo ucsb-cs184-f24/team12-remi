@@ -1,7 +1,19 @@
 import {StyleSheet} from 'react-native';
 
 const Ustyles = StyleSheet.create({
-    container: {
+    header_text: {
+		fontFamily: "Nunito_700Bold",
+		fontWeight: 'bold',
+		fontSize: 30,
+		color: '#0D5F13',
+		padding: 0,
+		justifyContent: 'center',
+		alignContent: 'center',
+		textAlign: 'center',
+		alignSelf: 'center',
+		paddingBottom: 10
+	},
+	container: {
 		marginHorizontal: 20,
 		flex: 1,
 		justifyContent: 'space-evenly'
@@ -29,7 +41,17 @@ const Ustyles = StyleSheet.create({
 		justifyContent: 'center',
 		alignSelf: 'center',
 		paddingBottom: 10
-	}
+	}, text: {
+        fontFamily: 'Nunito',
+        fontSize: 20,
+        lineHeight: 0,
+        color: '#0D5F13',
+        paddingTop: 0,
+        justifyContent: 'center',
+        alignSelf: 'center',
+        paddingBottom: 0,
+        
+    }
 });
 
 export default Ustyles;
