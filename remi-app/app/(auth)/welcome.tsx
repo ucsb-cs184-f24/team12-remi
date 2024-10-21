@@ -35,6 +35,7 @@ export default function Welcome() {
       await setDoc(doc(db, 'RemiUsers', user.uid), {
         username: username,
         email: email,
+        friend_list: []
       });
 
       alert('Account created successfully!');
