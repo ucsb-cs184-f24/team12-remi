@@ -1,24 +1,11 @@
-import {
-	Text,
-	View,
-	StyleSheet,
-	Button,
-	ImageBackground
-} from 'react-native';
-import {signOut} from 'firebase/auth';
-import Ustyles from '../../components/UniversalStyles';
-import Spacer from '../../components/Spacer'
-
-const Page = () => {
-	const user = auth.currentUser;
-}
-
 import React, { useState } from 'react';
-import {TextInput, ActivityIndicator } from 'react-native';
+import { View, TextInput, Button, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
-import { auth, db } from '../../firebaseConfig'; // Assuming you have set up Firestore in firebaseConfig 
-import { doc, setDoc } from 'firebase/firestore';
+
+import { auth, db } from '../../firebaseConfig'; 
+import { doc, setDoc, getDocs, collection, query, where } from 'firebase/firestore';
+
 
 export default function Welcome() {
   const [email, setEmail] = useState('');
@@ -26,23 +13,41 @@ export default function Welcome() {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const checkIfUsernameExists = async (username: string) => {
+    const usersRef = collection(db, 'RemiUsers');
+    const q = query(usersRef, where('username', '==', username));
+    const querySnapshot = await getDocs(q);
+
+    return !querySnapshot.empty;  // Returns true if the username exists
+  };
+
   const signUp = async () => {
     setLoading(true);
     try {
-      // Create user with Firebase Authentication
+      const usernameExists = await checkIfUsernameExists(username);
+      if (usernameExists) {
+        alert('Username is already taken. Please choose a different one.');
+        setLoading(false);
+        return;
+      }
+
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Store additional user info (username) in Firestore
       await setDoc(doc(db, 'RemiUsers', user.uid), {
         username: username,
-        email: email
+        email: email,
+        friend_list: []
       });
 
       alert('Account created successfully!');
     } catch (e: any) {
       const err = e as FirebaseError;
-      alert('Registration failed: ' + err.message);
+      if (err.code === 'auth/email-already-in-use') {
+        alert('This email is already associated with an account. Please use a different email or login with this existing email.');
+      } else {
+        alert('Registration failed: ' + err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -100,5 +105,3 @@ const styles = StyleSheet.create({
     borderColor: '#0D5F13',
   }
 });
-
-
