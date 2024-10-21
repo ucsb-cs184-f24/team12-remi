@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, SafeAreaView, StyleSheet, Text, View, ActivityIndicator , Button} from 'react-native';
+import { FlatList, SafeAreaView, StyleSheet, Text, View, ActivityIndicator , Button, Alert} from 'react-native';
 import { Searchbar } from 'react-native-paper';
-import { collection, getDocs ,query, limit} from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, QuerySnapshot, DocumentData } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 
 interface User {
@@ -63,10 +63,23 @@ const SearchFriendsScreen: React.FC = () => {
     </View>
   );
 
-  const handleInvite = (user: User) => {
-    // Handle invite logic here
-    console.log(`Invited ${user.username}`);
+  const handleInvite = async (user: User) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+  
+    try {
+      await addDoc(collection(db, 'Notifications'), {
+        from: currentUser.email,   
+        to: user.email,            
+        read_flag: true,         
+      });
+      Alert.alert('Success', `Friend request sent to ${user.username}`);
+    } catch (error) {
+      console.error('Error sending invite:', error);
+    }
   };
+  
+  
 
   if (loading) {
     return (
