@@ -23,13 +23,13 @@ const TabsLayout = () => {
         }}></Tabs.Screen> */}
       {/* Tab for settings.tsx */}
       <Tabs.Screen
-        name="settings"
+        name="add-recipe"
         options={{
-          headerTitle: "Settings",
+          headerTitle: "Add Recipe",
           headerShown: false,
-          title: "Settings",
+          title: "Add Recipe",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings-outline" color={color} size={size} />
+            <Ionicons name="add-circle-outline" color={color} size={size} />
           ),
         }}
       />

@@ -16,6 +16,7 @@ import {
 	import * as Font from 'expo-font';
 	import AppLoading from 'expo-app-loading';
 	import { useFonts, OrelegaOne_400Regular } from '@expo-google-fonts/orelega-one';
+  import { Nunito_700Bold } from '@expo-google-fonts/nunito';
 	import Ustyles from '../components/UniversalStyles';
 	// export var isCreateAccount = useState(false);
 export default function Index() {
@@ -39,6 +40,7 @@ export default function Index() {
 
 	let [fontsLoaded] = useFonts({
 		OrelegaOne_400Regular,
+    Nunito_700Bold,
 	});
 
 	if (!fontsLoaded) {
@@ -74,7 +76,7 @@ export default function Index() {
             {loading ? (
               <ActivityIndicator size={'small'} style={{ margin: 28 }} />
             ) : (
-              <>
+              <View>
                 <Button onPress={signIn} title="Login" color="#0D5F13" />
                 {/* Navigate to Register Page */}
                 <Button
@@ -82,7 +84,7 @@ export default function Index() {
                   title="Create account"
                   color="#0D5F13"
                 />
-              </>
+              </View> // this was not working for rainas laptop idk
             )}
           </KeyboardAvoidingView>
         </View>

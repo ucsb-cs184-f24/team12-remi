@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { View, TextInput, Button, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
+
 import { auth, db } from '../../firebaseConfig'; 
 import { doc, setDoc, getDocs, collection, query, where } from 'firebase/firestore';
+
 
 export default function Welcome() {
   const [email, setEmail] = useState('');
