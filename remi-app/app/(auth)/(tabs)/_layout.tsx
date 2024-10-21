@@ -45,6 +45,17 @@ const TabsLayout = () => {
           ),
         }}
       />
+      <Tabs.Screen
+        name="ImagePickerPage"
+        options={{
+          headerTitle: "ImagePickerPage",
+          headerShown: false,
+          title: "ImagePickerPage",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" color={color} size={size} />
+          ),
+        }}
+      />
     </Tabs>;
 }
 
