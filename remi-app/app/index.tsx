@@ -42,7 +42,9 @@ import Ustyles from "../components/UniversalStyles";
 		TextInput,
 		Button,
 		ActivityIndicator,
-		ImageBackground
+		ImageBackground,
+    TouchableWithoutFeedback,
+    Keyboard
 	} from 'react-native';
 	import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 	import { FirebaseError } from 'firebase/app';
@@ -79,15 +81,9 @@ export default function Index() {
     Nunito_400Regular,
   });
 
-<<<<<<< HEAD
   if (!fontsLoaded) {
     return <AppLoading />;
   }
-=======
-	if (!fontsLoaded) {
-		return <AppLoading />;
-	}
->>>>>>> b0b0158 (rebased)
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
