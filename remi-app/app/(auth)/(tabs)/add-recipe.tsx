@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { FirebaseError } from 'firebase/app';
 import { auth, db } from '../../../firebaseConfig'; // Assuming you have set up Firestore in firebaseConfig 
 import { doc, setDoc } from 'firebase/firestore';
+import RNPickerSelect from 'react-native-picker-select';
 import {
     Text,
     View,
@@ -71,15 +72,19 @@ const App = () => {
     };
 
     return (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <Spacer size={80} />
+        <View style={Ustyles.background}> 
+            <Spacer size={60}/>
             <View style={styles.justifytop_container}>
                 <Text style={Ustyles.header_text}>
+                    Add Recipe
+                </Text>
+                <Text style={Ustyles.header_2}>
                     What did you make today?
                 </Text>
 				<TouchableOpacity onPress={pickImage} style={styles.iconContainer}>
-					<Ionicons name="camera-outline" size={60} color="#0D5F13" />
-					{/* <Text style={styles.iconText}>Pick an Image</Text> Wrapped in <Text>  */} 
+                    <View style={styles.iconBackground}>
+                        <Ionicons name="camera-outline" size={100} color="#0D5F13" />
+                    </View>
 				</TouchableOpacity>
                 {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
                 <TextInput
@@ -91,13 +96,15 @@ const App = () => {
                 />
                 <TextInput
                     style={styles.input}
-                    placeholder="Hashtags"
+                    placeholder="Select Tags"
                     value={hashtags}
                     onChangeText={setHashtags}
                     placeholderTextColor='#BCD5AC'
                 />
-				<TouchableOpacity style={styles.button} onPress={handleSubmit}>
-					<Text>Submit</Text> 
+				<TouchableOpacity style={styles.buttonContainer} onPress={handleSubmit} >
+                    <View style={styles.button}>
+                        <Text style={Ustyles.text}>Next</Text>
+                    </View>
 				</TouchableOpacity>
                 {loading && <ActivityIndicator size="large" color="#0D5F13" />}
             </View>
@@ -116,27 +123,39 @@ const styles = StyleSheet.create({
         borderColor: '#0D5F13',
     },
 	button: {
+        alignSelf: 'center',
 		alignItems: 'center',
-		paddingHorizontal: 10,
-		paddingVertical: 2,
+		paddingHorizontal: 20,
+		paddingVertical: 8,
 		borderRadius: 6,
-		borderWidth: 4,
+		borderWidth: 2,
 		borderColor: '#0D5F13',
-		fontFamily: 'Nunito',
-		color: '#0D5F13'
-
+        backgroundColor: '#FFF9E6',
 	},
+    buttonContainer: {
+        alignItems: 'center', // This centers the button horizontally
+        marginVertical: 20, // Optional: Adjust spacing around the button
+    },
     justifytop_container: {
-        marginHorizontal: 20,
         flex: 1,
+		backgroundColor: '#FFF9E6', // Background color behind the ImageBackground
+        padding: 20,
         justifyContent: 'flex-start',
-		alignContent: 'center'
+        alignContent: 'center',
     },
     iconContainer: {
         flexDirection: 'row',
+        justifyContent: 'center',
         alignItems: 'center',
         marginVertical: 20,
     },
+    iconBackground: {
+        backgroundColor: '#BCD5AC', // Light green background color
+        padding: 35, // Space between the icon and the edge of the rectangle
+        borderRadius: 200, // Rounded corners
+        justifyContent: 'center',
+        alignItems: 'center',
+    }, 
     iconText: {
         marginLeft: 10, // Space between icon and text
         fontSize: 18,

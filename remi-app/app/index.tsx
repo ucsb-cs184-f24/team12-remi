@@ -16,7 +16,7 @@ import {
 	import * as Font from 'expo-font';
 	import AppLoading from 'expo-app-loading';
 	import { useFonts, OrelegaOne_400Regular } from '@expo-google-fonts/orelega-one';
-  import { Nunito_700Bold } from '@expo-google-fonts/nunito';
+  import { Nunito_600SemiBold, Nunito_700Bold } from '@expo-google-fonts/nunito';
 	import Ustyles from '../components/UniversalStyles';
 	// export var isCreateAccount = useState(false);
 export default function Index() {
@@ -41,6 +41,7 @@ export default function Index() {
 	let [fontsLoaded] = useFonts({
 		OrelegaOne_400Regular,
     Nunito_700Bold,
+    Nunito_600SemiBold
 	});
 
 	if (!fontsLoaded) {

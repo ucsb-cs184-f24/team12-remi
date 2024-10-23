@@ -13,6 +13,17 @@ const Ustyles = StyleSheet.create({
 		alignSelf: 'center',
 		paddingBottom: 10
 	},
+	header_2: {
+		fontFamily: "Nunito_600SemiBold",
+		fontSize: 20,
+		color: '#0D5F13',
+		padding: 0,
+		justifyContent: 'center',
+		alignContent: 'center',
+		textAlign: 'center',
+		alignSelf: 'center',
+		paddingBottom: 10
+	},
 	container: {
 		marginHorizontal: 20,
 		flex: 1,
