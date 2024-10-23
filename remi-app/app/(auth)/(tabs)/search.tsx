@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, Text, View, ActivityIndicator , Button, Alert} from 'react-native';
 import { Searchbar } from 'react-native-paper';
-import { collection, addDoc, getDocs, query, QuerySnapshot, DocumentData } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, QuerySnapshot, DocumentData,onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 
 interface User {
@@ -19,24 +19,19 @@ const SearchFriendsScreen: React.FC = () => {
 
   // Fetch users from Firestore
   useEffect(() => {
-    const fetchAllUsers = async () => {
-      try {
-        const usersCollection = collection(db, 'RemiUsers');
-        // const usersQuery = query(usersCollection, limit(20));
-        const usersSnapshot = await getDocs(usersCollection);
-        const usersList = usersSnapshot.docs.map(doc => ({
-          username: doc.data().username,
-          email: doc.data().email
-        })) as User[];
-        setAllUsers(usersList);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const usersCollection = collection(db, 'RemiUsers');
+    const unsubscribe = onSnapshot(usersCollection, (snapshot) => {
+      const usersList = snapshot.docs.map(doc => ({
+        username: doc.data().username,
+        email: doc.data().email,
+      })) as User[];
+      setAllUsers(usersList);
+    }, (error) => {
+      console.error('Error fetching users:', error);
+    });
 
-    fetchAllUsers();
+    // Clean up the listener when the component unmounts
+    return () => unsubscribe();
   }, []);
 
   // Handle search query for both username and email
