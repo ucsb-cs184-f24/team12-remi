@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { TouchableWithoutFeedback, Keyboard, View, TextInput, Button, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
 
@@ -55,12 +55,14 @@ export default function Welcome() {
   };
 
   return (
-    <View style={styles.container}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
       <TextInput
         style={styles.input}
         placeholder="Username"
         value={username}
         onChangeText={setUsername}
+        autoCorrect={false}
         placeholderTextColor='#BCD5AC'
       />
       <TextInput
@@ -68,6 +70,7 @@ export default function Welcome() {
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
+        autoCorrect={false}
         keyboardType="email-address"
         autoCapitalize="none"
         placeholderTextColor='#BCD5AC'
@@ -77,6 +80,7 @@ export default function Welcome() {
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
+        autoCorrect={false}
         secureTextEntry
         placeholderTextColor='#BCD5AC'
       />
@@ -86,7 +90,8 @@ export default function Welcome() {
       ) : (
         <Button title="Create Account" onPress={signUp} color="#0D5F13" />
       )}
-    </View>
+      </View>
+    </TouchableWithoutFeedback>
   );
 }
 
