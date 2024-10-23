@@ -12,6 +12,7 @@
 * Try to make issue names clear and concise, if they repeat, add a (n of X) to show linear progress
 
 ## Retro Assessment
+
 * For this first retrospective, we used a site called EasyRetro to set up a board of 3 columns; Start, Stop, and Continue
 * Team members put their discussion points under each column, then after 5 minutes, began voting on cards they believed were important
 * We discussed the cards with the most votes, giving everyone an opportunity to voice their opinions on them
@@ -19,4 +20,8 @@
 
 ## Retro Board
 ![image](https://github.com/user-attachments/assets/f0ea2426-3a17-46a7-9491-55bc071b1ec4)
+
+## Retro Outcome
+
+* We tested out a new channel on Discord called "pr-reviews-and-documentation" to better inform others of any changes or progress made. Github holds some of the base information on what we did via a checklist, but doesn't have all the details that would be needed to understand the changes made at a deeper level. This channel has allowed everyone on the team the opportunity to add more information on what they did. It has been very helpful so far, and I believe it can be even better once people add more detailed informations about their PRs.
 
