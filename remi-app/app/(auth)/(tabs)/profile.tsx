@@ -6,9 +6,9 @@ import {
 	ImageBackground
 } from 'react-native';
 import {signOut} from 'firebase/auth';
-import {auth} from '../../firebaseConfig';
-import Ustyles from '../../components/UniversalStyles';
-import Spacer from '../../components/Spacer'
+import {auth} from '../../../firebaseConfig';
+import Ustyles from '../../../components/UniversalStyles';
+import Spacer from '../../../components/Spacer'
 
 const Page = () => {
 	const user = auth.currentUser;
