@@ -27,28 +27,6 @@ const Page: React.FC = () => {
   const [friendRequests, setFriendRequests] = useState([]); // Friend requests data
 
 
-  // Add a post with hardcoded data
-  const addPost = async () => {
-    try {
-      const postRef = collection(db, 'Posts');
-      await addDoc(postRef, {
-        userId: user?.uid || 'guest123',
-        mediaUrl: 'https://cdn.com/post.jpg',
-        caption: 'Enjoying the sunset!',
-        hashtags: ['#sunset', '#photography'],
-        likesCount: 0,
-        createdAt: new Date().toISOString(),
-      });
-      Alert.alert('Success', 'Post added successfully!');
-    } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert('Error', `Failed to add post: ${error.message}`);
-      } else {
-        Alert.alert('Error', 'An unknown error occurred.');
-      }
-    }
-  };
-
   // Fetch all posts from Firestore
   const fetchAllPosts = async () => {
     try {
@@ -140,8 +118,6 @@ const Page: React.FC = () => {
       <Text style={Ustyles.logotext}>remi</Text>
       <Text style={styles.text}>{user?.email}</Text>
       <Spacer size={50} />
-      <Button title="Add Post" onPress={addPost} color="#0D5F13" />
-      <Spacer size={20} />
        
       <View style={styles.bellIconContainer}>
         <TouchableOpacity onPress={() => setModalVisible(true)} style={{ padding: 10 }}>
