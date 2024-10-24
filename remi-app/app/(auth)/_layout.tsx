@@ -39,7 +39,7 @@ const AuthLayout = () => {
 	  }, [user, initializing]);
 	return<Stack>
 	<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-	<Stack.Screen name="welcome" options={{ headerTitle: 'Create your account!' }} />
+	<Stack.Screen name="register" options={{ headerTitle: 'Create your account!' }} />
   </Stack>;
 };
 export default AuthLayout;
