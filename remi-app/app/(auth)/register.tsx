@@ -7,7 +7,7 @@ import { auth, db } from '../../firebaseConfig';
 import { doc, setDoc, getDocs, collection, query, where } from 'firebase/firestore';
 
 
-export default function Welcome() {
+export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
