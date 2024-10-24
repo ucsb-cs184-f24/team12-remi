@@ -8,7 +8,9 @@ import {
 		TextInput,
 		Button,
 		ActivityIndicator,
-		ImageBackground
+		ImageBackground,
+    TouchableWithoutFeedback,
+    Keyboard
 	} from 'react-native';
 	import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 	import { FirebaseError } from 'firebase/app';
@@ -48,48 +50,52 @@ export default function Index() {
 	}
 
   return (
-    <View style={Ustyles.background}>
-      <ImageBackground source={require('../assets/images/background-lineart.png')} style={Ustyles.backgroundImage}>
-        <View style={styles.container}>
-          <ImageBackground source={require('../assets/images/bg-ellipse.png')} style={{ justifyContent: 'center' }} resizeMode="contain">
-            <Text style={Ustyles.logotext}>remi</Text>
-          </ImageBackground>
-          <KeyboardAvoidingView behavior="padding">
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              placeholderTextColor="#BCD5AC"
-              placeholder="Email"
-            />
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholder="Password"
-              placeholderTextColor="#BCD5AC"
-            />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={Ustyles.background}>
+        <ImageBackground source={require('../assets/images/background-lineart.png')} style={Ustyles.backgroundImage}>
+          <View style={styles.container}>
+            <ImageBackground source={require('../assets/images/bg-ellipse.png')} style={{ justifyContent: 'center' }} resizeMode="contain">
+              <Text style={Ustyles.logotext}>remi</Text>
+            </ImageBackground>
+            <KeyboardAvoidingView behavior="padding">
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                autoCorrect={false}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                placeholderTextColor="#BCD5AC"
+                placeholder="Email"
+              />
+              <TextInput
+                style={styles.input}
+                value={password}
+                onChangeText={setPassword}
+                autoCorrect={false}
+                secureTextEntry
+                placeholder="Password"
+                placeholderTextColor="#BCD5AC"
+              />
 
-            {loading ? (
-              <ActivityIndicator size={'small'} style={{ margin: 28 }} />
-            ) : (
-              <View>
-                <Button onPress={signIn} title="Login" color="#0D5F13" />
-                {/* Navigate to Register Page */}
-                <Button
-                  onPress={() => router.push('./(auth)/register')} // Navigate to the registration page
-                  title="Create account"
-                  color="#0D5F13"
-                />
-              </View> // this was not working for rainas laptop idk
-            )}
-          </KeyboardAvoidingView>
-        </View>
-      </ImageBackground>
-    </View>
+              {loading ? (
+                <ActivityIndicator size={'small'} style={{ margin: 28 }} />
+              ) : (
+                <View>
+                  <Button onPress={signIn} title="Login" color="#0D5F13" />
+                  {/* Navigate to Register Page */}
+                  <Button
+                    onPress={() => router.push('./(auth)/register')} // Navigate to the registration page
+                    title="Create account"
+                    color="#0D5F13"
+                  />
+                </View> // this was not working for rainas laptop idk
+              )}
+            </KeyboardAvoidingView>
+          </View>
+        </ImageBackground>
+      </View>
+    </TouchableWithoutFeedback>
   );
 }
 const styles = StyleSheet.create({
