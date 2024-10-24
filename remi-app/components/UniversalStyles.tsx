@@ -1,6 +1,15 @@
 import { StyleSheet } from "react-native";
 
 const Ustyles = StyleSheet.create({
+<<<<<<< HEAD
+=======
+  header: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+>>>>>>> 449284b (Changed welcome.tsx name to register, and notifications to its own page)
   header_text: {
     fontFamily: "Nunito_700Bold",
     fontWeight: "bold",
@@ -13,6 +22,7 @@ const Ustyles = StyleSheet.create({
     alignSelf: "center",
     paddingBottom: 10,
   },
+<<<<<<< HEAD
   button: {
     alignSelf: "center",
     alignItems: "center",
@@ -38,6 +48,8 @@ const Ustyles = StyleSheet.create({
     alignSelf: "center",
     paddingBottom: 10,
   },
+=======
+>>>>>>> 449284b (Changed welcome.tsx name to register, and notifications to its own page)
   container: {
     marginHorizontal: 20,
     flex: 1,
@@ -60,12 +72,17 @@ const Ustyles = StyleSheet.create({
     fontFamily: "OrelegaOne_400Regular",
     fontSize: 50,
     lineHeight: 100,
+<<<<<<< HEAD
     color: "#0D5F13", // Dark Green
+=======
+    color: "#0D5F13",
+>>>>>>> 449284b (Changed welcome.tsx name to register, and notifications to its own page)
     padding: 0,
     justifyContent: "center",
     alignSelf: "center",
     paddingBottom: 10,
   },
+<<<<<<< HEAD
   notif_text: {
     fontFamily: "Nunito_600SemiBold",
     fontSize: 14,
@@ -79,6 +96,8 @@ const Ustyles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "center",
   },
+=======
+>>>>>>> 449284b (Changed welcome.tsx name to register, and notifications to its own page)
   text: {
     fontFamily: "Nunito",
     fontSize: 20,

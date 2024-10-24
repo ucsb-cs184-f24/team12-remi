@@ -1,19 +1,9 @@
-<<<<<<< HEAD
 import React, { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { FirebaseError } from "firebase/app";
 import { auth, db, storage } from "../../../firebaseConfig";
 import { doc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-=======
-import React, { useState } from 'react';
-import * as ImagePicker from 'expo-image-picker';
-import {Keyboard, TouchableWithoutFeedback} from 'react-native';
-import { FirebaseError } from 'firebase/app';
-import { auth, db, storage} from '../../../firebaseConfig'; // Assuming you have set up Firestore in firebaseConfig 
-import { doc, setDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'; 
->>>>>>> b84ac3f (Added no autocorrect flag on text inputs, made it so that text inputs can be tapped out)
 import {
   Text,
   View,

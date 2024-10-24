@@ -102,7 +102,11 @@ const Notifs = () => {
   };
 
   const showConfirmationAlert = async (request) => {
+<<<<<<< HEAD
     Alert.alert("Confirmation", "Accept friend request?", [
+=======
+    Alert.alert("Confirmation", "Are you sure you want to do this?", [
+>>>>>>> 449284b (Changed welcome.tsx name to register, and notifications to its own page)
       {
         text: "Yes",
         onPress: () => handleAccept(request),
@@ -115,9 +119,14 @@ const Notifs = () => {
   };
 
   return (
+<<<<<<< HEAD
     <View style={Ustyles.background}>
       <Spacer size={20} />
       <Text style={Ustyles.header_2}>Pending Friend Requests</Text>
+=======
+    <View>
+      <Text style={Ustyles.header_text}>Pending Friend Requests</Text>
+>>>>>>> 449284b (Changed welcome.tsx name to register, and notifications to its own page)
       {friendRequests.length === 0 ? (
         <Text style={Ustyles.header_text}>No pending friend requests.</Text>
       ) : (
@@ -128,11 +137,15 @@ const Notifs = () => {
             <View>
               <View style={styles.container}>
                 <Avatar
+<<<<<<< HEAD
                   size={50}
+=======
+>>>>>>> 449284b (Changed welcome.tsx name to register, and notifications to its own page)
                   rounded
                   source={{
                     uri: "https://i.ytimg.com/vi/gw7xLqpieRc/hq720.jpg?sqp=-oaymwE7CK4FEIIDSFryq4qpAy0IARUAAAAAGAElAADIQj0AgKJD8AEB-AG-B4AC0AWKAgwIABABGH8gRCgdMA8=&rs=AOn4CLCl6hXsf5TzBTBMZv2OfjYMWa4Rng",
                   }}
+<<<<<<< HEAD
                   containerStyle={{
                     marginLeft: 20,
                     marginRight: 10,
@@ -168,6 +181,20 @@ const Notifs = () => {
                 </View>
               </View>
               <Spacer size={40} />
+=======
+                  containerStyle={{ marginLeft: 20, marginTop: 50 }}
+                />
+                <ChatBubble
+                  isOwnMessage={false}
+                  bubbleColor="#ffffff"
+                  tailColor="#ffffff"
+                  withTail={false}
+                  onPress={() => showConfirmationAlert(item)}
+                >
+                  <Text>{item.from} wants to add you as a friend.</Text>
+                </ChatBubble>
+              </View>
+>>>>>>> 449284b (Changed welcome.tsx name to register, and notifications to its own page)
             </View>
           )}
         />
@@ -179,7 +206,10 @@ const Notifs = () => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
+<<<<<<< HEAD
     alignItems: "center",
+=======
+>>>>>>> 449284b (Changed welcome.tsx name to register, and notifications to its own page)
     flex: 1,
     paddingHorizontal: 0,
   },
@@ -188,6 +218,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     flex: 1,
     paddingHorizontal: 0,
+<<<<<<< HEAD
     marginTop: 10.
   },
   notifButton: {
@@ -202,6 +233,9 @@ const styles = StyleSheet.create({
     borderColor: '#0D5F13',
     backgroundColor: '#BCD5AC',
 },
+=======
+  },
+>>>>>>> 449284b (Changed welcome.tsx name to register, and notifications to its own page)
   chatBubble: {
     padding: 10,
   },
@@ -211,6 +245,7 @@ const styles = StyleSheet.create({
   textOwn: {
     color: "white",
   },
+<<<<<<< HEAD
   chatBubbleContainer: {
     alignItems: 'center',
   },
@@ -251,5 +286,8 @@ const styles = StyleSheet.create({
     
   },
   });
+=======
+});
+>>>>>>> 449284b (Changed welcome.tsx name to register, and notifications to its own page)
 
 export default Notifs;
