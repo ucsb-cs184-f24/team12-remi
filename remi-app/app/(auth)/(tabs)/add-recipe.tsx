@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import {Keyboard, TouchableWithoutFeedback} from 'react-native';
 import { FirebaseError } from 'firebase/app';
 import { auth, db, storage} from '../../../firebaseConfig'; // Assuming you have set up Firestore in firebaseConfig 
 import { doc, setDoc } from 'firebase/firestore';
@@ -126,37 +127,41 @@ const App = () => {
     
 
     return (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <Spacer size={80} />
-            <View style={styles.justifytop_container}>
-                <Text style={Ustyles.header_text}>
-                    What did you make today?
-                </Text>
-				<TouchableOpacity onPress={pickImage} style={styles.iconContainer}>
-					<Ionicons name="camera-outline" size={60} color="#0D5F13" />
-					{/* <Text style={styles.iconText}>Pick an Image</Text> Wrapped in <Text>  */} 
-				</TouchableOpacity>
-                {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
-                <TextInput
-                    style={styles.input}
-                    placeholder="Caption"
-                    value={caption}
-                    onChangeText={setCaption}
-                    placeholderTextColor='#BCD5AC'
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Hashtags"
-                    value={hashtags}
-                    onChangeText={setHashtags}
-                    placeholderTextColor='#BCD5AC'
-                />
-				<TouchableOpacity style={styles.button} onPress={handleSubmit}>
-					<Text>Submit</Text> 
-				</TouchableOpacity>
-                {loading && <ActivityIndicator size="large" color="#0D5F13" />}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                <Spacer size={80} />
+                <View style={styles.justifytop_container}>
+                    <Text style={Ustyles.header_text}>
+                        What did you make today?
+                    </Text>
+                    <TouchableOpacity onPress={pickImage} style={styles.iconContainer}>
+                        <Ionicons name="camera-outline" size={60} color="#0D5F13" />
+                        {/* <Text style={styles.iconText}>Pick an Image</Text> Wrapped in <Text>  */} 
+                    </TouchableOpacity>
+                    {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Caption"
+                        value={caption}
+                        autoCorrect={false}
+                        onChangeText={setCaption}
+                        placeholderTextColor='#BCD5AC'
+                    />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Hashtags"
+                        value={hashtags}
+                        autoCorrect={false}
+                        onChangeText={setHashtags}
+                        placeholderTextColor='#BCD5AC'
+                    />
+                    <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+                        <Text>Submit</Text> 
+                    </TouchableOpacity>
+                    {loading && <ActivityIndicator size="large" color="#0D5F13" />}
+                </View>
             </View>
-        </View>
+        </TouchableWithoutFeedback>
     );
 };
 
