@@ -1,6 +1,8 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
+
 
 // Optionally import the services that you want to use
 // import {...} from "firebase/auth";
@@ -26,5 +28,6 @@ const app: FirebaseApp = initializeApp(firebaseConfig);
 // Export Firebase services with proper types
 export const auth: Auth = getAuth(app);
 export const db: Firestore = getFirestore(app);
+export const storage: FirebaseStorage = getStorage(app); 
 // For more information on how to access Firebase in your project,
 // see the Firebase documentation: https://firebase.google.com/docs/web/setup#access-firebase
