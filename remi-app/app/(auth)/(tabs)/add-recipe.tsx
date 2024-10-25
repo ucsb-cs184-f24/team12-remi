@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
-import {Keyboard, TouchableWithoutFeedback} from 'react-native';
 import { FirebaseError } from 'firebase/app';
-
 import RNPickerSelect from 'react-native-picker-select';
 import { auth, db, storage} from '../../../firebaseConfig'; // Assuming you have set up Firestore in firebaseConfig 
 import { doc, setDoc } from 'firebase/firestore';
