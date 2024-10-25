@@ -19,14 +19,11 @@ import {
   import { Nunito_700Bold } from '@expo-google-fonts/nunito';
 	import Ustyles from '../components/UniversalStyles';
 	// export var isCreateAccount = useState(false);
-  import * as SplashScreen from 'expo-splash-screen';
-SplashScreen.preventAutoHideAsync();
 export default function Index() {
   const router = useRouter(); // Initialize router
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [appIsReady, setAppIsReady] = useState(false);
 
   const signIn = async () => {
     setLoading(true);
@@ -46,20 +43,9 @@ export default function Index() {
     Nunito_700Bold,
 	});
 
-	useEffect(() => {
-        async function prepare() {
-            if (fontsLoaded) {
-                await SplashScreen.hideAsync();
-                setAppIsReady(true);
-            }
-        }
-        prepare();
-    }, [fontsLoaded]);
-
-    // Prevent rendering until fonts are ready
-    if (!appIsReady) {
-        return null;
-    }
+	if (!fontsLoaded) {
+		return <AppLoading />;
+	}
 
   return (
     <View style={Ustyles.background}>
