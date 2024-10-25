@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
-import {Keyboard, TouchableWithoutFeedback} from 'react-native';
 import { FirebaseError } from 'firebase/app';
+import RNPickerSelect from 'react-native-picker-select';
 import { auth, db, storage} from '../../../firebaseConfig'; // Assuming you have set up Firestore in firebaseConfig 
 import { doc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'; 
@@ -9,15 +9,18 @@ import {
     Text,
     View,
     StyleSheet,
-    Button,
     TextInput,
     Image,
     ActivityIndicator,
-    TouchableOpacity
+    TouchableOpacity,
+    ScrollView,
+    Keyboard,
+    TouchableWithoutFeedback,
+    KeyboardAvoidingView,
 } from 'react-native';
 import Ustyles from '@/components/UniversalStyles';
 import Spacer from '@/components/Spacer';
-import { Ionicons } from '@expo/vector-icons'; // For icons
+import { Ionicons } from '@expo/vector-icons';
 
 const App = () => {
     const [image, setImage] = useState<string | null>(null);
@@ -109,15 +112,13 @@ const App = () => {
                 mediaUrl: mediaUrl,
                 userId: auth.currentUser?.uid,
                 createdAt: new Date().toISOString(),
-                likesCount: 0 // Initial likes count
+                likesCount: 0,
             });
-            // Clear input fields after submission
             setCaption('');
             setHashtags('');
             setImage(null);
             alert('Recipe submitted successfully!');
         } catch (error) {
-            // Type assertion to handle the error correctly
             const errorMessage = (error as FirebaseError).message || (error as Error).message;
             alert(`Error: ${errorMessage}`);
         } finally {
@@ -128,79 +129,143 @@ const App = () => {
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                <Spacer size={80} />
-                <View style={styles.justifytop_container}>
-                    <Text style={Ustyles.header_text}>
-                        What did you make today?
-                    </Text>
-                    <TouchableOpacity onPress={pickImage} style={styles.iconContainer}>
-                        <Ionicons name="camera-outline" size={60} color="#0D5F13" />
-                        {/* <Text style={styles.iconText}>Pick an Image</Text> Wrapped in <Text>  */} 
-                    </TouchableOpacity>
-                    {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Caption"
-                        value={caption}
-                        autoCorrect={false}
-                        onChangeText={setCaption}
-                        placeholderTextColor='#BCD5AC'
-                    />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Hashtags"
-                        value={hashtags}
-                        autoCorrect={false}
-                        onChangeText={setHashtags}
-                        placeholderTextColor='#BCD5AC'
-                    />
-                    <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-                        <Text>Submit</Text> 
-                    </TouchableOpacity>
-                    {loading && <ActivityIndicator size="large" color="#0D5F13" />}
-                </View>
+            <View style={Ustyles.background}>
+                <Spacer size={60} />
+                <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+                    <ScrollView contentContainerStyle={styles.scrollViewContent}>
+                        <View style={styles.justifytop_container}>
+                            <Text style={Ustyles.header_text}>Add Recipe</Text>
+                            <Text style={Ustyles.header_2}>What did you make today?</Text>
+                            {image ? (
+                                // Render the "Change Image" button if an image is selected
+                                <TouchableOpacity onPress={pickImage} style={styles.changeImageButton}>
+                                    <Text style={styles.changeImageText}>Change Image</Text>
+                                </TouchableOpacity>
+                            ) : (
+                                // Render the camera button if no image is selected
+                                <TouchableOpacity onPress={pickImage} style={styles.iconContainer}>
+                                    <Ionicons name="camera-outline" size={100} color="#0D5F13" />
+                                </TouchableOpacity>
+                            )}
+
+                            {image && <Image source={{ uri: image }} style={styles.imagestyle} />}
+                            <Spacer size={20} />
+                            <TextInput
+                                multiline={true}
+                                style={styles.notes_input}
+                                placeholder={`ingredients?\nrecipe?\nanything you want your friends to know?`}
+                                value={caption}
+                                onChangeText={setCaption}
+                                placeholderTextColor="#BCD5AC"
+                            />
+                            <TextInput
+                                multiline={true}
+                                style={styles.tags_input}
+                                placeholder={`select tags`}
+                                value={hashtags}
+                                onChangeText={setHashtags}
+                                placeholderTextColor="#BCD5AC"
+                            />
+                            <TouchableOpacity style={styles.buttonContainer} onPress={handleSubmit}>
+                                <View style={styles.button}>
+                                    <Text style={Ustyles.text}>Next</Text>
+                                </View>
+                            </TouchableOpacity>
+                            {loading && <ActivityIndicator size="large" color="#0D5F13" />}
+                        </View>
+                    </ScrollView>
+                </KeyboardAvoidingView>
             </View>
         </TouchableWithoutFeedback>
     );
 };
 
 const styles = StyleSheet.create({
-    input: {
+    imagestyle: {
+        width: 200,
+        height: 200,
+        alignSelf: 'center',
+        borderWidth: 4,
+        borderRadius: 4,
+        borderColor: '#0D5F13',
+        marginVertical: 20,
+    },
+    scrollViewContent: {
+        flexGrow: 1,
+        justifyContent: 'flex-start',
+        paddingBottom: 20,
+    },
+    notes_input: {
         marginVertical: 4,
-        height: 50,
+        height: 150,
         borderWidth: 2,
         borderRadius: 4,
-        padding: 10,
+        padding: 6,
         backgroundColor: '#fff',
         borderColor: '#0D5F13',
+        textAlignVertical: 'top',
+        //textAlign: 'justify',
+        fontSize: 18,
+        fontFamily: 'Nunito_600SemiBold',
+        width: '100%'
+        
     },
-	button: {
-		alignItems: 'center',
-		paddingHorizontal: 10,
-		paddingVertical: 2,
-		borderRadius: 6,
-		borderWidth: 4,
-		borderColor: '#0D5F13',
-		fontFamily: 'Nunito',
-		color: '#0D5F13'
-
-	},
-    justifytop_container: {
-        marginHorizontal: 20,
-        flex: 1,
-        justifyContent: 'flex-start',
-		alignContent: 'center'
+    tags_input: {
+        marginVertical: 4,
+        height: 80,
+        borderWidth: 2,
+        borderRadius: 4,
+        padding: 6,
+        backgroundColor: '#fff',
+        borderColor: '#0D5F13',
+        textAlignVertical: 'top',
+        //textAlign: 'justify',
+        fontSize: 18,
+        fontFamily: 'Nunito_600SemiBold',
+        width: '100%'
+        
     },
-    iconContainer: {
-        flexDirection: 'row',
+    button: {
+        alignSelf: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 8,
+        borderRadius: 6,
+        borderWidth: 2,
+        borderColor: '#0D5F13',
+        backgroundColor: '#FFF9E6',
+    },
+    buttonContainer: {
         alignItems: 'center',
         marginVertical: 20,
     },
-    iconText: {
-        marginLeft: 10, // Space between icon and text
-        fontSize: 18,
-        color: '#0D5F13',
+    justifytop_container: {
+        flex: 1,
+        backgroundColor: '#FFF9E6',
+        padding: 20,
+        justifyContent: 'flex-start',
+    },
+    iconContainer: {
+        justifyContent: 'center',
+        alignSelf: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+        backgroundColor: '#BCD5AC',
+        padding: 35,
+        width: 200,
+        height: 200,
+        borderRadius: 100,
+    }, changeImageButton: {
+        alignSelf: 'center',
+        backgroundColor: '#0D5F13',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 20,
+    },
+    changeImageText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontFamily: 'Nunito_600SemiBold',
     },
 });
 
