@@ -1,4 +1,4 @@
-import {StyleSheet} from 'react-native';
+import { StyleSheet } from "react-native";
 
 const Ustyles = StyleSheet.create({
     header_text: {
@@ -62,7 +62,13 @@ const Ustyles = StyleSheet.create({
         alignSelf: 'center',
         paddingBottom: 0,
         
-    }
+    },
+  header: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+  },
 });
 
 export default Ustyles;

@@ -81,7 +81,7 @@ export default function Index() {
                 <Button onPress={signIn} title="Login" color="#0D5F13" />
                 {/* Navigate to Register Page */}
                 <Button
-                  onPress={() => router.push('./(auth)/welcome')} // Navigate to the registration page
+                  onPress={() => router.push('./(auth)/register')} // Navigate to the registration page
                   title="Create account"
                   color="#0D5F13"
                 />
