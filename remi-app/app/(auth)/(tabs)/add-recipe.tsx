@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {Keyboard, TouchableWithoutFeedback} from 'react-native';
 import { FirebaseError } from 'firebase/app';
-import { auth, db } from '../../../firebaseConfig'; // Assuming you have set up Firestore in firebaseConfig 
+import { auth, db, storage} from '../../../firebaseConfig'; // Assuming you have set up Firestore in firebaseConfig 
 import { doc, setDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'; 
 import {
     Text,
     View,
@@ -25,34 +26,87 @@ const App = () => {
     const [loading, setLoading] = useState(false);
 
     const pickImage = async () => {
-        // Request permission to access the media library
-        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (permissionResult.granted === false) {
-            alert('Permission to access camera roll is required!');
-            return;
-        }
-
-        // Open the image picker
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.All,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 1,
-        });
-
-        if (!result.canceled) {
-            setImage(result.assets[0].uri);
+        try {
+            // Request permission to access the media library
+            const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (!permissionResult.granted) {
+                alert('Permission to access camera roll is required!');
+                return;
+            }
+    
+            // Open the image picker
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.All,
+                allowsEditing: true,
+                aspect: [4, 3],
+                quality: 1,
+            });
+    
+            if (!result.canceled) {
+                console.log('Selected Image URI:', result.assets[0].uri); // Log URI for debugging
+                setImage(result.assets[0].uri); // Set image URI state
+            }
+        } catch (error) {
+            console.error('Error picking image:', error); // Log the error for debugging
+            alert('An error occurred while selecting an image. Please try again.');
         }
     };
+    
+    const uploadImageToStorage = async (uri: string): Promise<string> => {
+        try {
+            console.log("Image upload started");
+    
+            // Ensure the URI is not null or undefined
+            if (!uri) {
+                throw new Error("Image URI is null or undefined.");
+            }
+    
+            console.log("Fetching image from URI:", uri);
+            const response = await fetch(uri);
+    
+            if (!response.ok) {
+                throw new Error(`Network response error: ${response.statusText}`);
+            }
+    
+            console.log("Converting response to blob...");
+            const blob = await response.blob();
+    
+            console.log("Creating Firebase Storage reference...");
+            const storageRef = ref(storage, `images/${Date.now()}.jpg`);
+    
+            console.log("Uploading blob to Firebase Storage...");
+            await uploadBytes(storageRef, blob);
+    
+            console.log("Getting download URL...");
+            const downloadURL = await getDownloadURL(storageRef);
+            console.log("Image successfully uploaded. Download URL:", downloadURL);
+    
+            return downloadURL;
+        } catch (error) {
+            console.error("Upload failed:", error);
+            alert(`Image upload failed: ${(error as Error).message}`);
+            throw error; // Re-throw to be caught by the calling function
+        }
+    };
+    
+    
+
 
     const handleSubmit = async () => {
         setLoading(true);
         try {
+            let mediaUrl = '';
+
+            if (image) {
+                console.log("have image")
+                mediaUrl = await uploadImageToStorage(image);
+                console.log(mediaUrl)
+            }
             const docRef = doc(db, 'Posts', `${Date.now()}`); // Use a unique ID for the document
             await setDoc(docRef, {
                 caption: caption,
                 hashtags: hashtags,
-                mediaUrl: image,
+                mediaUrl: mediaUrl,
                 userId: auth.currentUser?.uid,
                 createdAt: new Date().toISOString(),
                 likesCount: 0 // Initial likes count
@@ -70,6 +124,7 @@ const App = () => {
             setLoading(false);
         }
     };
+    
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
