@@ -64,7 +64,17 @@ const Ustyles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
     textAlign: "center",
-  },
+  }, text: {
+        fontFamily: 'Nunito',
+        fontSize: 20,
+        lineHeight: 0,
+        color: '#0D5F13',
+        paddingTop: 0,
+        justifyContent: 'center',
+        alignSelf: 'center',
+        paddingBottom: 0,
+
+    },
 });
 
 export default Ustyles;
