@@ -155,7 +155,7 @@ const App = () => {
       setLoading(false);
     }
   };
-
+  
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={Ustyles.background}>
@@ -276,7 +276,7 @@ const App = () => {
                 onPress={handleSubmit}
               >
                 <View style={styles.button}>
-                  <Text style={Ustyles.text}>Next</Text>
+                  <Text style={Ustyles.header_2}>Next</Text>
                 </View>
               </TouchableOpacity>
               {loading && <ActivityIndicator size="large" color="#0D5F13" />}

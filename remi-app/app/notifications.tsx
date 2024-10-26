@@ -102,7 +102,7 @@ const Notifs = () => {
   };
 
   const showConfirmationAlert = async (request) => {
-    Alert.alert("Confirmation", "Are you sure you want to do this?", [
+    Alert.alert("Confirmation", "Accept friend request?", [
       {
         text: "Yes",
         onPress: () => handleAccept(request),
@@ -115,8 +115,9 @@ const Notifs = () => {
   };
 
   return (
-    <View>
-      <Text style={Ustyles.header_text}>Pending Friend Requests</Text>
+    <View style={Ustyles.background}>
+      <Spacer size={20} />
+      <Text style={Ustyles.header_2}>Pending Friend Requests</Text>
       {friendRequests.length === 0 ? (
         <Text style={Ustyles.header_text}>No pending friend requests.</Text>
       ) : (
@@ -127,22 +128,46 @@ const Notifs = () => {
             <View>
               <View style={styles.container}>
                 <Avatar
+                  size={50}
                   rounded
                   source={{
                     uri: "https://i.ytimg.com/vi/gw7xLqpieRc/hq720.jpg?sqp=-oaymwE7CK4FEIIDSFryq4qpAy0IARUAAAAAGAElAADIQj0AgKJD8AEB-AG-B4AC0AWKAgwIABABGH8gRCgdMA8=&rs=AOn4CLCl6hXsf5TzBTBMZv2OfjYMWa4Rng",
                   }}
-                  containerStyle={{ marginLeft: 20, marginTop: 50 }}
+                  containerStyle={{
+                    marginLeft: 20,
+                    marginRight: 10,
+                    marginTop: 5,
+                    borderWidth: 3,
+                    borderColor: '#0D5F13',
+                  }}
                 />
-                <ChatBubble
-                  isOwnMessage={false}
-                  bubbleColor="#ffffff"
-                  tailColor="#ffffff"
-                  withTail={false}
-                  onPress={() => showConfirmationAlert(item)}
-                >
-                  <Text>{item.from} wants to add you as a friend.</Text>
-                </ChatBubble>
+                <View style={styles.chatBubbleContainer}>
+                
+                  <View style={styles.notifButton}>
+                    <Text style={Ustyles.notif_text}>{item.from} wants to add you as a friend!</Text>
+                  </View>
+
+                  <View style={styles.container2}>
+                    <TouchableOpacity
+                    onPress={() => handleAccept(item)}
+                    style={styles.acceptButton}
+                    >
+                      <Text style={styles.green_text}>Accept</Text>
+                    </TouchableOpacity>
+                   
+                    <TouchableOpacity
+                    onPress={() => handleReject(item)}
+                    style={styles.rejectButton}
+                    >
+                      <Text style={styles.red_text}>Reject</Text>
+                    </TouchableOpacity>
+
+                  </View>
+
+                 
+                </View>
               </View>
+              <Spacer size={40} />
             </View>
           )}
         />
@@ -154,6 +179,7 @@ const Notifs = () => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
+    alignItems: "center",
     flex: 1,
     paddingHorizontal: 0,
   },
@@ -162,7 +188,20 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     flex: 1,
     paddingHorizontal: 0,
+    marginTop: 10.
   },
+  notifButton: {
+    textAlignVertical: 'center',
+    alignSelf: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 15,
+    borderWidth: 2,
+    height: 40,
+    borderColor: '#0D5F13',
+    backgroundColor: '#BCD5AC',
+},
   chatBubble: {
     padding: 10,
   },
@@ -172,6 +211,45 @@ const styles = StyleSheet.create({
   textOwn: {
     color: "white",
   },
-});
+  chatBubbleContainer: {
+    alignItems: 'center',
+  },
+  acceptButton: {
+    textAlignVertical: 'center',
+    alignSelf: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: '#0D5F13',
+    marginHorizontal: 5,
+  },
+  rejectButton: {
+    textAlignVertical: 'center',
+    alignSelf: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: '#871717',
+    marginHorizontal: 5,
+  },
+  green_text: {
+    fontFamily: 'Nunito_400Regular',
+    fontSize: 12,
+    color: '#0D5F13',
+    alignSelf: 'center',
+    //paddingBottom: 0,
+  }, red_text: {
+    fontFamily: 'Nunito_400Regular',
+    fontSize: 12,
+    color: '#871717',
+    alignSelf: 'center',
+    //paddingBottom: 0,
+    
+  },
+  });
 
 export default Notifs;
