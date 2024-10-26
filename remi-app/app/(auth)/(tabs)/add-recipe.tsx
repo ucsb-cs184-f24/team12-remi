@@ -168,7 +168,7 @@ const App = () => {
                             />
                             <TouchableOpacity style={styles.buttonContainer} onPress={handleSubmit}>
                                 <View style={styles.button}>
-                                    <Text style={Ustyles.text}>Next</Text>
+                                    <Text style={Ustyles.header_2}>Next</Text>
                                 </View>
                             </TouchableOpacity>
                             {loading && <ActivityIndicator size="large" color="#0D5F13" />}

@@ -47,23 +47,19 @@ const Ustyles = StyleSheet.create({
 		fontFamily: 'OrelegaOne_400Regular',
 		fontSize: 50,
 		lineHeight: 100,
-		color: '#0D5F13',
+		color: '#0D5F13', // Dark Green
 		padding: 0,
 		justifyContent: 'center',
 		alignSelf: 'center',
 		paddingBottom: 10
-	}, text: {
-        fontFamily: 'Nunito',
-        fontSize: 20,
-        lineHeight: 0,
-        color: '#0D5F13',
-        paddingTop: 0,
-        justifyContent: 'center',
+	}, notif_text: {
+        fontFamily: 'Nunito_600SemiBold',
+        fontSize: 14,
+        color: '#FFFFFF',
         alignSelf: 'center',
         paddingBottom: 0,
         
-    },
-  header: {
+    }, header: {
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 10,
