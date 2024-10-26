@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { FirebaseError } from 'firebase/app';
-import RNPickerSelect from 'react-native-picker-select';
-import { auth, db, storage} from '../../../firebaseConfig'; // Assuming you have set up Firestore in firebaseConfig 
+import { auth, db, storage } from '../../../firebaseConfig'; 
 import { doc, setDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'; 
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
     Text,
     View,
@@ -18,104 +17,103 @@ import {
     TouchableWithoutFeedback,
     KeyboardAvoidingView,
 } from 'react-native';
+import SectionedMultiSelect from 'react-native-sectioned-multi-select';
+import { Ionicons, MaterialIcons as Icon } from '@expo/vector-icons';
 import Ustyles from '@/components/UniversalStyles';
 import Spacer from '@/components/Spacer';
-import { Ionicons } from '@expo/vector-icons';
+
+const items = [
+    { name: 'Breakfast', id: 1 },
+    { name: 'Lunch', id: 2 },
+    { name: 'Dinner', id: 3 },
+    { name: 'Vegetarian', id: 4 },
+    { name: 'Vegan', id: 5 },
+    { name: 'Gluten-Free', id: 6 },
+    { name: 'Dairy-Free', id: 7 },
+    { name: 'Keto', id: 8 },
+    { name: 'Paleo', id: 9 },
+    { name: 'Low Carb', id: 10 },
+    { name: 'Mediterranean', id: 11 },
+    { name: 'Asian', id: 12 },
+    { name: 'Italian', id: 13 },
+    { name: 'Mexican', id: 14 },
+    { name: 'Indian', id: 15 },
+    { name: 'Middle Eastern', id: 16 },
+    { name: 'French', id: 17 },
+    { name: 'American', id: 18 },
+    { name: 'African', id: 19 },
+    { name: 'Caribbean', id: 20 },
+    { name: 'Comfort Food', id: 21 },
+    { name: 'Dessert', id: 22 },
+    { name: 'Snacks', id: 23 },
+    { name: 'Appetizers', id: 24 },
+    { name: 'BBQ', id: 25 },
+    { name: 'Seafood', id: 26 },
+    { name: 'Soups & Stews', id: 27 },
+    { name: 'Salads', id: 28 },
+    { name: 'Beverages', id: 29 },
+];
 
 const App = () => {
     const [image, setImage] = useState<string | null>(null);
     const [caption, setCaption] = useState('');
-    const [hashtags, setHashtags] = useState('');
+    const [selectedTags, setSelectedTags] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
 
     const pickImage = async () => {
         try {
-            // Request permission to access the media library
             const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (!permissionResult.granted) {
                 alert('Permission to access camera roll is required!');
                 return;
             }
-    
-            // Open the image picker
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.All,
                 allowsEditing: true,
                 aspect: [4, 3],
                 quality: 1,
             });
-    
             if (!result.canceled) {
-                console.log('Selected Image URI:', result.assets[0].uri); // Log URI for debugging
-                setImage(result.assets[0].uri); // Set image URI state
+                setImage(result.assets[0].uri);
             }
         } catch (error) {
-            console.error('Error picking image:', error); // Log the error for debugging
             alert('An error occurred while selecting an image. Please try again.');
         }
     };
     
     const uploadImageToStorage = async (uri: string): Promise<string> => {
         try {
-            console.log("Image upload started");
-    
-            // Ensure the URI is not null or undefined
-            if (!uri) {
-                throw new Error("Image URI is null or undefined.");
-            }
-    
-            console.log("Fetching image from URI:", uri);
+            if (!uri) throw new Error("Image URI is null or undefined.");
             const response = await fetch(uri);
-    
-            if (!response.ok) {
-                throw new Error(`Network response error: ${response.statusText}`);
-            }
-    
-            console.log("Converting response to blob...");
             const blob = await response.blob();
-    
-            console.log("Creating Firebase Storage reference...");
             const storageRef = ref(storage, `images/${Date.now()}.jpg`);
-    
-            console.log("Uploading blob to Firebase Storage...");
             await uploadBytes(storageRef, blob);
-    
-            console.log("Getting download URL...");
             const downloadURL = await getDownloadURL(storageRef);
-            console.log("Image successfully uploaded. Download URL:", downloadURL);
-    
             return downloadURL;
         } catch (error) {
-            console.error("Upload failed:", error);
             alert(`Image upload failed: ${(error as Error).message}`);
-            throw error; // Re-throw to be caught by the calling function
+            throw error;
         }
     };
-    
-    
-
 
     const handleSubmit = async () => {
         setLoading(true);
         try {
             let mediaUrl = '';
-
             if (image) {
-                console.log("have image")
                 mediaUrl = await uploadImageToStorage(image);
-                console.log(mediaUrl)
             }
-            const docRef = doc(db, 'Posts', `${Date.now()}`); // Use a unique ID for the document
+            const docRef = doc(db, 'Posts', `${Date.now()}`);
             await setDoc(docRef, {
                 caption: caption,
-                hashtags: hashtags,
+                hashtags: selectedTags.map(tagId => items.find(item => item.id === tagId)?.name),
                 mediaUrl: mediaUrl,
                 userId: auth.currentUser?.uid,
                 createdAt: new Date().toISOString(),
                 likesCount: 0,
             });
             setCaption('');
-            setHashtags('');
+            setSelectedTags([]);
             setImage(null);
             alert('Recipe submitted successfully!');
         } catch (error) {
@@ -125,7 +123,6 @@ const App = () => {
             setLoading(false);
         }
     };
-    
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -135,19 +132,26 @@ const App = () => {
                     <ScrollView contentContainerStyle={styles.scrollViewContent}>
                         <View style={styles.justifytop_container}>
                             <Text style={Ustyles.header_text}>Add Recipe</Text>
+                            <Spacer size={15} />
                             <Text style={Ustyles.header_2}>What did you make today?</Text>
+                            <TextInput
+                                multiline={true}
+                                style={styles.title_input}
+                                placeholder={`dish name`}
+                                value={caption}
+                                onChangeText={setCaption}
+                                placeholderTextColor="#BCD5AC"
+                            /> 
+                            <Spacer size={10} />
                             {image ? (
-                                // Render the "Change Image" button if an image is selected
                                 <TouchableOpacity onPress={pickImage} style={styles.changeImageButton}>
                                     <Text style={styles.changeImageText}>Change Image</Text>
                                 </TouchableOpacity>
                             ) : (
-                                // Render the camera button if no image is selected
                                 <TouchableOpacity onPress={pickImage} style={styles.iconContainer}>
                                     <Ionicons name="camera-outline" size={100} color="#0D5F13" />
                                 </TouchableOpacity>
                             )}
-
                             {image && <Image source={{ uri: image }} style={styles.imagestyle} />}
                             <Spacer size={20} />
                             <TextInput
@@ -158,14 +162,63 @@ const App = () => {
                                 onChangeText={setCaption}
                                 placeholderTextColor="#BCD5AC"
                             />
-                            <TextInput
-                                multiline={true}
-                                style={styles.tags_input}
-                                placeholder={`select tags`}
-                                value={hashtags}
-                                onChangeText={setHashtags}
-                                placeholderTextColor="#BCD5AC"
+                            <Spacer size={20} />
+                            <SectionedMultiSelect
+                                items={items}
+                                IconRenderer={Icon as any}
+                                uniqueKey="id"
+                                onSelectedItemsChange={setSelectedTags}
+                                selectedItems={selectedTags}
+                                selectText="Select Tags"
+                                searchPlaceholderText="Search Tags"
+                                confirmText="Apply Tags"
+                                styles={{
+                                    selectToggle: {
+                                        backgroundColor: '#BCD5AC', // Dark green background
+                                        borderColor: '#0D5F13',
+                                        borderWidth: 2,
+                                        padding: 12,
+                                        borderRadius: 8,
+                                    },
+                                    selectToggleText: {
+                                        fontSize: 16,
+                                        color: '#0D5F13', // White text for visibility on dark green
+                                        fontFamily: 'Nunito_600SemiBold',
+                                    },
+                                    chipContainer: {
+                                        backgroundColor: '#BCD5AC',
+                                        borderRadius: 15,
+                                    }, 
+                                    chipText: {
+                                        fontSize: 14,
+                                        color: '#0D5F13',
+                                    },
+                                    itemText: {
+                                        fontSize: 16,
+                                        color: '#333',
+                                        fontFamily: 'Nunito_600SemiBold',
+                                    },
+                                    confirmText: {
+                                        color: '#BCD5AC', // Light green color for the "Apply" button text
+                                        fontSize: 16,
+                                        fontWeight: 'bold',
+                                    },
+                                    selectedItemText: {
+                                        color: '#0D5F13', // Highlight selected items
+                                    },
+                                    scrollView: {
+                                        backgroundColor: '#f7f7f9',
+                                    },
+                                    subItemText: {
+                                        color: '#666',
+                                    },
+                                    searchTextInput: {
+                                        borderBottomWidth: 1,
+                                        borderBottomColor: '#0D5F13',
+                                    },
+                                }}
                             />
+                            <Spacer size={10} />
                             <TouchableOpacity style={styles.buttonContainer} onPress={handleSubmit}>
                                 <View style={styles.button}>
                                     <Text style={Ustyles.text}>Next</Text>
@@ -209,6 +262,20 @@ const styles = StyleSheet.create({
         fontFamily: 'Nunito_600SemiBold',
         width: '100%'
         
+    },
+    title_input: {
+        marginVertical: 4,
+        height: 50,
+        borderWidth: 2,
+        borderRadius: 4,
+        paddingVertical: 8, // Adjust padding to balance vertical centering
+        paddingHorizontal: 10, // Horizontal padding to keep text away from edges
+        backgroundColor: '#fff',
+        borderColor: '#0D5F13',
+        textAlignVertical: 'center', // Centers text vertically
+        fontSize: 18,
+        fontFamily: 'Nunito_600SemiBold',
+        width: '100%',
     },
     tags_input: {
         marginVertical: 4,
