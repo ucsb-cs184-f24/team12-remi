@@ -21,12 +21,14 @@ import {
 import Ustyles from '@/components/UniversalStyles';
 import Spacer from '@/components/Spacer';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 const App = () => {
     const [image, setImage] = useState<string | null>(null);
     const [caption, setCaption] = useState('');
     const [hashtags, setHashtags] = useState('');
     const [loading, setLoading] = useState(false);
+    const router = useRouter(); 
 
     const pickImage = async () => {
         try {
@@ -178,7 +180,7 @@ const App = () => {
                                 onChangeText={setHashtags}
                                 placeholderTextColor="#BCD5AC"
                             />
-                            <TouchableOpacity style={styles.buttonContainer} onPress={handleSubmit}>
+                            <TouchableOpacity style={styles.buttonContainer} onPress={() => router.push('/Next')}>
                                 <View style={styles.button}>
                                     <Text style={Ustyles.text}>Next</Text>
                                 </View>
