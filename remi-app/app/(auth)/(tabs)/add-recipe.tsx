@@ -96,6 +96,18 @@ const App = () => {
 
 
     const handleSubmit = async () => {
+        if (!image) {
+            alert('Please select an image.');
+            return;
+        }
+        if (!caption.trim()) {
+            alert('Caption is required.');
+            return;
+        }
+        if (!hashtags.trim()) {
+            alert('Please add at least one hashtag.');
+            return;
+        }
         setLoading(true);
         try {
             let mediaUrl = '';
