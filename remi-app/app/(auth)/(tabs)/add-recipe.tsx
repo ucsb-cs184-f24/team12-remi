@@ -155,7 +155,7 @@ const App = () => {
       setLoading(false);
     }
   };
-  
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={Ustyles.background}>
@@ -212,7 +212,7 @@ const App = () => {
                 selectText="Select Tags"
                 searchPlaceholderText="Search Tags"
                 confirmText="Apply Tags"
-                colors={{ primary: "#0D5F13"}}
+                colors={{ primary: "#0D5F13" }}
                 styles={{
                   selectToggle: {
                     backgroundColor: "#BCD5AC", // Dark green background
@@ -231,7 +231,7 @@ const App = () => {
                     borderRadius: 15,
                   },
                   backdrop: {
-                    backgroundColor: "#BCD5AC"
+                    backgroundColor: "#BCD5AC",
                   },
                   chipText: {
                     fontSize: 14,
@@ -253,8 +253,8 @@ const App = () => {
                     color: "#0D5F13", // Highlight selected items
                     fontFamily: "Nunito_600SemiBold",
                   },
-                  selectedItem:{
-                    backgroundColor: "#FFF9E6"
+                  selectedItem: {
+                    backgroundColor: "#FFF9E6",
                   },
                   scrollView: {
                     backgroundColor: "#f7f7f9",
@@ -271,14 +271,11 @@ const App = () => {
                 }}
               />
               <Spacer size={10} />
-              <TouchableOpacity
-                style={styles.buttonContainer}
-                onPress={handleSubmit}
-              >
-                <View style={styles.button}>
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity style={styles.button} onPress={handleSubmit}>
                   <Text style={Ustyles.header_2}>Next</Text>
-                </View>
-              </TouchableOpacity>
+                </TouchableOpacity>
+              </View>
               {loading && <ActivityIndicator size="large" color="#0D5F13" />}
             </View>
           </ScrollView>
