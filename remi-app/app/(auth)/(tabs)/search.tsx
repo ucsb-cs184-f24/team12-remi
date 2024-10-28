@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, Text, View, ActivityIndicator , Button, Alert} from 'react-native';
 import { Searchbar } from 'react-native-paper';
-import { collection, addDoc, getDocs, query, QuerySnapshot, DocumentData,onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, QuerySnapshot, DocumentData,onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 
 interface User {
@@ -63,17 +63,33 @@ const SearchFriendsScreen: React.FC = () => {
     if (!currentUser) return;
   
     try {
-      await addDoc(collection(db, 'Notifications'), {
-        from: currentUser.email,   
-        to: user.email,            
-        read_flag: true,         
+      const notificationsRef = collection(db, 'Notifications');
+      const existingInviteQuery = query(
+        notificationsRef,
+        where("from", "==", currentUser.email),
+        where("to", "==", user.email),
+        where("read_flag", "==", true)  
+      );
+  
+      const querySnapshot = await getDocs(existingInviteQuery);
+  
+      // If an invite already exists, skip creating a new one
+      if (!querySnapshot.empty) {
+        Alert.alert('Info', `You have already sent a friend request to ${user.username}`);
+        return;
+      }
+  
+      // Otherwise, send a new invite
+      await addDoc(notificationsRef, {
+        from: currentUser.email,
+        to: user.email,
+        read_flag: true,
       });
       Alert.alert('Success', `Friend request sent to ${user.username}`);
     } catch (error) {
       console.error('Error sending invite:', error);
     }
   };
-  
   
 
   if (loading) {
