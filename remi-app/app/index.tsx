@@ -1,7 +1,6 @@
 import { useRouter } from "expo-router"; // Add this import
 import { useEffect, useState } from "react";
 import {
-<<<<<<< HEAD
   Text,
   View,
   StyleSheet,
@@ -34,28 +33,6 @@ import {
 import Ustyles from "../components/UniversalStyles";
 // export var isCreateAccount = useState(false);
 
-=======
-		Text,
-		View,
-		StyleSheet,
-		KeyboardAvoidingView,
-		TextInput,
-		Button,
-		ActivityIndicator,
-		ImageBackground,
-    TouchableWithoutFeedback,
-    Keyboard
-	} from 'react-native';
-	import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-	import { FirebaseError } from 'firebase/app';
-	import { auth } from '../firebaseConfig';
-	import * as Font from 'expo-font';
-	import AppLoading from 'expo-app-loading';
-	import { useFonts, OrelegaOne_400Regular } from '@expo-google-fonts/orelega-one';
-  import { Nunito_700Bold } from '@expo-google-fonts/nunito';
-	import Ustyles from '../components/UniversalStyles';
-	// export var isCreateAccount = useState(false);
->>>>>>> b0b0158 (rebased)
 export default function Index() {
   const router = useRouter(); // Initialize router
   const [email, setEmail] = useState("");
