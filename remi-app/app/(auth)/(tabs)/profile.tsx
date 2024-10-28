@@ -7,56 +7,54 @@ import {
 	Switch,
 	ImageBackground
 } from 'react-native';
-import {signOut} from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth, db } from '../../../firebaseConfig'; 
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import Ustyles from '../../../components/UniversalStyles';
-import Spacer from '../../../components/Spacer'
+import Spacer from '../../../components/Spacer';
 import React, { useEffect, useState } from 'react';
 
 const DEFAULT_PROFILE_PIC = 'https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png';
 
 const Page = () => {
     const user = auth.currentUser;
-    const [profilePic, setProfilePic] = useState<string>(DEFAULT_PROFILE_PIC); // Default profile pic
-	const [username, setUsername] = useState('');
-    const [isPublic, setIsPublic] = useState(false); // State for the toggle switch
+    const [profilePic, setProfilePic] = useState<string>(DEFAULT_PROFILE_PIC);
+    const [username, setUsername] = useState('');
+    const [isPublic, setIsPublic] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    // Fetch current visibility from Firestore when the component loads
-	useEffect(() => {
-		const fetchUserData = async () => {
-			if (user) {
-				try {
-					const userDocRef = doc(db, 'RemiUsers', user.uid);
-					const userSnapshot = await getDoc(userDocRef);
-					if (userSnapshot.exists()) {
-						const userData = userSnapshot.data();
-						setIsPublic(userData.visibility === 'public');
-						setUsername(userData.username || ''); // Get the username
-						// console.log('Username:', userData.username)
-					}
-				} catch (error) {
-					console.error('Error fetching user data:', error);
-				} finally {
-					setLoading(false);
-				}
-			}
-		};
-	
-		fetchUserData();
-	}, [user]);
-	
+    // Fetch user data on load
+    useEffect(() => {
+        const fetchUserData = async () => {
+            if (user) {
+                try {
+                    const userDocRef = doc(db, 'RemiUsers', user.uid);
+                    const userSnapshot = await getDoc(userDocRef);
+                    if (userSnapshot.exists()) {
+                        const userData = userSnapshot.data();
+                        setIsPublic(userData.visibility === 'public');
+                        setUsername(userData.username || '');
+                    }
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
 
-    // Handle the toggle switch and update the Firestore document
+        fetchUserData();
+    }, [user]);
+
+    // Handle visibility toggle
     const toggleSwitch = async () => {
         if (!user) return;
-        const newVisibility = !isPublic ? 'public' : 'private'; // Determine the new visibility state
+        const newVisibility = !isPublic ? 'public' : 'private';
         setIsPublic(!isPublic);
 
         try {
             const userDocRef = doc(db, 'RemiUsers', user.uid);
-            await updateDoc(userDocRef, { visibility: newVisibility }); // Update visibility in Firestore
+            await updateDoc(userDocRef, { visibility: newVisibility });
             alert(`Profile visibility updated to ${newVisibility}`);
         } catch (error) {
             console.error('Error updating visibility:', error);
@@ -75,7 +73,7 @@ const Page = () => {
     return (
         <View style={Ustyles.background}>
             <Spacer size={50} />
-			<Text style={styles.headerText}>Profile</Text>
+            <Text style={styles.headerText}>Profile</Text>
             
             {/* Profile picture and email */}
             <View style={styles.profileContainer}>
@@ -84,7 +82,7 @@ const Page = () => {
                     style={styles.profileImage}
                 />
                 <View style={styles.userContainer}>
-                    <Text style={styles.text}>{username}</Text>
+                    <Text style={styles.usernameText}>{username}</Text>
                     <Text style={styles.text}>{user?.email}</Text>
                 </View>
             </View>
@@ -110,39 +108,37 @@ const Page = () => {
 };
 
 const styles = StyleSheet.create({
-	headerText: {
-        fontSize: 24,         
-        fontWeight: 'bold',   
-        textAlign: 'center',  
-        color: '#0D5F13',     
+    headerText: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        color: '#0D5F13',
     },
     text: {
         fontFamily: 'Roboto',
         fontSize: 20,
-        lineHeight: 0,
         color: '#0D5F13',
-        paddingTop: 0,
         justifyContent: 'center',
         alignSelf: 'center',
-        paddingBottom: 0,
+    },
+    usernameText: {
+        fontFamily: 'Roboto',
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#0D5F13',
+        textAlign: 'left',
     },
     userContainer: {
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginVertical: 10,
-		marginLeft: 20,
-		alignSelf: 'flex-start'
+        justifyContent: 'flex-start',
+        marginLeft: 10,
     },
     profileContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         marginBottom: 20,
-		marginVertical: 20,
-		marginLeft: 20,
-        marginRight: 20,
-		alignSelf: 'flex-start'
+        marginHorizontal: 20,
     },
     profileImage: {
         width: 70,
@@ -152,18 +148,16 @@ const styles = StyleSheet.create({
     },
     switchContainer: {
         flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
         marginVertical: 10,
-		marginLeft: 20,
-		alignSelf: 'flex-start'
+        marginLeft: 20, // Add left margin for alignment with other elements
     },
     visibilityText: {
         fontSize: 18,
         color: '#0D5F13',
         marginRight: 10,
-		marginLeft: 20,
-		alignSelf: 'flex-start'
+        textAlign: 'left', // Align the text to the left
     },
     switch: {
         transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }],
