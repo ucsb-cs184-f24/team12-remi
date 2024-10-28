@@ -1,4 +1,3 @@
-// App.tsx
 import React, { useState } from 'react';
 import { 
   StyleSheet, 
@@ -11,22 +10,98 @@ import {
 import Slider from '@react-native-community/slider'; 
 import { Ionicons } from '@expo/vector-icons';
 import Spacer from '@/components/Spacer';
+import { useNavigation, useRouter, useLocalSearchParams  } from "expo-router";
+import { FirebaseError } from "firebase/app";
+import { auth, db, storage } from "../../firebaseConfig";
+import { doc, setDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
+
+const uploadImageToStorage = async (uri: string): Promise<string> => {
+  try {
+    if (!uri) throw new Error("Image URI is null or undefined.");
+    const response = await fetch(uri);
+    console.log("1");
+    const blob = await response.blob();
+    console.log("2");
+    const storageRef = ref(storage, `images/${Date.now()}.jpg`);
+    console.log("3", storageRef);
+    await uploadBytes(storageRef, blob);
+    console.log("4");
+    const downloadURL = await getDownloadURL(storageRef);
+    console.log("6");
+    return downloadURL;
+  } catch (error) {
+    alert(`Image upload failed: ${(error as Error).message}`);
+    throw error;
+  }
+};
+
 
 export default function App() {
+  const params = useLocalSearchParams();
+  const { image, title, caption, selectedTags } = params;
+  console.log(image, title, caption, selectedTags);
   const [price, setPrice] = useState<number>(1.5);
   const [difficulty, setDifficulty] = useState<number>(4.5);
   const [time, setTime] = useState<number>(30);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!image) {
+        alert('Please select an image.');
+        return;
+    }
+    if (!caption.trim()) {
+        alert('Caption is required.');
+        return;
+    }
+    if (selectedTags.length==0) {
+        alert('Please add at least one hashtag.');
+        return;
+    }
+setLoading(true);
+try {
+  let mediaUrl = "";
+
+  if (image) {
+    console.log("have image");
+    mediaUrl = await uploadImageToStorage(image);
+    console.log(mediaUrl);
+  }
+
+  console.log("9");
+  const docRef = doc(db, "Posts", `${Date.now()}`); // Use a unique ID for the document
+  await setDoc(docRef, {
+    title: title,
+    caption: caption,
+    hashtags: selectedTags , // Store tags as an array
+    mediaUrl: mediaUrl,
+    userId: auth.currentUser?.uid,
+    createdAt: new Date().toISOString(),
+    likesCount: 0,
+  });
+
+  // Reset state
+  // setTitle("");
+  // setCaption("");
+  // setImage(null);
+  // setSelectedTags([]); // Clear selected tags
+  alert("Recipe submitted successfully!");
+} catch (error) {
+  const errorMessage =
+    (error as FirebaseError).message || (error as Error).message;
+  alert(`Error: ${errorMessage}`);
+} finally {
+  setLoading(false);
+}
+};
 
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <View style={styles.justifytop_container}>
       <Spacer size={60} />
-      <TouchableOpacity  style={styles.iconContainer}>
-                                    <Ionicons name="camera-outline" size={100} color="#0D5F13" />
-                                </TouchableOpacity>
-
-       
-
+      <Image source={{ uri: image }}  style={styles.iconContainer}/>
         <View style={styles.sliderContainer}>
           <Text style={styles.label}>Price: ${price.toFixed(2)}/Serving</Text>
           <Slider
@@ -69,6 +144,9 @@ export default function App() {
             {Math.ceil(time * 0.33)} passive minutes
           </Text>
         </View>
+        <TouchableOpacity style={styles.buttonContainer} onPress={handleSubmit}>
+          <Text >Submit Recipe</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );

@@ -55,17 +55,6 @@ const TabsLayout = () => {
           ),
         }}
       />
-      <Tabs.Screen
-        name="Next"
-        options={{
-          headerTitle: "Next",
-          headerShown: false,
-          title: "Next",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" color={color} size={size} />
-          ),
-        }}
-      />
     </Tabs>
     ;
 }

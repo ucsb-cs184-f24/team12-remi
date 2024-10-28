@@ -122,7 +122,7 @@ const App = () => {
             alert('Caption is required.');
             return;
         }
-        if (!hashtags.trim()) {
+        if (selectedTags.length==0) {
             alert('Please add at least one hashtag.');
             return;
         }
@@ -287,7 +287,17 @@ const App = () => {
               <Spacer size={10} />
               <TouchableOpacity
                 style={styles.buttonContainer}
-                onPress={() => router.push('/Next')}
+                onPress={() =>
+                  router.push({
+                    pathname: "/Next",
+                    params: {
+                      image,
+                      title,
+                      caption,
+                      selectedTags,
+                    },
+                  })
+                }
               >
                 <View style={styles.button}>
                   <Text style={Ustyles.header_2}>Next</Text>
