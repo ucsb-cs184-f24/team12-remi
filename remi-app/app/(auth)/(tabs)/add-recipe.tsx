@@ -292,8 +292,10 @@ const App = () => {
                 <View style={styles.button}>
 
                   <Text style={Ustyles.header_2}>Next</Text>
+                  </View>
                 </TouchableOpacity>
               </View>
+              <View>
               {loading && <ActivityIndicator size="large" color="#0D5F13" />}
             </View>
           </ScrollView>
