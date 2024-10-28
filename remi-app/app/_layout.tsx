@@ -51,11 +51,7 @@ export default function RootLayout() {
 
   return (
     <Stack>
-<<<<<<< HEAD
       <Stack.Screen name="index" options={{ headerShown: false }} />
-=======
-      <Stack.Screen name="index" options={{ headerTitle: 'Login' }} />
->>>>>>> 449284b (Changed welcome.tsx name to register, and notifications to its own page)
       <Stack.Screen name="notifications" options={{ headerTitle: 'Notifications' }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
     </Stack>
