@@ -61,8 +61,7 @@ const App = () => {
   const [caption, setCaption] = useState("");
   const [title, setTitle] = useState("");
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
-  const [loading, setLoading] = useState(false);
-    const router = useRouter(); 
+  const router = useRouter(); 
 
   const pickImage = async () => {
     try {
@@ -98,78 +97,7 @@ const App = () => {
     // setHashtags(tagsArray.join(", "));
   };
 
-  const uploadImageToStorage = async (uri: string): Promise<string> => {
-    try {
-      if (!uri) throw new Error("Image URI is null or undefined.");
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      const storageRef = ref(storage, `images/${Date.now()}.jpg`);
-      await uploadBytes(storageRef, blob);
-      const downloadURL = await getDownloadURL(storageRef);
-      return downloadURL;
-    } catch (error) {
-      alert(`Image upload failed: ${(error as Error).message}`);
-      throw error;
-    }
-  };
 
-  const handleSubmit = async () => {
-        if (!image) {
-            alert('Please select an image.');
-            return;
-        }
-        if (!caption.trim()) {
-            alert('Caption is required.');
-            return;
-        }
-        if (selectedTags.length==0) {
-            alert('Please add at least one hashtag.');
-            return;
-        }
-    setLoading(true);
-    try {
-      let mediaUrl = "";
-
-      if (image) {
-        console.log("have image");
-        mediaUrl = await uploadImageToStorage(image);
-        console.log(mediaUrl);
-      }
-
-      // Convert selectedTags to an array of tag names
-      const tagsArray = selectedTags
-        .map((tagId) => {
-          const tag = items.find((item) => item.id === tagId);
-          return tag ? tag.name : ""; // Extract the tag name, default to '' if not found
-        })
-        .filter(Boolean); // Filter out any empty strings just in case
-
-      const docRef = doc(db, "Posts", `${Date.now()}`); // Use a unique ID for the document
-      await setDoc(docRef, {
-        title: title,
-        caption: caption,
-        hashtags: tagsArray, // Store tags as an array
-        mediaUrl: mediaUrl,
-        userId: auth.currentUser?.uid,
-        createdAt: new Date().toISOString(),
-        likesCount: 0,
-      });
-
-      // Reset state
-      setTitle("");
-      setCaption("");
-      setImage(null);
-      setSelectedTags([]); // Clear selected tags
-      alert("Recipe submitted successfully!");
-    } catch (error) {
-      const errorMessage =
-        (error as FirebaseError).message || (error as Error).message;
-      alert(`Error: ${errorMessage}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={Ustyles.background}>
@@ -303,7 +231,6 @@ const App = () => {
                   <Text style={Ustyles.header_2}>Next</Text>
                 </View>
               </TouchableOpacity>
-              {loading && <ActivityIndicator size="large" color="#0D5F13" />}
             </View>
           </ScrollView>
         </KeyboardAvoidingView>

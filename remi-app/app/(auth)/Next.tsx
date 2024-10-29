@@ -14,23 +14,42 @@ import { useNavigation, useRouter, useLocalSearchParams  } from "expo-router";
 import { FirebaseError } from "firebase/app";
 import { auth, db, storage } from "../../firebaseConfig";
 import { doc, setDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL ,uploadBytesResumable} from "firebase/storage";
 
+interface Params {
+  image: string;
+  title: string;
+  caption: string;
+  selectedTags: string[];
+}
 
 const uploadImageToStorage = async (uri: string): Promise<string> => {
   try {
     if (!uri) throw new Error("Image URI is null or undefined.");
     const response = await fetch(uri);
-    console.log("1");
+    if (!response.ok) throw new Error("Failed to fetch the image.");
     const blob = await response.blob();
-    console.log("2");
     const storageRef = ref(storage, `images/${Date.now()}.jpg`);
-    console.log("3", storageRef);
-    await uploadBytes(storageRef, blob);
-    console.log("4");
-    const downloadURL = await getDownloadURL(storageRef);
-    console.log("6");
-    return downloadURL;
+    const uploadTask = uploadBytesResumable(storageRef, blob);
+
+    return new Promise((resolve, reject) => {
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          console.log(
+            `Upload is ${((snapshot.bytesTransferred / snapshot.totalBytes) * 100).toFixed(2)}% done`
+          );
+        },
+        (error) => {
+          console.error("Upload failed", error);
+          reject(error);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          resolve(downloadURL);
+        }
+      );
+    });
   } catch (error) {
     alert(`Image upload failed: ${(error as Error).message}`);
     throw error;
@@ -39,9 +58,10 @@ const uploadImageToStorage = async (uri: string): Promise<string> => {
 
 
 export default function App() {
-  const params = useLocalSearchParams();
+  const router = useRouter();
+  const params = useLocalSearchParams<Params>(); // Specify the expected type
+
   const { image, title, caption, selectedTags } = params;
-  console.log(image, title, caption, selectedTags);
   const [price, setPrice] = useState<number>(1.5);
   const [difficulty, setDifficulty] = useState<number>(4.5);
   const [time, setTime] = useState<number>(30);
@@ -69,25 +89,23 @@ try {
     mediaUrl = await uploadImageToStorage(image);
     console.log(mediaUrl);
   }
-
-  console.log("9");
   const docRef = doc(db, "Posts", `${Date.now()}`); // Use a unique ID for the document
   await setDoc(docRef, {
     title: title,
     caption: caption,
     hashtags: selectedTags , // Store tags as an array
     mediaUrl: mediaUrl,
+    Price:price,
+    Difficulty: difficulty,
+    Time: time,
     userId: auth.currentUser?.uid,
     createdAt: new Date().toISOString(),
     likesCount: 0,
   });
 
-  // Reset state
-  // setTitle("");
-  // setCaption("");
-  // setImage(null);
-  // setSelectedTags([]); // Clear selected tags
   alert("Recipe submitted successfully!");
+  resetState();
+  router.push("/(tabs)/add-recipe"); 
 } catch (error) {
   const errorMessage =
     (error as FirebaseError).message || (error as Error).message;
@@ -96,7 +114,11 @@ try {
   setLoading(false);
 }
 };
-
+const resetState = () => {
+  setPrice(1.5);
+  setDifficulty(4.5);
+  setTime(30);
+};
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <View style={styles.justifytop_container}>
@@ -144,8 +166,8 @@ try {
             {Math.ceil(time * 0.33)} passive minutes
           </Text>
         </View>
-        <TouchableOpacity style={styles.buttonContainer} onPress={handleSubmit}>
-          <Text >Submit Recipe</Text>
+        <TouchableOpacity style={styles.buttonContainer} onPress={handleSubmit} disabled={loading}>
+           <Text>{loading ? 'Submitting...' : 'Submit Recipe'}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
