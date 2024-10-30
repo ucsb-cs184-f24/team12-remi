@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons"; // For icons
 import {
   collection,
   addDoc,
+  getDoc,
   getDocs,
   doc,
   query,
@@ -57,8 +58,9 @@ const formatTimeAgo = (date: Date) => {
 };
 
 interface RecipePostProps {
-  username: string;
+  userID: string;
   timeAgo: Date;
+  mediaUrl: string;
   likes: number;
   comments: number;
   recipeName: string;
@@ -69,8 +71,22 @@ interface RecipePostProps {
   hashtags: string[];
 }
 
+const getUsername = async (userID: string): Promise<string> => {
+  try {
+    const userDocRef = doc(db, "RemiUsers", userID);
+    const userSnapshot = await getDoc(userDocRef);
+    if (userSnapshot.exists()) {
+      const userData = userSnapshot.data();
+      return userData.username;
+    }
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+  }
+  return "Unknown User";
+};
+
 const RecipePost: React.FC<RecipePostProps> = ({
-  username,
+  userID,
   timeAgo,
   likes,
   comments,
@@ -80,69 +96,105 @@ const RecipePost: React.FC<RecipePostProps> = ({
   time,
   caption,
   hashtags,
-}) => (
-  <View style={Ustyles.post}>
-    <View style={Ustyles.postHeader}>
-      <View style={Ustyles.userInfo}>
-        <Image
-          source={require("../../../assets/placeholders/user-avatar.png")}
-          style={Ustyles.avatar}
-        />
-        <View>
-          <Text style={Ustyles.username}>{username}</Text>
-          <Text style={Ustyles.timeAgo}>{formatTimeAgo(timeAgo)}</Text>
-        </View>
-      </View>
-      <View style={Ustyles.engagement}>
-        <View style={Ustyles.engagementItem}>
-          <Ionicons name="heart-outline" size={27} color="red" />
-          <Text style={Ustyles.engagementText}>{likes}</Text>
-        </View>
-        <View style={Ustyles.engagementItem}>
-          <Ionicons name="chatbox-outline" size={27} color="gray" />
-          <Text style={Ustyles.engagementText}>{comments}</Text>
-        </View>
-      </View>
-    </View>
-    <View style={Ustyles.recipeContent}>
-      <View style={Ustyles.leftColumn}>
-        <View style={Ustyles.imageContainer}>
+  mediaUrl,
+}) => {
+  const [username, setUsername] = useState<string>("");
+
+  useEffect(() => {
+    const fetchUsername = async () => {
+      const name = await getUsername(userID);
+      setUsername(name);
+    };
+    fetchUsername();
+  }, [userID]);
+
+  return (
+    <View style={Ustyles.post}>
+      <View style={Ustyles.postHeader}>
+        <View style={Ustyles.userInfo}>
           <Image
-            source={require("../../../assets/placeholders/recipe-image.png")}
-            style={Ustyles.recipeImage}
+            source={require("../../../assets/placeholders/user-avatar.png")}
+            style={Ustyles.avatar}
           />
+          <View>
+            <Text style={Ustyles.username}>{username}</Text>
+            <Text style={Ustyles.timeAgo}>{formatTimeAgo(timeAgo)}</Text>
+          </View>
         </View>
-        <Text style={Ustyles.recipeName}>{recipeName}</Text>
-        <TouchableOpacity style={Ustyles.seeNotesButton}>
-          <Text style={Ustyles.seeNotesText}>See Notes</Text>
-        </TouchableOpacity>
-      </View>
-      <View style={Ustyles.rightColumn}>
-        <View style={Ustyles.recipeDetails}>
-          <Text style={Ustyles.detailText}>Price: ${price}/Serving</Text>
-          <View style={Ustyles.slider}>
-            <View style={[Ustyles.sliderFill, { width: "30%" }]} />
+        <View style={Ustyles.engagement}>
+          <View style={Ustyles.engagementItem}>
+            <Ionicons name="heart-outline" size={27} color="red" />
+            <Text style={Ustyles.engagementText}>{likes}</Text>
           </View>
-          <Text style={Ustyles.detailText}>Difficulty: {difficulty}/5</Text>
-          <View style={Ustyles.slider}>
-            <View style={[Ustyles.sliderFill, { width: "90%" }]} />
+          <View style={Ustyles.engagementItem}>
+            <Ionicons name="chatbox-outline" size={27} color="gray" />
+            <Text style={Ustyles.engagementText}>{comments}</Text>
           </View>
-          <Text style={Ustyles.detailText}>Time: {time} min</Text>
-          <View style={Ustyles.slider}>
-            <View style={[Ustyles.sliderFill, { width: "50%" }]} />
-          </View>
-          <Text style={Ustyles.subDetailText}>
-            20 active minutes + 10 passive minutes
-          </Text>
         </View>
       </View>
+      <View style={Ustyles.recipeContent}>
+        <View style={Ustyles.leftColumn}>
+          <View style={Ustyles.imageContainer}>
+            <Image
+              source={
+                mediaUrl
+                  ? { uri: mediaUrl }
+                  : require("../../../assets/placeholders/recipe-image.png")
+              }
+              style={Ustyles.recipeImage}
+            />
+          </View>
+          <Text style={Ustyles.recipeName}>{recipeName}</Text>
+          <TouchableOpacity style={Ustyles.seeNotesButton}>
+            <Text style={Ustyles.seeNotesText}>See Notes</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={Ustyles.rightColumn}>
+          <View style={Ustyles.recipeDetails}>
+            <Text style={Ustyles.detailText}>
+              Price: ${price.toFixed(2)}/Serving
+            </Text>
+            <View style={Ustyles.slider}>
+              <View
+                style={[
+                  Ustyles.sliderFill,
+                  { width: `${(price / 10) * 100}%` },
+                ]}
+              />
+            </View>
+            <Text style={Ustyles.detailText}>
+              Difficulty: {difficulty.toFixed(1)} / 5
+            </Text>
+            <View style={Ustyles.slider}>
+              <View
+                style={[
+                  Ustyles.sliderFill,
+                  { width: `${(difficulty / 5) * 100}%` },
+                ]}
+              />
+            </View>
+            <Text style={Ustyles.detailText}>Time: {time} min</Text>
+            <View style={Ustyles.slider}>
+              <View
+                style={[
+                  Ustyles.sliderFill,
+                  { width: `${(time / 120) * 100}%` },
+                ]}
+              />
+            </View>
+            <Text style={Ustyles.subDetailText}>
+              20 active minutes + 10 passive minutes
+            </Text>
+          </View>
+        </View>
+      </View>
+      <View style={Ustyles.captionContainer}>
+        <Text style={Ustyles.caption}>{caption}</Text>
+        <Text style={Ustyles.hashtags}>{hashtags}</Text>
+      </View>
     </View>
-    <View style={Ustyles.captionContainer}>
-      <Text style={Ustyles.caption}>{caption}</Text>
-      <Text style={Ustyles.hashtags}>{hashtags}</Text>
-    </View>
-  </View>
-);
+  );
+};
 
 // Component definition
 const Home: React.FC = () => {
@@ -154,18 +206,17 @@ const Home: React.FC = () => {
     { id: string; [key: string]: any }[]
   >([]);
   const router = useRouter();
+  const [friendsList, setFriendsList] = useState<string[]>([]);
 
   // Fetch all posts from Firestore
   const fetchAllPosts = async () => {
     try {
       const postsRef = collection(db, "Posts");
-      const userPostsQuery = query(
-        postsRef,
-        where("userId", "==", "ykkMofuaXDb6jQt3dj1IyJwYTtm1")
-      );
-      const querySnapshot = await getDocs(userPostsQuery);
+      console.log(friendsList);
+      const q = query(postsRef, where("userId", "in", friendsList));
+      const querySnapshot = await getDocs(q);
+      console.log(querySnapshot);
       const filteredPosts = querySnapshot.docs.map((doc) => doc.data());
-      console.log("Fetched Filtered Posts:", filteredPosts);
       setPosts(filteredPosts);
     } catch (error) {
       if (error instanceof Error) {
@@ -179,7 +230,7 @@ const Home: React.FC = () => {
   // Use `useEffect` to fetch posts when the component mounts
   useEffect(() => {
     fetchAllPosts();
-  }, []);
+  }, [friendsList]);
 
   useEffect(() => {
     // Set up real-time listener for pending friend requests
@@ -200,6 +251,35 @@ const Home: React.FC = () => {
 
       return () => unsubscribe();
     }
+  }, [user]);
+
+  useEffect(() => {
+    const fetchFriendsList = async () => {
+      if (user) {
+        try {
+          const userDocRef = doc(db, "RemiUsers", user.uid);
+          const userSnapshot = await getDoc(userDocRef);
+          if (userSnapshot.exists()) {
+            const userData = userSnapshot.data();
+            const friendsEmails = userData.friends_list || [];
+
+            if (friendsEmails.length > 0) {
+              const q = query(
+                collection(db, "RemiUsers"),
+                where("email", "in", friendsEmails)
+              );
+              const querySnapshot = await getDocs(q);
+              const friendsIds = querySnapshot.docs.map((doc) => doc.id);
+              setFriendsList(friendsIds);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching friend list:", error);
+        }
+      }
+    };
+
+    fetchFriendsList();
   }, [user]);
 
   return (
@@ -245,18 +325,19 @@ const Home: React.FC = () => {
           {posts.map((post, index) => (
             <RecipePost
               key={index}
-              username={post.username || "Anonymous"}
+              userID={post.userId || "Anonymous"}
               timeAgo={
                 post.createdAt ? new Date(post.createdAt) : new Date(2002, 2, 8)
               }
-              likes={post.likes || "0"}
+              likes={post.likesCount || "0"}
               comments={post.comments || "0"}
-              recipeName={post.recipeName || "Untitled Recipe"}
-              price={post.price || "0.00"}
-              difficulty={post.difficulty || "0"}
-              time={post.cookingTime || "0"}
+              recipeName={post.title || "Untitled Recipe"}
+              price={post.Price || "0.00"}
+              difficulty={post.Difficulty || "0"}
+              time={post.Time || "0"}
               caption={post.caption || "No caption"}
               hashtags={post.hashtags || ["#default"]}
+              mediaUrl={post.mediaUrl || ""}
             />
           ))}
         </ScrollView>
