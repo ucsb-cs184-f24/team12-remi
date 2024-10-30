@@ -246,7 +246,6 @@ const Ustyles = StyleSheet.create({
     fontSize: 14,
     color: "#FFFFFF",
     alignSelf: "center",
-    paddingBottom: 0,
   },
   header: {
     fontSize: 20,
