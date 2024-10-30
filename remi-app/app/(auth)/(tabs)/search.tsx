@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, Text, View, ActivityIndicator, Button, Alert } from 'react-native';
 import { Searchbar } from 'react-native-paper';
-import { collection, addDoc, getDocs, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, onSnapshot, doc } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 
 interface User {
@@ -24,20 +24,18 @@ const SearchFriendsScreen: React.FC = () => {
       return;
     }
 
-    const fetchFriendsList = async () => {
-      try {
-        const userDoc = await getDoc(doc(db, 'RemiUsers', currentUser.uid));
-        if (userDoc.exists()) {
-          setCurrentUserFriends(userDoc.data().friends_list || []);
-        }
-      } catch (error) {
-        console.error("Error fetching friends list:", error);
+    const userDocRef = doc(db, 'RemiUsers', currentUser.uid);
+    const unsubscribeFriendsList = onSnapshot(userDocRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        setCurrentUserFriends(docSnapshot.data().friends_list || []);
       }
-    };
+    }, (error) => {
+      console.error("Error fetching friends list:", error);
+    });
 
     const fetchAllUsers = () => {
       const usersCollection = collection(db, 'RemiUsers');
-      const unsubscribe = onSnapshot(usersCollection, (snapshot) => {
+      const unsubscribeUsers = onSnapshot(usersCollection, (snapshot) => {
         const usersList = snapshot.docs.map(doc => ({
           username: doc.data().username,
           email: doc.data().email,
@@ -47,13 +45,15 @@ const SearchFriendsScreen: React.FC = () => {
         console.error('Error fetching users:', error);
       });
 
-      return unsubscribe;
+      return unsubscribeUsers;
     };
 
-    fetchFriendsList();
-    const unsubscribe = fetchAllUsers();
+    const unsubscribeUsers = fetchAllUsers();
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeFriendsList();
+      unsubscribeUsers();
+    };
   }, [currentUser]);
 
   const onChangeSearch = (query: string) => {
@@ -65,7 +65,7 @@ const SearchFriendsScreen: React.FC = () => {
       return;
     }
     const filtered = allUsers.filter(person =>
-      person.email !== currentUser.email && // Exclude current user
+      person.email !== currentUser.email &&
       (person.username.toLowerCase().startsWith(query.toLowerCase()) ||
        person.email.toLowerCase().startsWith(query.toLowerCase()))
     );
@@ -81,7 +81,7 @@ const SearchFriendsScreen: React.FC = () => {
         <Text style={styles.email}>{item.email}</Text>
         {isAlreadyFriend ? (
           <View style={styles.centeredTextContainer}>
-            <Text style={styles.alreadyFriendText}>Already friend with this user!</Text>
+            <Text style={styles.alreadyFriendText}>Already friends with this user!</Text>
           </View>
         ) : (
           <Button title="Invite" onPress={() => handleInvite(item)} />
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   centeredTextContainer: {
-    alignItems: 'center', // Center the "Already friends" text
+    alignItems: 'center',
     marginTop: 5,
   },
   alreadyFriendText: {
