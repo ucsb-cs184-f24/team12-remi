@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, SafeAreaView, StyleSheet, Text, View, ActivityIndicator , Button, Alert} from 'react-native';
+import { FlatList, SafeAreaView, StyleSheet, Text, View, ActivityIndicator ,TouchableOpacity , Button, Alert} from 'react-native';
 import { Searchbar } from 'react-native-paper';
 import { collection, addDoc, getDocs, query, where, QuerySnapshot, DocumentData,onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
@@ -54,7 +54,11 @@ const SearchFriendsScreen: React.FC = () => {
     <View style={styles.item}>
       <Text style={styles.username}>{item.username}</Text>
       <Text style={styles.email}>{item.email}</Text>
-      <Button title="Invite" onPress={() => handleInvite(item)} />
+      <TouchableOpacity style={styles.inviteButton} 
+      onPress={() => handleInvite(item)}
+    >
+      <Text style={styles.inviteButtonText}>Invite</Text>
+    </TouchableOpacity>
     </View>
   );
 
@@ -123,10 +127,11 @@ const SearchFriendsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF9E6',
   },
   searchBar: {
     margin: 10,
+    backgroundColor: '#BCD5AC',
   },
   item: {
     padding: 20,
@@ -151,6 +156,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  inviteButton: {
+    margin: 10,
+    alignItems: 'center',
+  },
+  inviteButtonText: {
+    color: '#0D5F13',
+    fontSize: 16,
+    fontFamily: 'Nunito_600SemiBold',
   },
 });
 
