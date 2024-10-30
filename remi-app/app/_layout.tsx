@@ -1,9 +1,8 @@
-import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { auth } from '../firebaseConfig';
-import { User, onAuthStateChanged } from 'firebase/auth'; 
-import { View, ActivityIndicator } from 'react-native';
-
+import { Stack, useRouter, useSegments } from "expo-router";
+import { useEffect, useState } from "react";
+import { auth } from "../firebaseConfig";
+import { User, onAuthStateChanged } from "firebase/auth";
+import { View, ActivityIndicator } from "react-native";
 
 export default function RootLayout() {
   const [initializing, setInitializing] = useState(true);
@@ -12,7 +11,7 @@ export default function RootLayout() {
   const segments = useSegments();
 
   const changedAuthState = (user: User | null) => {
-    console.log('onAuthStateChanged', user);
+    console.log("onAuthStateChanged", user);
     setUser(user);
     if (initializing) setInitializing(false);
   };
@@ -25,13 +24,13 @@ export default function RootLayout() {
   useEffect(() => {
     if (initializing) return;
 
-    console.log('Segments are: ', segments);
-    const inAuthGroup = segments && segments[0] === '(auth)';
-    
+    console.log("Segments are: ", segments);
+    const inAuthGroup = segments && segments[0] === "(auth)";
+
     if (user && !inAuthGroup) {
-      router.replace('./(tabs)/home'); 
+      router.replace("./(tabs)/home");
     } else if (!user && inAuthGroup) {
-      router.replace('/');
+      router.replace("/");
     }
   }, [user, initializing]);
 
@@ -39,9 +38,9 @@ export default function RootLayout() {
     return (
       <View
         style={{
-          alignItems: 'center',
-          justifyContent: 'center',
-          flex: 1
+          alignItems: "center",
+          justifyContent: "center",
+          flex: 1,
         }}
       >
         <ActivityIndicator size="large" />
@@ -52,8 +51,14 @@ export default function RootLayout() {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="notifications" options={{ headerTitle: 'Notifications' }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="notifications"
+        options={{ headerTitle: "Notifications" }}
+      />
+      <Stack.Screen
+        name="(auth)"
+        options={{ headerTitle: "Home", headerShown: false }}
+      />
     </Stack>
   );
 }
