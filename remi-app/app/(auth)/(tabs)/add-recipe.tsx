@@ -54,14 +54,14 @@ const items = [
   { name: "Beverages", id: 29 },
   { name: "Japanese", id: 30 },
 ];
-import { useRouter } from 'expo-router';
+import { useRouter } from "expo-router";
 
 const App = () => {
   const [image, setImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [title, setTitle] = useState("");
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
-  const router = useRouter(); 
+  const router = useRouter();
 
   const pickImage = async () => {
     try {
@@ -79,6 +79,7 @@ const App = () => {
       });
       if (!result.canceled) {
         setImage(result.assets[0].uri);
+        //console.log("Testing", image);
       }
     } catch (error) {
       alert("An error occurred while selecting an image. Please try again.");
@@ -97,7 +98,20 @@ const App = () => {
     // setHashtags(tagsArray.join(", "));
   };
 
-
+  const handleNext = () => {
+    // Encode the image URI to prevent issues with special characters
+    const encodedImage = encodeURIComponent(image);
+    console.log("What am i here", image);
+    router.push({
+      pathname: "/Next",
+      params: {
+        image: encodedImage,
+        title,
+        caption,
+        selectedTags,
+      },
+    });
+  };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -216,24 +230,12 @@ const App = () => {
               <Spacer size={10} />
               <TouchableOpacity
                 style={styles.buttonContainer}
-                onPress={() =>
-                  router.push({
-                    pathname: "/Next",
-                    params: {
-                      image,
-                      title,
-                      caption,
-                      selectedTags,
-                    },
-                  })
-                }
+                onPress={handleNext}
               >
                 <View style={styles.button}>
                   <Text style={Ustyles.header_2}>Next</Text>
                 </View>
               </TouchableOpacity>
-
-
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
