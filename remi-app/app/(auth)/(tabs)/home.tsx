@@ -211,6 +211,9 @@ const Home: React.FC = () => {
   // Fetch all posts from Firestore
   const fetchAllPosts = async () => {
     try {
+      if (friendsList.length === 0) {
+        return;
+      }
       const postsRef = collection(db, "Posts");
       console.log(friendsList);
       const q = query(postsRef, where("userId", "in", friendsList));
@@ -254,32 +257,32 @@ const Home: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
-    const fetchFriendsList = async () => {
-      if (user) {
-        try {
-          const userDocRef = doc(db, "RemiUsers", user.uid);
-          const userSnapshot = await getDoc(userDocRef);
-          if (userSnapshot.exists()) {
-            const userData = userSnapshot.data();
-            const friendsEmails = userData.friends_list || [];
+    const unsubscribe = onSnapshot(
+      doc(db, "RemiUsers", user?.uid || ""),
+      (doc) => {
+        if (doc.exists()) {
+          const userData = doc.data();
+          const friendsEmails = userData.friends_list || [];
 
-            if (friendsEmails.length > 0) {
-              const q = query(
-                collection(db, "RemiUsers"),
-                where("email", "in", friendsEmails)
-              );
-              const querySnapshot = await getDocs(q);
-              const friendsIds = querySnapshot.docs.map((doc) => doc.id);
-              setFriendsList(friendsIds);
-            }
+          if (friendsEmails.length > 0) {
+            const q = query(
+              collection(db, "RemiUsers"),
+              where("email", "in", friendsEmails)
+            );
+            getDocs(q)
+              .then((querySnapshot) => {
+                const friendsIds = querySnapshot.docs.map((doc) => doc.id);
+                setFriendsList(friendsIds);
+              })
+              .catch((error) => {
+                console.error("Error fetching friend list:", error);
+              });
           }
-        } catch (error) {
-          console.error("Error fetching friend list:", error);
         }
       }
-    };
+    );
 
-    fetchFriendsList();
+    return () => unsubscribe();
   }, [user]);
 
   return (
@@ -322,24 +325,32 @@ const Home: React.FC = () => {
               </TouchableOpacity>
             </View>
           </View>
-          {posts.map((post, index) => (
-            <RecipePost
-              key={index}
-              userID={post.userId || "Anonymous"}
-              timeAgo={
-                post.createdAt ? new Date(post.createdAt) : new Date(2002, 2, 8)
-              }
-              likes={post.likesCount || "0"}
-              comments={post.comments || "0"}
-              recipeName={post.title || "Untitled Recipe"}
-              price={post.Price || "0.00"}
-              difficulty={post.Difficulty || "0"}
-              time={post.Time || "0"}
-              caption={post.caption || "No caption"}
-              hashtags={post.hashtags || ["#default"]}
-              mediaUrl={post.mediaUrl || ""}
-            />
-          ))}
+          {posts
+            .sort((a, b) => {
+              const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+              const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+              return dateB.getTime() - dateA.getTime();
+            })
+            .map((post, index) => (
+              <RecipePost
+                key={index}
+                userID={post.userId || "Anonymous"}
+                timeAgo={
+                  post.createdAt
+                    ? new Date(post.createdAt)
+                    : new Date(2002, 2, 8)
+                }
+                likes={post.likesCount || "0"}
+                comments={post.comments || "0"}
+                recipeName={post.title || "Untitled Recipe"}
+                price={post.Price || "0.00"}
+                difficulty={post.Difficulty || "0"}
+                time={post.Time || "0"}
+                caption={post.caption || "No caption"}
+                hashtags={post.hashtags || ["#default"]}
+                mediaUrl={post.mediaUrl || ""}
+              />
+            ))}
         </ScrollView>
         {/* <Button title="Sign out" onPress={() => signOut(auth)} color="#0D5F13" /> */}
       </View>
