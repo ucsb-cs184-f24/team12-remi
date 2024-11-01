@@ -246,7 +246,6 @@ const Ustyles = StyleSheet.create({
     fontSize: 14,
     color: "#FFFFFF",
     alignSelf: "center",
-    paddingBottom: 0,
   },
   header: {
     fontSize: 20,
@@ -255,7 +254,7 @@ const Ustyles = StyleSheet.create({
     textAlign: "center",
   },
   text: {
-    fontFamily: "Nunito",
+    fontFamily: "Nunito_400Regular",
     fontSize: 20,
     lineHeight: 0,
     color: "#0D5F13",
