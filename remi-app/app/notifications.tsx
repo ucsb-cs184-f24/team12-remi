@@ -117,7 +117,7 @@ const Notifs = () => {
   return (
     <View style={Ustyles.background}>
       <Spacer size={20} />
-      <Text style={Ustyles.header_text}>Pending Friend Requests</Text>
+      <Text style={Ustyles.header}>Pending Friend Requests</Text>
       <Spacer size={20} />
       {friendRequests.length === 0 ? (
         <Text style={Ustyles.text}>No friend requests.</Text>
@@ -131,9 +131,7 @@ const Notifs = () => {
                 <Avatar
                   size={50}
                   rounded
-                  source={{
-                    uri: "https://i.ytimg.com/vi/gw7xLqpieRc/hq720.jpg?sqp=-oaymwE7CK4FEIIDSFryq4qpAy0IARUAAAAAGAElAADIQj0AgKJD8AEB-AG-B4AC0AWKAgwIABABGH8gRCgdMA8=&rs=AOn4CLCl6hXsf5TzBTBMZv2OfjYMWa4Rng",
-                  }}
+                  source={require('../assets/placeholders/user-avatar.png')}
                   containerStyle={{
                     marginLeft: 20,
                     marginRight: 10,
@@ -189,7 +187,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 12,
     flex: 0.8,
-    paddingHorizontal: 0,
     marginTop: 10,
   },
   notifButton: {

@@ -254,7 +254,7 @@ const Ustyles = StyleSheet.create({
     textAlign: "center",
   },
   text: {
-    fontFamily: "Nunito",
+    fontFamily: "Nunito_400Regular",
     fontSize: 20,
     lineHeight: 0,
     color: "#0D5F13",
