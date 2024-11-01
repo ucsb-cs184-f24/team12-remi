@@ -1,8 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { FlatList, SafeAreaView, StyleSheet, Text, View, ActivityIndicator, Button, Alert } from 'react-native';
-import { Searchbar } from 'react-native-paper';
-import { collection, addDoc, getDocs, query, where, onSnapshot, doc } from 'firebase/firestore';
-import { db, auth } from '../../../firebaseConfig';
+
+import React, { useEffect, useState } from "react";
+import {
+  FlatList,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+  ActivityIndicator,
+  Button,
+  Alert,
+} from "react-native";
+import { Searchbar } from "react-native-paper";
+import {
+  collection,
+  addDoc,
+  doc,
+  getDocs,
+  query,
+  where,
+  QuerySnapshot,
+  DocumentData,
+  onSnapshot,
+} from "firebase/firestore";
+import { db, auth } from "../../../firebaseConfig";
 
 interface User {
   friends_list: Array<string>;
@@ -18,6 +38,7 @@ const SearchFriendsScreen: React.FC = () => {
   const [currentUserFriends, setCurrentUserFriends] = useState<string[]>([]);
   const currentUser = auth.currentUser;
 
+
   useEffect(() => {
     if (!currentUser) {
       console.warn("User not authenticated");
@@ -32,6 +53,7 @@ const SearchFriendsScreen: React.FC = () => {
     }, (error) => {
       console.error("Error fetching friends list:", error);
     });
+
 
     const fetchAllUsers = () => {
       const usersCollection = collection(db, 'RemiUsers');
@@ -94,7 +116,7 @@ const SearchFriendsScreen: React.FC = () => {
     if (!currentUser) return;
 
     try {
-      const notificationsRef = collection(db, 'Notifications');
+      const notificationsRef = collection(db, "Notifications");
       const existingInviteQuery = query(
         notificationsRef,
         where("from", "==", currentUser.email),
@@ -105,7 +127,10 @@ const SearchFriendsScreen: React.FC = () => {
       const querySnapshot = await getDocs(existingInviteQuery);
 
       if (!querySnapshot.empty) {
-        Alert.alert('Info', `You have already sent a friend request to ${user.username}`);
+        Alert.alert(
+          "Info",
+          `You have already sent a friend request to ${user.username}`
+        );
         return;
       }
 
@@ -114,9 +139,9 @@ const SearchFriendsScreen: React.FC = () => {
         to: user.email,
         read_flag: true,
       });
-      Alert.alert('Success', `Friend request sent to ${user.username}`);
+      Alert.alert("Success", `Friend request sent to ${user.username}`);
     } catch (error) {
-      console.error('Error sending invite:', error);
+      console.error("Error sending invite:", error);
     }
   };
 
@@ -127,6 +152,7 @@ const SearchFriendsScreen: React.FC = () => {
       </View>
     );
   }
+
 
   if (loading) {
     return (
@@ -159,7 +185,7 @@ const SearchFriendsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   searchBar: {
     margin: 10,
@@ -167,15 +193,15 @@ const styles = StyleSheet.create({
   item: {
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: "#ddd",
   },
   username: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   email: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   centeredTextContainer: {
     alignItems: 'center',
@@ -187,15 +213,15 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   emptyText: {
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 20,
     fontSize: 16,
-    color: '#888',
+    color: "#888",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   errorText: {
     color: '#ff0000',

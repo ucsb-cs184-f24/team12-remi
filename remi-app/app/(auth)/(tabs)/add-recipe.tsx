@@ -54,13 +54,14 @@ const items = [
   { name: "Beverages", id: 29 },
   { name: "Japanese", id: 30 },
 ];
+import { useRouter } from "expo-router";
 
 const App = () => {
   const [image, setImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [title, setTitle] = useState("");
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
-  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const pickImage = async () => {
     try {
@@ -78,6 +79,7 @@ const App = () => {
       });
       if (!result.canceled) {
         setImage(result.assets[0].uri);
+        //console.log("Testing", image);
       }
     } catch (error) {
       alert("An error occurred while selecting an image. Please try again.");
@@ -96,64 +98,19 @@ const App = () => {
     // setHashtags(tagsArray.join(", "));
   };
 
-  const uploadImageToStorage = async (uri: string): Promise<string> => {
-    try {
-      if (!uri) throw new Error("Image URI is null or undefined.");
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      const storageRef = ref(storage, `images/${Date.now()}.jpg`);
-      await uploadBytes(storageRef, blob);
-      const downloadURL = await getDownloadURL(storageRef);
-      return downloadURL;
-    } catch (error) {
-      alert(`Image upload failed: ${(error as Error).message}`);
-      throw error;
-    }
-  };
-
-  const handleSubmit = async () => {
-    setLoading(true);
-    try {
-      let mediaUrl = "";
-
-      if (image) {
-        console.log("have image");
-        mediaUrl = await uploadImageToStorage(image);
-        console.log(mediaUrl);
-      }
-
-      // Convert selectedTags to an array of tag names
-      const tagsArray = selectedTags
-        .map((tagId) => {
-          const tag = items.find((item) => item.id === tagId);
-          return tag ? tag.name : ""; // Extract the tag name, default to '' if not found
-        })
-        .filter(Boolean); // Filter out any empty strings just in case
-
-      const docRef = doc(db, "Posts", `${Date.now()}`); // Use a unique ID for the document
-      await setDoc(docRef, {
-        title: title,
-        caption: caption,
-        hashtags: tagsArray, // Store tags as an array
-        mediaUrl: mediaUrl,
-        userId: auth.currentUser?.uid,
-        createdAt: new Date().toISOString(),
-        likesCount: 0,
-      });
-
-      // Reset state
-      setTitle("");
-      setCaption("");
-      setImage(null);
-      setSelectedTags([]); // Clear selected tags
-      alert("Recipe submitted successfully!");
-    } catch (error) {
-      const errorMessage =
-        (error as FirebaseError).message || (error as Error).message;
-      alert(`Error: ${errorMessage}`);
-    } finally {
-      setLoading(false);
-    }
+  const handleNext = () => {
+    // Encode the image URI to prevent issues with special characters
+    const encodedImage = encodeURIComponent(image);
+    console.log("What am i here", image);
+    router.push({
+      pathname: "/Next",
+      params: {
+        image: encodedImage,
+        title,
+        caption,
+        selectedTags,
+      },
+    });
   };
 
   return (
@@ -271,12 +228,14 @@ const App = () => {
                 }}
               />
               <Spacer size={10} />
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+              <TouchableOpacity
+                style={styles.buttonContainer}
+                onPress={handleNext}
+              >
+                <View style={styles.button}>
                   <Text style={Ustyles.header_2}>Next</Text>
-                </TouchableOpacity>
-              </View>
-              {loading && <ActivityIndicator size="large" color="#0D5F13" />}
+                </View>
+              </TouchableOpacity>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>

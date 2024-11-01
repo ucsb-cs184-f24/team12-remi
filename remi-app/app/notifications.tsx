@@ -117,9 +117,10 @@ const Notifs = () => {
   return (
     <View style={Ustyles.background}>
       <Spacer size={20} />
-      <Text style={Ustyles.header_2}>Pending Friend Requests</Text>
+      <Text style={Ustyles.header}>Pending Friend Requests</Text>
+      <Spacer size={20} />
       {friendRequests.length === 0 ? (
-        <Text style={Ustyles.header_text}>No pending friend requests.</Text>
+        <Text style={Ustyles.text}>No friend requests.</Text>
       ) : (
         <FlatList
           data={friendRequests}
@@ -130,9 +131,7 @@ const Notifs = () => {
                 <Avatar
                   size={50}
                   rounded
-                  source={{
-                    uri: "https://i.ytimg.com/vi/gw7xLqpieRc/hq720.jpg?sqp=-oaymwE7CK4FEIIDSFryq4qpAy0IARUAAAAAGAElAADIQj0AgKJD8AEB-AG-B4AC0AWKAgwIABABGH8gRCgdMA8=&rs=AOn4CLCl6hXsf5TzBTBMZv2OfjYMWa4Rng",
-                  }}
+                  source={require('../assets/placeholders/user-avatar.png')}
                   containerStyle={{
                     marginLeft: 20,
                     marginRight: 10,
@@ -185,22 +184,24 @@ const styles = StyleSheet.create({
   },
   container2: {
     flexDirection: "row",
-    justifyContent: "flex-start",
-    flex: 1,
-    paddingHorizontal: 0,
-    marginTop: 10.
+    justifyContent: "center",
+    gap: 12,
+    flex: 0.8,
+    marginTop: 10,
   },
   notifButton: {
     textAlignVertical: 'center',
     alignSelf: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 15,
     borderRadius: 15,
     borderWidth: 2,
-    height: 40,
     borderColor: '#0D5F13',
     backgroundColor: '#BCD5AC',
+    flexWrap: 'wrap',
+    width: '90%',
+    
 },
   chatBubble: {
     padding: 10,
@@ -213,10 +214,9 @@ const styles = StyleSheet.create({
   },
   chatBubbleContainer: {
     alignItems: 'center',
+    paddingRight: 50,
   },
   acceptButton: {
-    textAlignVertical: 'center',
-    alignSelf: 'center',
     alignItems: 'center',
     paddingHorizontal: 15,
     paddingVertical: 8,
@@ -226,8 +226,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   rejectButton: {
-    textAlignVertical: 'center',
-    alignSelf: 'center',
     alignItems: 'center',
     paddingHorizontal: 15,
     paddingVertical: 8,
