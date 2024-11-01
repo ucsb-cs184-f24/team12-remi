@@ -1,6 +1,164 @@
 import { StyleSheet } from "react-native";
 
 const Ustyles = StyleSheet.create({
+  stickyHeader: {
+    height: 50,
+    backgroundColor: "#FFF9E6",
+  },
+  notificationBadge: {
+    position: "absolute",
+    right: 4,
+    top: 1,
+    backgroundColor: "red",
+    borderRadius: 10,
+    width: 15,
+    height: 15,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 0,
+  },
+  notificationText: {
+    color: "white",
+    fontSize: 11,
+    fontWeight: "bold",
+  },
+  bellIconContainer2: {
+    marginLeft: "auto", // Pushes the icon to the right
+    marginRight: 15,
+    justifyContent: "center",
+    alignItems: "flex-end",
+  },
+  logo: {
+    width: 30,
+    height: 30,
+  },
+  feed: {
+    flex: 1,
+  },
+  post: {
+    backgroundColor: "#FFFFFF",
+    marginBottom: 10,
+    padding: 10,
+    borderRadius: 10,
+  },
+  postHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  userInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  timeAgo: {
+    color: "#888",
+    fontSize: 12,
+    fontFamily: "Nunito_400Regular",
+  },
+  engagement: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  engagementItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 20,
+  },
+  engagementText: {
+    fontSize: 14,
+    marginLeft: 5,
+    color: "#8B4513",
+    textAlignVertical: "center",
+  },
+  recipeContent: {
+    flexDirection: "row",
+    borderWidth: 2,
+    borderColor: "#006400",
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  leftColumn: {
+    width: "65%",
+    padding: 10,
+  },
+  imageContainer: {
+    aspectRatio: 1,
+    borderColor: "#006400",
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  recipeImage: {
+    width: "100%",
+    height: "100%",
+  },
+  seeNotesButton: {
+    backgroundColor: "#E6F3E6",
+    paddingVertical: 3,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    alignSelf: "center",
+    borderWidth: 2,
+    borderColor: "#006400",
+  },
+  seeNotesText: {
+    color: "#006400",
+    fontWeight: "bold",
+    fontSize: 16,
+    fontFamily: "Nunito_600SemiBold",
+  },
+  rightColumn: {
+    width: "35%",
+    backgroundColor: "#E6F3E6",
+    padding: 10,
+  },
+  recipeDetails: {
+    justifyContent: "center",
+  },
+  detailText: {
+    marginBottom: 5,
+    fontSize: 14,
+    color: "#006400",
+    fontFamily: "Nunito_700Bold",
+    fontWeight: "bold",
+  },
+  subDetailText: {
+    fontSize: 12,
+    fontFamily: "Nunito_400Regular",
+    color: "#006400",
+    marginTop: 2,
+  },
+  slider: {
+    height: 4,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 2,
+    marginBottom: 10,
+  },
+  sliderFill: {
+    height: "100%",
+    backgroundColor: "#006400",
+    borderRadius: 2,
+  },
+  captionContainer: {
+    backgroundColor: "#E6F3E6",
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  caption: {
+    color: "#006400",
+    marginBottom: 5,
+  },
+  hashtags: {
+    color: "#006400",
+    fontSize: 12,
+  },
   header_text: {
     fontFamily: "Nunito_700Bold",
     fontWeight: "bold",
@@ -22,10 +180,28 @@ const Ustyles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#0D5F13",
     backgroundColor: "#FFF9E6",
+    marginVertical: 5,
   },
   buttonContainer: {
     alignItems: "center",
     marginVertical: 20,
+  },
+  username: {
+    fontFamily: "Nunito_700Bold",
+    fontSize: 15,
+    color: "#0D5F13",
+    padding: 0,
+  },
+  recipeName: {
+    fontFamily: "Nunito_700Bold",
+    fontSize: 20,
+    color: "#0D5F13",
+    padding: 0,
+    justifyContent: "center",
+    alignContent: "center",
+    textAlign: "center",
+    alignSelf: "center",
+    paddingVertical: 10,
   },
   header_2: {
     fontFamily: "Nunito_600SemiBold",
@@ -36,7 +212,6 @@ const Ustyles = StyleSheet.create({
     alignContent: "center",
     textAlign: "center",
     alignSelf: "center",
-    paddingBottom: 10,
   },
   container: {
     marginHorizontal: 20,
