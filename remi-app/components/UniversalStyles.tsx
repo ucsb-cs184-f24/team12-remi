@@ -34,9 +34,10 @@ const Ustyles = StyleSheet.create({
   },
   feed: {
     flex: 1,
+    backgroundColor: "#FFF9E6",
   },
   post: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FFF9E6",
     marginBottom: 10,
     padding: 10,
     borderRadius: 10,
@@ -46,6 +47,11 @@ const Ustyles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 10,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#BCD5AC', // Adjust color to fit your theme
+    marginVertical: 16,
   },
   userInfo: {
     flexDirection: "row",
@@ -80,7 +86,7 @@ const Ustyles = StyleSheet.create({
   recipeContent: {
     flexDirection: "row",
     borderWidth: 2,
-    borderColor: "#006400",
+    borderColor: "#0D5F13",
     borderRadius: 10,
     overflow: "hidden",
   },
@@ -90,7 +96,8 @@ const Ustyles = StyleSheet.create({
   },
   imageContainer: {
     aspectRatio: 1,
-    borderColor: "#006400",
+    borderColor: "#0D5F13",
+    borderWidth: 3,
     borderRadius: 10,
     overflow: "hidden",
   },
@@ -99,23 +106,23 @@ const Ustyles = StyleSheet.create({
     height: "100%",
   },
   seeNotesButton: {
-    backgroundColor: "#E6F3E6",
-    paddingVertical: 3,
+    // backgroundColor: "#BCD5AC",
+    paddingVertical: 5,
     paddingHorizontal: 15,
     borderRadius: 20,
     alignSelf: "center",
     borderWidth: 2,
-    borderColor: "#006400",
+    borderColor: "#0D5F13",
   },
   seeNotesText: {
-    color: "#006400",
+    color: "#0D5F13",
     fontWeight: "bold",
     fontSize: 16,
     fontFamily: "Nunito_600SemiBold",
   },
   rightColumn: {
     width: "35%",
-    backgroundColor: "#E6F3E6",
+    backgroundColor: "#BCD5AC",
     padding: 10,
   },
   recipeDetails: {
@@ -124,14 +131,14 @@ const Ustyles = StyleSheet.create({
   detailText: {
     marginBottom: 5,
     fontSize: 14,
-    color: "#006400",
+    color: "#0D5F13",
     fontFamily: "Nunito_700Bold",
     fontWeight: "bold",
   },
   subDetailText: {
     fontSize: 12,
     fontFamily: "Nunito_400Regular",
-    color: "#006400",
+    color: "#0D5F13",
     marginTop: 2,
   },
   slider: {
@@ -142,22 +149,22 @@ const Ustyles = StyleSheet.create({
   },
   sliderFill: {
     height: "100%",
-    backgroundColor: "#006400",
+    backgroundColor: "#0D5F13",
     borderRadius: 2,
   },
   captionContainer: {
-    backgroundColor: "#E6F3E6",
+    backgroundColor: "#BCD5AC",
     padding: 10,
     borderRadius: 10,
     marginTop: 10,
   },
   caption: {
-    color: "#006400",
+    color: "#0D5F13",
     marginBottom: 5,
   },
   hashtags: {
-    color: "#006400",
-    fontSize: 12,
+    color: "#0D5F13",
+    fontSize: 15,
   },
   header_text: {
     fontFamily: "Nunito_700Bold",
