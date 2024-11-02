@@ -57,6 +57,39 @@ const formatTimeAgo = (date: Date) => {
   }
 };
 
+const hashtagMap: { [key: string]: string } = {
+  "1": "Breakfast",
+  "2": "Lunch",
+  "3": "Dinner",
+  "4": "Vegetarian",
+  "5": "Vegan",
+  "6": "Gluten-Free",
+  "7": "Dairy-Free",
+  "8": "Keto",
+  "9": "Paleo",
+  "10": "Low Carb",
+  "11": "Mediterranean",
+  "12": "Asian",
+  "13": "Italian",
+  "14": "Mexican",
+  "15": "Indian",
+  "16": "Middle Eastern",
+  "17": "French",
+  "18": "American",
+  "19": "African",
+  "20": "Caribbean",
+  "21": "Comfort Food",
+  "22": "Dessert",
+  "23": "Snacks",
+  "24": "Appetizers",
+  "25": "BBQ",
+  "26": "Seafood",
+  "27": "Soups & Stews",
+  "28": "Salads",
+  "29": "Beverages",
+  "30": "Japanese",
+};
+
 interface RecipePostProps {
   userID: string;
   timeAgo: Date;
@@ -68,7 +101,7 @@ interface RecipePostProps {
   difficulty: number;
   time: number;
   caption: string;
-  hashtags: string[];
+  hashtags: string;
 }
 
 const getUsername = async (userID: string): Promise<string> => {
@@ -100,6 +133,16 @@ const RecipePost: React.FC<RecipePostProps> = ({
 }) => {
   const [username, setUsername] = useState<string>("");
 
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const handleSeeNotesPress = () => {
+    setModalVisible(true); // Show the modal
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false); // Hide the modal
+  };
+
   useEffect(() => {
     const fetchUsername = async () => {
       const name = await getUsername(userID);
@@ -107,6 +150,15 @@ const RecipePost: React.FC<RecipePostProps> = ({
     };
     fetchUsername();
   }, [userID]);
+
+  const hashtagNames = hashtags
+    .split(',')
+    .map(id => {
+      const name = hashtagMap[id.trim()];
+      return name ? `#${name}` : undefined; // Add "#" to the name if it exists
+    })
+    .filter(Boolean); // Filter out any undefined values
+
 
   return (
     <View style={Ustyles.post}>
@@ -145,9 +197,28 @@ const RecipePost: React.FC<RecipePostProps> = ({
             />
           </View>
           <Text style={Ustyles.recipeName}>{recipeName}</Text>
-          <TouchableOpacity style={Ustyles.seeNotesButton}>
+          <TouchableOpacity 
+            style={Ustyles.seeNotesButton}
+            onPress={handleSeeNotesPress}
+          >
             <Text style={Ustyles.seeNotesText}>See Notes</Text>
           </TouchableOpacity>
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={handleCloseModal} // Close on back button press
+          >
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalText}>{caption}</Text>
+                {/* Add more content as needed */}
+                <TouchableOpacity style={styles.closeButton} onPress={handleCloseModal}>
+                  <Text style={styles.closeButtonText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
         </View>
         <View style={Ustyles.rightColumn}>
           <View style={Ustyles.recipeDetails}>
@@ -182,15 +253,15 @@ const RecipePost: React.FC<RecipePostProps> = ({
                 ]}
               />
             </View>
-            <Text style={Ustyles.subDetailText}>
+            {/* <Text style={Ustyles.subDetailText}>
               20 active minutes + 10 passive minutes
-            </Text>
+            </Text> */}
           </View>
         </View>
       </View>
       <View style={Ustyles.captionContainer}>
-        <Text style={Ustyles.caption}>{caption}</Text>
-        <Text style={Ustyles.hashtags}>{hashtags}</Text>
+        {/* <Text style={Ustyles.caption}>{caption}</Text> */}
+        <Text style={Ustyles.hashtags}>{hashtagNames.join(", ")}</Text>
       </View>
     </View>
   );
@@ -285,9 +356,10 @@ const Home: React.FC = () => {
     return () => unsubscribe();
   }, [user]);
 
+
   return (
     <SafeAreaView style={Ustyles.background}>
-      <View style={Ustyles.feed}>
+     <View style={Ustyles.background}>
         <ScrollView stickyHeaderIndices={[0]} style={Ustyles.feed}>
           {/* <View style={Ustyles.stickyHeader}>
             <TouchableOpacity
@@ -313,7 +385,7 @@ const Home: React.FC = () => {
                 <Ionicons
                   name="notifications-outline"
                   size={27}
-                  color="black"
+                  color="#0D5F13"
                 />
                 {friendRequests.length > 0 && (
                   <View style={Ustyles.notificationBadge}>
@@ -332,24 +404,27 @@ const Home: React.FC = () => {
               return dateB.getTime() - dateA.getTime();
             })
             .map((post, index) => (
-              <RecipePost
-                key={index}
-                userID={post.userId || "Anonymous"}
-                timeAgo={
-                  post.createdAt
-                    ? new Date(post.createdAt)
-                    : new Date(2002, 2, 8)
-                }
-                likes={post.likesCount || "0"}
-                comments={post.comments || "0"}
-                recipeName={post.title || "Untitled Recipe"}
-                price={post.Price || "0.00"}
-                difficulty={post.Difficulty || "0"}
-                time={post.Time || "0"}
-                caption={post.caption || "No caption"}
-                hashtags={post.hashtags || ["#default"]}
-                mediaUrl={post.mediaUrl || ""}
-              />
+              <View>
+                <RecipePost
+                  key={index}
+                  userID={post.userId || "Anonymous"}
+                  timeAgo={
+                    post.createdAt
+                      ? new Date(post.createdAt)
+                      : new Date(2002, 2, 8)
+                  }
+                  likes={post.likesCount || 0}
+                  comments={post.comments || 0}
+                  recipeName={post.title || "Untitled Recipe"}
+                  price={post.Price || 0.00}
+                  difficulty={post.Difficulty || 0}
+                  time={post.Time || 0}
+                  caption={post.caption || "No caption"}
+                  hashtags={post.hashtags || ["None"]}
+                  mediaUrl={post.mediaUrl || ""}
+                />
+                <View style={Ustyles.separator} />
+              </View>
             ))}
         </ScrollView>
         {/* <Button title="Sign out" onPress={() => signOut(auth)} color="#0D5F13" /> */}
@@ -373,15 +448,15 @@ const styles = StyleSheet.create({
     justifyContent: "center", // Center the logo
     height: 60,
     paddingHorizontal: 16,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#FFF9E6",
     borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
+    borderBottomColor: "#BCD5AC",
     position: "relative", // Add this to allow absolute positioning of children
   },
   logoText: {
     fontFamily: "OrelegaOne_400Regular",
     fontSize: 24,
-    color: "#000000",
+    color: "0D5F13",
   },
   iconContainer: {
     position: "absolute",
@@ -397,6 +472,43 @@ const styles = StyleSheet.create({
   },
   contentText: {
     fontSize: 16,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0)", // Semi-transparent background
+  },
+  modalContent: {
+    width: "80%",
+    padding: 20,
+    backgroundColor: "#fff",
+    borderWidth: 2,
+    borderColor: "#0D5F13",
+    borderRadius: 10,
+    elevation: 5, // Shadow for Android
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 20,
+    color: "#0D5F13",
+    fontFamily: "Nunito_400Regular",
+  },
+  closeButton: {
+    alignSelf: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: "#0D5F13",
+    // backgroundColor: "#FFF9E6",
+    marginVertical: 5,
+  },
+  closeButtonText: {
+    fontFamily: "Nunito_700Bold",
+    fontSize: 15,
+    color: "#0D5F13",
   },
 });
 
