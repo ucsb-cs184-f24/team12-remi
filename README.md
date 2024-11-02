@@ -20,7 +20,9 @@ We believe that Remi is a recipe sharer app that has at minimum, two types of us
 # Installation
 ## Prerequisites
 Make sure you have the latest Node.js installed, as well as the Expo Go app on your phone. 
+
 https://nodejs.org/en/download/package-manager
+
 https://expo.dev/go
 
 ## Dependencies
@@ -30,6 +32,7 @@ Once you are inside the respository and under the remi-app folder, please run "n
 Make sure all the applications mentioned under Prerequisites are installed first. Once that is done, clone the repository under the main branch.
 
 SSH: git@github.com:ucsb-cs184-f24/team12-remi.git
+
 HTTPS: https://github.com/ucsb-cs184-f24/team12-remi.git
 
 Once cloned, make sure you cd into the remi-app folder, where you will run:
@@ -44,9 +47,13 @@ This will eventually build the app and provide a QR code, which you can then sca
 
 ## Functionality
 Login: Users begin with the login page, where they can either login with their existing account or create a new account. Any form of e-mail type is viable!
+
 Home Page: Once logged in, users can access their home page, where they can see posts made by their friends. At the top right corner is a notification icon which will show they user if they have any friend requests pending
+
 Add Recipes: Users can add a recipe post that friends can see. Add a dish name, comments about the recipe such as ingredients used, and tags such as the culture the dish is from! Click the next button to set the price, difficulty, and amount of time it took to make the dish. Then click submit recipe!
+
 Search: Users can search for other users on the app and send friend requests! Hopefully in the future you can also see posts from public users, like an explore page.
+
 Profile Page: Users can set their profile visibility(private or public), recent activity, change their profile picture and bio, and a sign out option! Not all of this functionality has been completed yet, but it's almost there!
 
 ## Known Problems
