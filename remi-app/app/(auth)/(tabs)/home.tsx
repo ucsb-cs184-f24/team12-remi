@@ -35,6 +35,7 @@ import Ustyles from "../../../components/UniversalStyles";
 import Spacer from "../../../components/Spacer";
 import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const formatTimeAgo = (date: Date) => {
   const now = new Date();
@@ -198,6 +199,7 @@ const RecipePost: React.FC<RecipePostProps> = ({
 
 // Component definition
 const Home: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const user = auth.currentUser;
   const [posts, setPosts] = useState<DocumentData[]>([]);
   //record notification count using state
@@ -289,24 +291,16 @@ const Home: React.FC = () => {
     <SafeAreaView style={Ustyles.background}>
       <View style={Ustyles.feed}>
         <ScrollView stickyHeaderIndices={[0]} style={Ustyles.feed}>
-          {/* <View style={Ustyles.stickyHeader}>
-            <TouchableOpacity
-              onPress={() => router.push("../../notifications")}
-              style={Ustyles.bellIconContainer2}
-            >
-              <Ionicons name="notifications-outline" size={30} color="#000" />
-              {friendRequests.length > 0 && (
-                <View style={Ustyles.notificationBadge}>
-                  <Text style={Ustyles.notificationText}>
-                    {friendRequests.length}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View> */}
-          <View style={styles.header}>
-            <Text style={styles.logoText}>Remi</Text>
-            <View style={styles.iconContainer}>
+          <View
+            style={[
+              styles.header,
+              {
+                backgroundColor: "#FFF9E6",
+              },
+            ]}
+          >
+            <View style={styles.headerContent}>
+              <Text style={styles.logoText}>Remi</Text>
               <TouchableOpacity
                 onPress={() => router.push("../../notifications")}
               >
@@ -344,7 +338,7 @@ const Home: React.FC = () => {
                 comments={post.comments || "0"}
                 recipeName={post.title || "Untitled Recipe"}
                 price={post.Price || "0.00"}
-                difficulty={post.Difficulty || "0"}
+                difficulty={post.Difficulty || 0}
                 time={post.Time || "0"}
                 caption={post.caption || "No caption"}
                 hashtags={post.hashtags || ["#default"]}
@@ -359,6 +353,16 @@ const Home: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  headerContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  headerText: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
   safeArea: {
     flex: 1,
     backgroundColor: "#ffffff",
@@ -373,7 +377,6 @@ const styles = StyleSheet.create({
     justifyContent: "center", // Center the logo
     height: 60,
     paddingHorizontal: 16,
-    backgroundColor: "#ffffff",
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
     position: "relative", // Add this to allow absolute positioning of children
