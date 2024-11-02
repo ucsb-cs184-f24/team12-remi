@@ -9,14 +9,16 @@ import {
   ImageBackground,
   Dimensions,
   Platform,
-  Switch
+  Switch,
 } from 'react-native';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../../../firebaseConfig';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import Modal from 'react-native-modal';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
-const ARCH_HEIGHT = height * 0.80; // Arch height covers 92% of the screen
+const ARCH_HEIGHT = height * 0.73;
 
 export default function Component() {
   const user = auth.currentUser;
@@ -24,6 +26,7 @@ export default function Component() {
   const [username, setUsername] = useState('');
   const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -47,10 +50,10 @@ export default function Component() {
     fetchUserData();
   }, [user]);
 
-  const toggleSwitch = async () => {
+  const toggleVisibility = async (value: boolean) => {
     if (!user) return;
-    const newVisibility = !isPublic ? 'public' : 'private';
-    setIsPublic(!isPublic);
+    const newVisibility = value ? 'public' : 'private';
+    setIsPublic(value);
 
     try {
       const userDocRef = doc(db, 'RemiUsers', user.uid);
@@ -60,6 +63,15 @@ export default function Component() {
       console.error('Error updating visibility:', error);
       alert('Failed to update profile visibility');
     }
+  };
+
+  const handleSignOut = () => {
+    signOut(auth).then(() => {
+      // Handle successful sign out
+    }).catch((error) => {
+      console.error('Error signing out:', error);
+    });
+    setIsMenuVisible(false);
   };
 
   if (loading) {
@@ -76,11 +88,14 @@ export default function Component() {
         source={require("../../../assets/images/background-lineart.png")}
         style={styles.backgroundImage}
       >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => setIsMenuVisible(true)}>
+            <Ionicons name="menu" size={30} color="#333" />
+          </TouchableOpacity>
+        </View>
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
-          {/* Flipped tan arch overlay */}
           <View style={styles.archOverlay} />
 
-          {/* Profile section */}
           <View style={styles.profileSection}>
             <TouchableOpacity style={styles.profileImageContainer}>
               <Image
@@ -98,38 +113,34 @@ export default function Component() {
                 Bio goes here...
               </Text>
             </View>
+          </View>
+        </ScrollView>
 
-            {/* Visibility toggle */}
-            <View style={styles.visibilityContainer}>
-              <Text style={styles.visibilityText}>Profile Visibility: {isPublic ? 'Public' : 'Private'}</Text>
-              <Switch
-                trackColor={{ false: "#767577", true: "#81B784" }}
-                thumbColor={isPublic ? "#0D5F13" : "#f4f3f4"}
-                ios_backgroundColor="#3e3e3e"
-                onValueChange={toggleSwitch}
-                value={isPublic}
-              />
+        <Modal
+          isVisible={isMenuVisible}
+          onBackdropPress={() => setIsMenuVisible(false)}
+          animationIn="slideInRight"
+          animationOut="slideOutRight"
+          style={styles.modal}
+        >
+          <View style={styles.menuContainer}>
+            <View style={styles.menuContent}>
+              <View style={styles.menuItem}>
+                <Text style={styles.menuItemText}>Profile Visibility</Text>
+                <Switch
+                  trackColor={{ false: "#767577", true: "#81b0ff" }}
+                  thumbColor={isPublic ? "#f5dd4b" : "#f4f3f4"}
+                  ios_backgroundColor="#3e3e3e"
+                  onValueChange={toggleVisibility}
+                  value={isPublic}
+                />
+              </View>
+              <TouchableOpacity style={styles.menuItem} onPress={handleSignOut}>
+                <Text style={styles.menuItemText}>Sign Out</Text>
+              </TouchableOpacity>
             </View>
           </View>
-
-          {/* Recent Activity section */}
-          <View style={styles.activitySection}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
-            <ScrollView style={styles.postsContainer}>
-              {/* Placeholder for posts */}
-              {[1, 2, 3].map((item) => (
-                <View key={item} style={styles.postItem}>
-                  <Text style={styles.postText}>Post {item}</Text>
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* Sign Out Button */}
-          <TouchableOpacity style={styles.signOutButton} onPress={() => signOut(auth)}>
-            <Text style={styles.signOutText}>Sign out</Text>
-          </TouchableOpacity>
-        </ScrollView>
+        </Modal>
       </ImageBackground>
     </View>
   );
@@ -145,23 +156,29 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  header: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 10,
+  },
   archOverlay: {
     position: 'absolute',
-    bottom: 0, // Changed from top to bottom
+    bottom: 0,
     left: 0,
     right: 0,
     height: ARCH_HEIGHT,
     backgroundColor: '#FFF9E6',
-    borderTopLeftRadius: ARCH_HEIGHT, // Changed from borderBottomLeftRadius
-    borderTopRightRadius: ARCH_HEIGHT, // Changed from borderBottomRightRadius
-    opacity: 0.9,
+    borderTopLeftRadius: ARCH_HEIGHT,
+    borderTopRightRadius: ARCH_HEIGHT,
+    opacity: 0.95,
   },
   scrollView: {
     flex: 1,
   },
   scrollViewContent: {
     minHeight: '100%',
-    paddingTop: 40, // Increased from 20
+    paddingTop: 40,
   },
   profileSection: {
     alignItems: 'center',
@@ -169,11 +186,11 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   profileImageContainer: {
-    width: 150, // Increased from 120
-    height: 150, // Increased from 120
-    borderRadius: 75, // Increased from 60
+    width: 150,
+    height: 150,
+    borderRadius: 75,
     backgroundColor: '#fff',
-    marginTop: 40, // Added to move it lower
+    marginTop: 40,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -187,13 +204,13 @@ const styles = StyleSheet.create({
     }),
   },
   profileImage: {
-    width: 150, // Increased from 120
-    height: 150, // Increased from 120
-    borderRadius: 75, // Increased from 60
+    width: 150,
+    height: 150,
+    borderRadius: 75,
   },
   replaceText: {
     position: 'absolute',
-    bottom: -30, // Adjusted from -24
+    bottom: -30,
     width: '100%',
     textAlign: 'center',
     color: '#666',
@@ -222,61 +239,38 @@ const styles = StyleSheet.create({
     color: '#444',
     lineHeight: 22,
   },
-  visibilityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginTop: 20,
-    padding: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 12,
-  },
-  visibilityText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  activitySection: {
-    padding: 20,
-    marginTop: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
-  },
-  postsContainer: {
-    maxHeight: 300,
-  },
-  postItem: {
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 10,
-  },
-  postText: {
-    fontSize: 16,
-    color: '#444',
-  },
-  signOutButton: {
-    backgroundColor: '#FFE5E5',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 40,
-    marginHorizontal: 20,
-  },
-  signOutText: {
-    color: '#D32F2F',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.8)', 
+  },
+  modal: {
+    margin: 0,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+  },
+  menuContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+    width: '70%',
+    height: '100%',
+  },
+  menuContent: {
+    marginTop: 60, // Added to move menu items lower
+  },
+  menuItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  menuItemText: {
+    fontSize: 18,
+    color: '#333',
   },
 });
