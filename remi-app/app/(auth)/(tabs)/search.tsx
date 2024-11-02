@@ -15,6 +15,7 @@ import { Searchbar } from "react-native-paper";
 import {
   collection,
   addDoc,
+  doc,
   getDocs,
   query,
   where,
@@ -31,68 +32,88 @@ interface User {
 }
 
 const SearchFriendsScreen: React.FC = () => {
-  const user = auth.currentUser;
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [filteredFriends, setFilteredFriends] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentUserFriends, setCurrentUserFriends] = useState<string[]>([]);
+  const currentUser = auth.currentUser;
 
-  // Fetch users from Firestore
+
   useEffect(() => {
-    const usersCollection = collection(db, "RemiUsers");
-    const unsubscribe = onSnapshot(
-      usersCollection,
-      (snapshot) => {
-        const usersList = snapshot.docs.map((doc) => ({
+    if (!currentUser) {
+      console.warn("User not authenticated");
+      return;
+    }
+
+    const userDocRef = doc(db, 'RemiUsers', currentUser.uid);
+    const unsubscribeFriendsList = onSnapshot(userDocRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        setCurrentUserFriends(docSnapshot.data().friends_list || []);
+      }
+    }, (error) => {
+      console.error("Error fetching friends list:", error);
+    });
+
+
+    const fetchAllUsers = () => {
+      const usersCollection = collection(db, 'RemiUsers');
+      const unsubscribeUsers = onSnapshot(usersCollection, (snapshot) => {
+        const usersList = snapshot.docs.map(doc => ({
           username: doc.data().username,
           email: doc.data().email,
         })) as User[];
         setAllUsers(usersList);
-      },
-      (error) => {
-        console.error("Error fetching users:", error);
-      }
-    );
+      }, (error) => {
+        console.error('Error fetching users:', error);
+      });
 
-    // Clean up the listener when the component unmounts
-    return () => unsubscribe();
-  }, []);
+      return unsubscribeUsers;
+    };
 
-  // Handle search query for both username and email
+    const unsubscribeUsers = fetchAllUsers();
+
+    return () => {
+      unsubscribeFriendsList();
+      unsubscribeUsers();
+    };
+  }, [currentUser]);
+
   const onChangeSearch = (query: string) => {
+    if (!currentUser) return;
+
     setSearchQuery(query);
-    // console.log("search with query: ", query);
-    if (query.trim() === "") {
+    if (query.trim() === '') {
       setFilteredFriends([]);
       return;
     }
-    const filtered = allUsers.filter(
-      (person) =>
-        (!currentUserFriends.includes(person.email) &&
-          person.username.toLowerCase().startsWith(query.toLowerCase())) ||
-        person.email.toLowerCase().startsWith(query.toLowerCase())
+    const filtered = allUsers.filter(person =>
+      person.email !== currentUser.email &&
+      (person.username.toLowerCase().startsWith(query.toLowerCase()) ||
+       person.email.toLowerCase().startsWith(query.toLowerCase()))
     );
-    const filteredWithoutSelf = filtered.filter(
-      (person) => person.email !== user?.email
-    );
-    setFilteredFriends(filteredWithoutSelf);
+    setFilteredFriends(filtered);
   };
 
-  const renderItem = ({ item }: { item: User }) => (
-    <View style={styles.item}>
-      <Text style={styles.username}>{item.username}</Text>
-      <Text style={styles.email}>{item.email}</Text>
-      <TouchableOpacity style={styles.inviteButton} 
-      onPress={() => handleInvite(item)}
-    >
-      <Text style={styles.inviteButtonText}>Invite</Text>
-    </TouchableOpacity>
-    </View>
-  );
+  const renderItem = ({ item }: { item: User }) => {
+    const isAlreadyFriend = currentUserFriends.includes(item.email);
+
+    return (
+      <View style={styles.item}>
+        <Text style={styles.username}>{item.username}</Text>
+        <Text style={styles.email}>{item.email}</Text>
+        {isAlreadyFriend ? (
+          <View style={styles.centeredTextContainer}>
+            <Text style={styles.alreadyFriendText}>Already friends with this user!</Text>
+          </View>
+        ) : (
+          <Button title="Invite" onPress={() => handleInvite(item)} />
+        )}
+      </View>
+    );
+  };
 
   const handleInvite = async (user: User) => {
-    const currentUser = auth.currentUser;
     if (!currentUser) return;
 
     try {
@@ -106,7 +127,6 @@ const SearchFriendsScreen: React.FC = () => {
 
       const querySnapshot = await getDocs(existingInviteQuery);
 
-      // If an invite already exists, skip creating a new one
       if (!querySnapshot.empty) {
         Alert.alert(
           "Info",
@@ -115,7 +135,6 @@ const SearchFriendsScreen: React.FC = () => {
         return;
       }
 
-      // Otherwise, send a new invite
       await addDoc(notificationsRef, {
         from: currentUser.email,
         to: user.email,
@@ -126,6 +145,15 @@ const SearchFriendsScreen: React.FC = () => {
       console.error("Error sending invite:", error);
     }
   };
+
+  if (!auth.currentUser) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.errorText}>User not authenticated. Please sign in.</Text>
+      </View>
+    );
+  }
+
 
   if (loading) {
     return (
@@ -145,12 +173,10 @@ const SearchFriendsScreen: React.FC = () => {
       />
       <FlatList
         data={filteredFriends}
-        keyExtractor={(item) => item.username}
+        keyExtractor={item => item.username}
         renderItem={renderItem}
         ListEmptyComponent={
-          searchQuery ? (
-            <Text style={styles.emptyText}>No users found</Text>
-          ) : null
+          searchQuery ? <Text style={styles.emptyText}>No users found</Text> : null
         }
       />
     </SafeAreaView>
@@ -179,6 +205,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
   },
+  centeredTextContainer: {
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  alreadyFriendText: {
+    fontSize: 14,
+    color: '#888',
+    fontStyle: 'italic',
+  },
   emptyText: {
     textAlign: "center",
     marginTop: 20,
@@ -190,6 +225,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   inviteButton: {
     margin: 10,
     alignItems: 'center',
