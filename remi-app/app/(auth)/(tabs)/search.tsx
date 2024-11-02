@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   Button,
   Alert,
+  Platform,
 } from "react-native";
 import { Searchbar } from "react-native-paper";
 import {
@@ -149,7 +150,7 @@ const SearchFriendsScreen: React.FC = () => {
   if (!auth.currentUser) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.errorText}>User not authenticated. Please sign in.</Text>
+        <Text style={styles.emptyText}>User not authenticated. Please sign in.</Text>
       </View>
     );
   }
@@ -169,7 +170,10 @@ const SearchFriendsScreen: React.FC = () => {
         placeholder="Search by username or email"
         onChangeText={onChangeSearch}
         value={searchQuery}
-        style={styles.searchBar}
+        style={{
+          marginTop: Platform.OS === 'ios' ? 0 : 40,
+          margin: 10,
+          backgroundColor: '#BCD5AC'}}
       />
       <FlatList
         data={filteredFriends}
@@ -187,10 +191,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFF9E6',
-  },
-  searchBar: {
-    margin: 10,
-    backgroundColor: '#BCD5AC',
   },
   item: {
     padding: 20,
