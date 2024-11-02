@@ -65,3 +65,6 @@ Create your feature branch: git checkout -b my-new-feature
 Commit your changes: git commit -am 'Add some feature'
 Push to the branch: git push origin my-new-feature
 Submit a pull request :D
+
+## License
+You can find our MIT license under our LICENSE.md: https://github.com/ucsb-cs184-f24/team12-remi/blob/main/LICENSE.md
