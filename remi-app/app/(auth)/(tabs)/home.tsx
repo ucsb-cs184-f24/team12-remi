@@ -6,12 +6,11 @@ import {
   Modal,
   FlatList,
   Button,
-  Image,
-  Alert,
   TouchableOpacity,
   ScrollView,
   Platform,
   StatusBar,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons"; // For icons
@@ -36,6 +35,9 @@ import Spacer from "../../../components/Spacer";
 import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Image as ExpoImage } from "expo-image"; // Add this
+
+const blurhash = "L6PZfSi_.AyE_3t7t7R**0o#DgR4";
 
 const formatTimeAgo = (date: Date) => {
   const now = new Date();
@@ -153,21 +155,23 @@ const RecipePost: React.FC<RecipePostProps> = ({
   }, [userID]);
 
   const hashtagNames = hashtags
-    .split(',')
-    .map(id => {
+    .split(",")
+    .map((id) => {
       const name = hashtagMap[id.trim()];
       return name ? `#${name}` : undefined; // Add "#" to the name if it exists
     })
     .filter(Boolean); // Filter out any undefined values
 
-
   return (
     <View style={Ustyles.post}>
       <View style={Ustyles.postHeader}>
         <View style={Ustyles.userInfo}>
-          <Image
+          <ExpoImage
             source={require("../../../assets/placeholders/user-avatar.png")}
             style={Ustyles.avatar}
+            placeholder={blurhash}
+            transition={200}
+            contentFit="cover"
           />
           <View>
             <Text style={Ustyles.username}>{username}</Text>
@@ -188,17 +192,20 @@ const RecipePost: React.FC<RecipePostProps> = ({
       <View style={Ustyles.recipeContent}>
         <View style={Ustyles.leftColumn}>
           <View style={Ustyles.imageContainer}>
-            <Image
+            <ExpoImage
               source={
                 mediaUrl
                   ? { uri: mediaUrl }
                   : require("../../../assets/placeholders/recipe-image.png")
               }
               style={Ustyles.recipeImage}
+              placeholder={blurhash}
+              transition={300}
+              contentFit="cover"
             />
           </View>
           <Text style={Ustyles.recipeName}>{recipeName}</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={Ustyles.seeNotesButton}
             onPress={handleSeeNotesPress}
           >
@@ -214,7 +221,10 @@ const RecipePost: React.FC<RecipePostProps> = ({
               <View style={styles.modalContent}>
                 <Text style={styles.modalText}>{caption}</Text>
                 {/* Add more content as needed */}
-                <TouchableOpacity style={styles.closeButton} onPress={handleCloseModal}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={handleCloseModal}
+                >
                   <Text style={styles.closeButtonText}>Close</Text>
                 </TouchableOpacity>
               </View>
@@ -358,70 +368,71 @@ const Home: React.FC = () => {
     return () => unsubscribe();
   }, [user]);
 
+  const renderItem = ({
+    item: post,
+    index,
+  }: {
+    item: DocumentData;
+    index: number;
+  }) => (
+    <View>
+      <RecipePost
+        key={index}
+        userID={post.userId || "Anonymous"}
+        timeAgo={
+          post.createdAt ? new Date(post.createdAt) : new Date(2002, 2, 8)
+        }
+        likes={post.likesCount || 0}
+        comments={post.comments || 0}
+        recipeName={post.title || "Untitled Recipe"}
+        price={post.Price || 0.0}
+        difficulty={post.Difficulty || 0}
+        time={post.Time || 0}
+        caption={post.caption || "No caption"}
+        hashtags={post.hashtags || ["None"]}
+        mediaUrl={post.mediaUrl || ""}
+      />
+      <View style={Ustyles.separator} />
+    </View>
+  );
 
   return (
     <SafeAreaView style={Ustyles.background}>
-     <View style={Ustyles.background}>
-        <ScrollView stickyHeaderIndices={[0]} style={Ustyles.feed}>
-          <View
-            style={[
-              styles.header,
-              {
-                backgroundColor: "#FFF9E6",
-              },
-            ]}
-          >
-            <View style={styles.headerContent}>
-              <Text style={styles.logoText}>Remi</Text>
-              <TouchableOpacity
-                onPress={() => router.push("../../notifications")}
-              >
-                <Ionicons
-                  name="notifications-outline"
-                  size={27}
-                  color="#0D5F13"
-                />
-                {friendRequests.length > 0 && (
-                  <View style={Ustyles.notificationBadge}>
-                    <Text style={Ustyles.notificationText}>
-                      {friendRequests.length}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            </View>
+      <View style={Ustyles.background}>
+        <View style={[styles.header, { backgroundColor: "#FFF9E6" }]}>
+          <View style={styles.headerContent}>
+            <Text style={styles.logoText}>Remi</Text>
+            <TouchableOpacity
+              onPress={() => router.push("../../notifications")}
+            >
+              <Ionicons
+                name="notifications-outline"
+                size={27}
+                color="#0D5F13"
+              />
+              {friendRequests.length > 0 && (
+                <View style={Ustyles.notificationBadge}>
+                  <Text style={Ustyles.notificationText}>
+                    {friendRequests.length}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
-          {posts
-            .sort((a, b) => {
-              const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
-              const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
-              return dateB.getTime() - dateA.getTime();
-            })
-            .map((post, index) => (
-              <View>
-                <RecipePost
-                  key={index}
-                  userID={post.userId || "Anonymous"}
-                  timeAgo={
-                    post.createdAt
-                      ? new Date(post.createdAt)
-                      : new Date(2002, 2, 8)
-                  }
-                  likes={post.likesCount || 0}
-                  comments={post.comments || 0}
-                  recipeName={post.title || "Untitled Recipe"}
-                  price={post.Price || 0.00}
-                  difficulty={post.Difficulty || 0}
-                  time={post.Time || 0}
-                  caption={post.caption || "No caption"}
-                  hashtags={post.hashtags || ["None"]}
-                  mediaUrl={post.mediaUrl || ""}
-                />
-                <View style={Ustyles.separator} />
-              </View>
-            ))}
-        </ScrollView>
-        {/* <Button title="Sign out" onPress={() => signOut(auth)} color="#0D5F13" /> */}
+        </View>
+        <FlatList
+          data={posts.sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+            const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+            return dateB.getTime() - dateA.getTime();
+          })}
+          renderItem={renderItem}
+          keyExtractor={(_, index) => index.toString()}
+          initialNumToRender={5}
+          maxToRenderPerBatch={5}
+          windowSize={5}
+          removeClippedSubviews={true}
+        />
       </View>
     </SafeAreaView>
   );
@@ -512,6 +523,9 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
     fontSize: 15,
     color: "#0D5F13",
+  },
+  imagePlaceholder: {
+    backgroundColor: "#e1e4e8",
   },
 });
 
