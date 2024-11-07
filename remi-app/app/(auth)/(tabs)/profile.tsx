@@ -10,12 +10,14 @@ import {
   Dimensions,
   Platform,
   Switch,
+  TextInput,
 } from 'react-native';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../../../firebaseConfig';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import Modal from 'react-native-modal';
 import { Ionicons } from '@expo/vector-icons';
+import Ustyles from "@/components/UniversalStyles";
 
 const { width, height } = Dimensions.get('window');
 const ARCH_HEIGHT = height * 0.73;
@@ -24,6 +26,8 @@ export default function Component() {
   const user = auth.currentUser;
   const [profilePic, setProfilePic] = useState('https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png');
   const [username, setUsername] = useState('');
+  const [bio, setBio] = useState('');
+  const [isEditingBio, setIsEditingBio] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
@@ -38,6 +42,7 @@ export default function Component() {
             const userData = userSnapshot.data();
             setIsPublic(userData.visibility === 'public');
             setUsername(userData.username || '');
+            setBio(userData.bio || ''); // Set bio if it exists
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -62,6 +67,19 @@ export default function Component() {
     } catch (error) {
       console.error('Error updating visibility:', error);
       alert('Failed to update profile visibility');
+    }
+  };
+
+  const saveBio = async () => {
+    if (!user) return;
+    try {
+      const userDocRef = doc(db, 'RemiUsers', user.uid);
+      await updateDoc(userDocRef, { bio });
+      setIsEditingBio(false);
+      alert('Bio updated successfully');
+    } catch (error) {
+      console.error('Error updating bio:', error);
+      alert('Failed to update bio');
     }
   };
 
@@ -105,13 +123,34 @@ export default function Component() {
               <Text style={styles.replaceText}>Click to replace</Text>
             </TouchableOpacity>
 
-            <Text style={styles.username}>{username}</Text>
+            <Text style={[Ustyles.header_text, styles.username]}>
+              {username}
+            </Text>
             <Text style={styles.friendsCount}>9 friends</Text>
 
             <View style={styles.bioContainer}>
-              <Text style={styles.bioText}>
-                Bio goes here...
-              </Text>
+              {isEditingBio ? (
+                <View style={styles.bioEditContainer}>
+                  <TextInput
+                    style={styles.bioInput}
+                    value={bio}
+                    onChangeText={setBio}
+                    placeholder="Enter your bio"
+                  />
+                  <TouchableOpacity onPress={saveBio}>
+                    <Ionicons name="checkmark" size={24} color="green" />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <>
+                  <Text style={styles.bioText}>
+                    {bio || "Insert bio..."}
+                  </Text>
+                  <TouchableOpacity onPress={() => setIsEditingBio(true)}>
+                    <Ionicons name="pencil" size={20} color="gray" />
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </View>
         </ScrollView>
@@ -231,13 +270,28 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: 20,
     padding: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center', // Centers content vertically
+    justifyContent: 'center', // Centers content horizontally
   },
   bioText: {
     fontSize: 16,
     color: '#444',
     lineHeight: 22,
+    textAlign: 'center', // Ensures text itself is centered
+    marginRight: 10, // Adds space between text and the pencil icon
+  },
+  bioEditContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bioInput: {
+    fontSize: 16,
+    color: '#444',
+    borderRadius: 8,
+    padding: 10,
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
@@ -259,7 +313,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   menuContent: {
-    marginTop: 60, // Added to move menu items lower
+    marginTop: 60,
   },
   menuItem: {
     flexDirection: 'row',
@@ -274,3 +328,4 @@ const styles = StyleSheet.create({
     color: '#333',
   },
 });
+
