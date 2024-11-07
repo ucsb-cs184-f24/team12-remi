@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import Ustyles from "@/components/UniversalStyles";
 
 const { width, height } = Dimensions.get('window');
 const ARCH_HEIGHT = height * 0.73;
+const MAX_BIO_LENGTH = 150;
 
 export default function Component() {
   const user = auth.currentUser;
@@ -31,6 +32,7 @@ export default function Component() {
   const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const bioInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -42,7 +44,7 @@ export default function Component() {
             const userData = userSnapshot.data();
             setIsPublic(userData.visibility === 'public');
             setUsername(userData.username || '');
-            setBio(userData.bio || ''); // Set bio if it exists
+            setBio(userData.bio || '');
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -54,6 +56,12 @@ export default function Component() {
 
     fetchUserData();
   }, [user]);
+
+  useEffect(() => {
+    if (isEditingBio && bioInputRef.current) {
+      bioInputRef.current.focus();
+    }
+  }, [isEditingBio]);
 
   const toggleVisibility = async (value: boolean) => {
     if (!user) return;
@@ -72,6 +80,10 @@ export default function Component() {
 
   const saveBio = async () => {
     if (!user) return;
+    if (bio.trim().length === 0) {
+      alert('Bio cannot be empty');
+      return;
+    }
     try {
       const userDocRef = doc(db, 'RemiUsers', user.uid);
       await updateDoc(userDocRef, { bio });
@@ -131,25 +143,33 @@ export default function Component() {
             <View style={styles.bioContainer}>
               {isEditingBio ? (
                 <View style={styles.bioEditContainer}>
-                  <TextInput
-                    style={styles.bioInput}
-                    value={bio}
-                    onChangeText={setBio}
-                    placeholder="Enter your bio"
-                  />
-                  <TouchableOpacity onPress={saveBio}>
-                    <Ionicons name="checkmark" size={24} color="green" />
+                  <View style={styles.bioInputWrapper}>
+                    <TextInput
+                      ref={bioInputRef}
+                      style={styles.bioInput}
+                      value={bio}
+                      onChangeText={(text) => setBio(text.slice(0, MAX_BIO_LENGTH))}
+                      placeholder="Enter your bio"
+                      multiline
+                      maxLength={MAX_BIO_LENGTH}
+                    />
+                  </View>
+                  <Text style={styles.characterCount}>
+                    {MAX_BIO_LENGTH - bio.length} characters remaining
+                  </Text>
+                  <TouchableOpacity style={styles.saveButton} onPress={saveBio}>
+                    <Text style={styles.saveButtonText}>Save Bio</Text>
                   </TouchableOpacity>
                 </View>
               ) : (
-                <>
+                <View style={styles.bioTextContainer}>
                   <Text style={styles.bioText}>
-                    {bio || "Insert bio..."}
+                    {bio || "Tap to add a bio..."}
                   </Text>
-                  <TouchableOpacity onPress={() => setIsEditingBio(true)}>
-                    <Ionicons name="pencil" size={20} color="gray" />
+                  <TouchableOpacity onPress={() => setIsEditingBio(true)} style={styles.editIcon}>
+                    <Ionicons name="pencil-outline" size={16} color="#666" />
                   </TouchableOpacity>
-                </>
+                </View>
               )}
             </View>
           </View>
@@ -269,29 +289,56 @@ const styles = StyleSheet.create({
   bioContainer: {
     width: '100%',
     marginTop: 20,
-    padding: 15,
-    borderRadius: 12,
+    alignItems: 'center',
+  },
+  bioEditContainer: {
+    width: '100%',
+    alignItems: 'stretch',
+  },
+  bioInputWrapper: {
     flexDirection: 'row',
-    alignItems: 'center', // Centers content vertically
-    justifyContent: 'center', // Centers content horizontally
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    paddingBottom: 5,
+  },
+  bioInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#444',
+    minHeight: 40,
+    paddingHorizontal: 0,
+  },
+  characterCount: {
+    alignSelf: 'flex-end',
+    fontSize: 12,
+    color: '#666',
+    marginTop: 5,
+  },
+  saveButton: {
+    backgroundColor: '#BCD5AC',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#333',
+    fontWeight: 'bold',
+  },
+  bioTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bioText: {
     fontSize: 16,
     color: '#444',
     lineHeight: 22,
-    textAlign: 'center', // Ensures text itself is centered
-    marginRight: 10, // Adds space between text and the pencil icon
   },
-  bioEditContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  bioInput: {
-    fontSize: 16,
-    color: '#444',
-    borderRadius: 8,
-    padding: 10,
-    flex: 1,
+  editIcon: {
+    marginLeft: 8,
+    padding: 4,
   },
   loadingContainer: {
     flex: 1,
@@ -328,4 +375,3 @@ const styles = StyleSheet.create({
     color: '#333',
   },
 });
-
