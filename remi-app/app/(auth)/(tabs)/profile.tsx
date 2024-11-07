@@ -12,13 +12,81 @@ import {
   Switch,
 } from 'react-native';
 import { signOut } from 'firebase/auth';
-import { auth, db } from '../../../firebaseConfig';
+import { auth, db, storage } from '../../../firebaseConfig';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, uploadBytesResumable, } from "firebase/storage";
 import Modal from 'react-native-modal';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 
 const { width, height } = Dimensions.get('window');
 const ARCH_HEIGHT = height * 0.73;
+const uploadImageToStorage = async (uri: string): Promise<string> => {
+  try {
+    console.log("What am i now: ", uri);
+    if (!uri) throw new Error("Image URI is null or undefined.");
+    const response = await fetch(uri);
+    if (!response.ok) throw new Error("Failed to fetch the image.");
+    const blob = await response.blob();
+    const storageRef = ref(storage, `images/${Date.now()}.jpg`);
+    const uploadTask = uploadBytesResumable(storageRef, blob);
+
+    return await new Promise((resolve, reject) => {
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          console.log(
+            `Upload is ${((snapshot.bytesTransferred / snapshot.totalBytes) * 100).toFixed(2)}% done`
+          );
+        },
+        (error) => {
+          console.error("Upload failed", error);
+          reject(error);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            resolve(downloadURL);
+          } catch (error) {
+            reject(error);
+          }
+        }
+      );
+    });
+  } catch (error) {
+    alert(`Image upload failed: ${(error as Error).message}`);
+    throw error;
+  }
+};
+
+// Define useImagePicker hook within this file
+const useImagePicker = () => {
+  const [image, setImage] = useState<string | null>(null);
+
+  const pickImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        alert("Permission to access camera roll is required!");
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: true,
+        aspect: [1, 1], // Square aspect for profile pic
+        quality: 1,
+      });
+      if (!result.canceled) {
+        setImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      alert("An error occurred while selecting an image. Please try again.");
+    }
+  };
+
+  return { image, pickImage };
+};
 
 export default function Component() {
   const user = auth.currentUser;
@@ -27,6 +95,7 @@ export default function Component() {
   const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const { image, pickImage } = useImagePicker();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -38,6 +107,7 @@ export default function Component() {
             const userData = userSnapshot.data();
             setIsPublic(userData.visibility === 'public');
             setUsername(userData.username || '');
+            setProfilePic(userData.profilePic || profilePic);
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -49,6 +119,33 @@ export default function Component() {
 
     fetchUserData();
   }, [user]);
+
+  useEffect(() => {
+    if (image) {
+      setProfilePic(image);
+      updateProfilePicture(image); // Save image to Firebase
+    }
+  }, [image]);
+
+  const updateProfilePicture = async (imageUri: string) => {
+    if (!user) return;
+  
+    try {
+      setLoading(true);
+      const mediaUrl = await uploadImageToStorage(imageUri);
+      
+      const userDocRef = doc(db, 'RemiUsers', user.uid);
+      await updateDoc(userDocRef, { profilePic: mediaUrl });
+      alert("Profile picture updated successfully!");
+      setProfilePic(mediaUrl); // Update state with new image URL
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
+      alert('Failed to update profile picture');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const toggleVisibility = async (value: boolean) => {
     if (!user) return;
@@ -97,11 +194,8 @@ export default function Component() {
           <View style={styles.archOverlay} />
 
           <View style={styles.profileSection}>
-            <TouchableOpacity style={styles.profileImageContainer}>
-              <Image
-                source={{ uri: profilePic }}
-                style={styles.profileImage}
-              />
+            <TouchableOpacity style={styles.profileImageContainer} onPress={pickImage}>
+              <Image source={{ uri: profilePic }} style={styles.profileImage} />
               <Text style={styles.replaceText}>Click to replace</Text>
             </TouchableOpacity>
 
@@ -189,7 +283,11 @@ const styles = StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: 75,
+    borderWidth: 5,
+    borderColor: '#0D5F13', // Default border color
     backgroundColor: '#fff',
+    justifyContent: 'center', // Center the image inside the container
+    alignItems: 'center',    // Center the image inside the container
     marginTop: 40,
     ...Platform.select({
       ios: {
@@ -204,9 +302,9 @@ const styles = StyleSheet.create({
     }),
   },
   profileImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
   },
   replaceText: {
     position: 'absolute',
