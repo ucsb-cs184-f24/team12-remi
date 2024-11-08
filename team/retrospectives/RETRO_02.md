@@ -1,4 +1,4 @@
-# Date of Retrospective: 10/18/24
+# Date of Retrospective: 11/08/24
 
 * Led by: Alex Chau
 * Present: Peter Hongye Liang, Helen Qi Wu, Alex Chau, Raina Kakani, Kavi Iyer, Anushka Vijay, Sunhu Choi
