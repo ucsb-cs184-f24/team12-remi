@@ -160,7 +160,6 @@
 //     })
 //     .filter(Boolean); // Filter out any undefined values
 
-
 //   return (
 //     <View style={Ustyles.post}>
 //       <View style={Ustyles.postHeader}>
@@ -198,7 +197,7 @@
 //             />
 //           </View>
 //           <Text style={Ustyles.recipeName}>{recipeName}</Text>
-//           <TouchableOpacity 
+//           <TouchableOpacity
 //             style={Ustyles.seeNotesButton}
 //             onPress={handleSeeNotesPress}
 //           >
@@ -357,7 +356,6 @@
 
 //     return () => unsubscribe();
 //   }, [user]);
-
 
 //   return (
 //     <SafeAreaView style={Ustyles.background}>
@@ -547,6 +545,7 @@ import {
   onSnapshot,
   updateDoc,
   arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { db, auth } from "../../../firebaseConfig"; // Ensure correct imports
 import { signOut } from "firebase/auth";
@@ -658,6 +657,7 @@ const RecipePost: React.FC<RecipePostProps> = ({
   const [modalVisible, setModalVisible] = useState(false);
 
   const [likesCount, setLikesCount] = useState(likes);
+  const [likedBy, setLikedBy] = useState<string[]>([]);
   const [commentsCount, setCommentsCount] = useState(comments);
 
   const handleSeeNotesPress = () => {
@@ -669,34 +669,75 @@ const RecipePost: React.FC<RecipePostProps> = ({
   };
 
   const handleLikePress = async () => {
+    if (!auth.currentUser) {
+      Alert.alert("Error", "You must be logged in to like posts.");
+      return;
+    }
+
+    const userId = auth.currentUser.uid;
+    const postRef = doc(db, "Posts", postID);
+
     try {
-      const postRef = doc(db, "Posts", postID); 
-      console.log(postID)
-      await updateDoc(postRef, {
-        likes: likesCount + 1
-      });
-      setLikesCount(likesCount + 1); // Update local state
+      const postSnapshot = await getDoc(postRef);
+
+      if (postSnapshot.exists()) {
+        const postData = postSnapshot.data();
+        const likedByArray: string[] = postData.likedBy || [];
+
+        if (likedByArray.includes(userId)) {
+          // User already liked the post, so remove their like
+          await updateDoc(postRef, {
+            likesCount: postData.likesCount - 1, // Directly update Firestore
+            likedBy: arrayRemove(userId), // Remove user ID
+          });
+        } else {
+          // User has not liked the post, so add their like
+          await updateDoc(postRef, {
+            likesCount: postData.likesCount + 1, // Directly update Firestore
+            likedBy: arrayUnion(userId), // Add user ID
+          });
+        }
+      }
     } catch (error) {
       console.error("Error updating like:", error);
+      Alert.alert("Error", "Failed to update like. Please try again.");
     }
   };
 
   useEffect(() => {
+    const postRef = doc(db, "Posts", postID);
+
+    const unsubscribe = onSnapshot(postRef, (doc) => {
+      if (doc.exists()) {
+        const postData = doc.data();
+        setLikesCount(postData.likesCount || 0); // Real-time update
+        setLikedBy(postData.likedBy || []); // Real-time update of likedBy array
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup listener
+  }, [postID]);
+
+  useEffect(() => {
     const fetchUsername = async () => {
-      const name = await getUsername(userID);
-      setUsername(name);
+      try {
+        const name = await getUsername(userID);
+        setUsername(name);
+      } catch (error) {
+        console.error("Error fetching username:", error);
+      }
     };
+
     fetchUsername();
   }, [userID]);
 
   const hashtagNames = hashtags
-    .split(',')
-    .map(id => {
+    .split(",")
+    .map((id) => {
       const name = hashtagMap[id.trim()];
       return name ? `#${name}` : undefined; // Add "#" to the name if it exists
     })
     .filter(Boolean); // Filter out any undefined values
-
 
   return (
     <View style={Ustyles.post}>
@@ -712,11 +753,26 @@ const RecipePost: React.FC<RecipePostProps> = ({
           </View>
         </View>
         <View style={Ustyles.engagement}>
-          <View style={Ustyles.engagementItem}>
+          {/* <View style={Ustyles.engagementItem}>
             <Ionicons
               name={likesCount > 0 ? "heart" : "heart-outline"}
               size={27}
               color="red"
+              onPress={handleLikePress}
+            />
+            <Text style={Ustyles.engagementText}>{likesCount}</Text>
+          </View> */}
+          <View style={Ustyles.engagementItem}>
+            <Ionicons
+              name={
+                likedBy.includes(auth.currentUser?.uid ?? "")
+                  ? "heart"
+                  : "heart-outline"
+              }
+              size={27}
+              color={
+                likedBy.includes(auth.currentUser?.uid ?? "") ? "red" : "gray"
+              }
               onPress={handleLikePress}
             />
             <Text style={Ustyles.engagementText}>{likesCount}</Text>
@@ -740,7 +796,7 @@ const RecipePost: React.FC<RecipePostProps> = ({
             />
           </View>
           <Text style={Ustyles.recipeName}>{recipeName}</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={Ustyles.seeNotesButton}
             onPress={handleSeeNotesPress}
           >
@@ -756,7 +812,10 @@ const RecipePost: React.FC<RecipePostProps> = ({
               <View style={styles.modalContent}>
                 <Text style={styles.modalText}>{caption}</Text>
                 {/* Add more content as needed */}
-                <TouchableOpacity style={styles.closeButton} onPress={handleCloseModal}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={handleCloseModal}
+                >
                   <Text style={styles.closeButtonText}>Close</Text>
                 </TouchableOpacity>
               </View>
@@ -834,7 +893,10 @@ const Home: React.FC = () => {
       const q = query(postsRef, where("userId", "in", friendsList));
       const querySnapshot = await getDocs(q);
       console.log(querySnapshot);
-      const filteredPosts = querySnapshot.docs.map((doc) => doc.data());
+      const filteredPosts = querySnapshot.docs.map((doc) => ({
+        ...doc.data(),
+        postID: doc.id,
+      }));
       setPosts(filteredPosts);
     } catch (error) {
       if (error instanceof Error) {
@@ -900,10 +962,9 @@ const Home: React.FC = () => {
     return () => unsubscribe();
   }, [user]);
 
-
   return (
     <SafeAreaView style={Ustyles.background}>
-     <View style={Ustyles.background}>
+      <View style={Ustyles.background}>
         <ScrollView stickyHeaderIndices={[0]} style={Ustyles.feed}>
           <View
             style={[
@@ -952,13 +1013,13 @@ const Home: React.FC = () => {
                   likes={post.likesCount || 0}
                   comments={post.comments || 0}
                   recipeName={post.title || "Untitled Recipe"}
-                  price={post.Price || 0.00}
+                  price={post.Price || 0.0}
                   difficulty={post.Difficulty || 0}
                   time={post.Time || 0}
                   caption={post.caption || "No caption"}
                   hashtags={post.hashtags || ["None"]}
                   mediaUrl={post.mediaUrl || ""}
-                  postID = {post.postID}
+                  postID={post.postID}
                 />
                 <View style={Ustyles.separator} />
               </View>
@@ -1059,4 +1120,3 @@ const styles = StyleSheet.create({
 });
 
 export default Home;
-
