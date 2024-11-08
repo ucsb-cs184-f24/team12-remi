@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,20 +10,22 @@ import {
   Dimensions,
   Platform,
   Switch,
-} from 'react-native';
-import { signOut } from 'firebase/auth';
-import { auth, db } from '../../../firebaseConfig';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
-import Modal from 'react-native-modal';
-import { Ionicons } from '@expo/vector-icons';
+} from "react-native";
+import { signOut } from "firebase/auth";
+import { auth, db } from "../../../firebaseConfig";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
+import Modal from "react-native-modal";
+import { Ionicons } from "@expo/vector-icons";
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 const ARCH_HEIGHT = height * 0.73;
 
 export default function Component() {
   const user = auth.currentUser;
-  const [profilePic, setProfilePic] = useState('https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png');
-  const [username, setUsername] = useState('');
+  const [profilePic, setProfilePic] = useState(
+    "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png"
+  );
+  const [username, setUsername] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
@@ -32,15 +34,15 @@ export default function Component() {
     const fetchUserData = async () => {
       if (user) {
         try {
-          const userDocRef = doc(db, 'RemiUsers', user.uid);
+          const userDocRef = doc(db, "RemiUsers", user.uid);
           const userSnapshot = await getDoc(userDocRef);
           if (userSnapshot.exists()) {
             const userData = userSnapshot.data();
-            setIsPublic(userData.visibility === 'public');
-            setUsername(userData.username || '');
+            setIsPublic(userData.visibility === "public");
+            setUsername(userData.username || "");
           }
         } catch (error) {
-          console.error('Error fetching user data:', error);
+          console.error("Error fetching user data:", error);
         } finally {
           setLoading(false);
         }
@@ -52,25 +54,27 @@ export default function Component() {
 
   const toggleVisibility = async (value: boolean) => {
     if (!user) return;
-    const newVisibility = value ? 'public' : 'private';
+    const newVisibility = value ? "public" : "private";
     setIsPublic(value);
 
     try {
-      const userDocRef = doc(db, 'RemiUsers', user.uid);
+      const userDocRef = doc(db, "RemiUsers", user.uid);
       await updateDoc(userDocRef, { visibility: newVisibility });
       alert(`Profile visibility updated to ${newVisibility}`);
     } catch (error) {
-      console.error('Error updating visibility:', error);
-      alert('Failed to update profile visibility');
+      console.error("Error updating visibility:", error);
+      alert("Failed to update profile visibility");
     }
   };
 
   const handleSignOut = () => {
-    signOut(auth).then(() => {
-      // Handle successful sign out
-    }).catch((error) => {
-      console.error('Error signing out:', error);
-    });
+    signOut(auth)
+      .then(() => {
+        // Handle successful sign out
+      })
+      .catch((error) => {
+        console.error("Error signing out:", error);
+      });
     setIsMenuVisible(false);
   };
 
@@ -93,15 +97,15 @@ export default function Component() {
             <Ionicons name="menu" size={30} color="#333" />
           </TouchableOpacity>
         </View>
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContent}
+        >
           <View style={styles.archOverlay} />
 
           <View style={styles.profileSection}>
             <TouchableOpacity style={styles.profileImageContainer}>
-              <Image
-                source={{ uri: profilePic }}
-                style={styles.profileImage}
-              />
+              <Image source={{ uri: profilePic }} style={styles.profileImage} />
               <Text style={styles.replaceText}>Click to replace</Text>
             </TouchableOpacity>
 
@@ -109,9 +113,7 @@ export default function Component() {
             <Text style={styles.friendsCount}>9 friends</Text>
 
             <View style={styles.bioContainer}>
-              <Text style={styles.bioText}>
-                Bio goes here...
-              </Text>
+              <Text style={styles.bioText}>Bio goes here...</Text>
             </View>
           </View>
         </ScrollView>
@@ -149,26 +151,26 @@ export default function Component() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   backgroundImage: {
     flex: 1,
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   header: {
-    position: 'absolute',
+    position: "absolute",
     top: 40,
     right: 20,
     zIndex: 10,
   },
   archOverlay: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     height: ARCH_HEIGHT,
-    backgroundColor: '#FFF9E6',
+    backgroundColor: "#FFF9E6",
     borderTopLeftRadius: ARCH_HEIGHT,
     borderTopRightRadius: ARCH_HEIGHT,
     opacity: 0.95,
@@ -177,11 +179,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollViewContent: {
-    minHeight: '100%',
+    minHeight: "100%",
     paddingTop: 40,
   },
   profileSection: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: 20,
     zIndex: 1,
   },
@@ -189,11 +191,11 @@ const styles = StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: 75,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     marginTop: 40,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 4,
@@ -209,68 +211,68 @@ const styles = StyleSheet.create({
     borderRadius: 75,
   },
   replaceText: {
-    position: 'absolute',
+    position: "absolute",
     bottom: -30,
-    width: '100%',
-    textAlign: 'center',
-    color: '#666',
+    width: "100%",
+    textAlign: "center",
+    color: "#666",
     fontSize: 12,
   },
   username: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 30,
-    color: '#333',
+    color: "#333",
   },
   friendsCount: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
     marginTop: 4,
   },
   bioContainer: {
-    width: '100%',
+    width: "100%",
     marginTop: 20,
     padding: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
     borderRadius: 12,
   },
   bioText: {
     fontSize: 16,
-    color: '#444',
+    color: "#444",
     lineHeight: 22,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)', 
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
   },
   modal: {
     margin: 0,
-    justifyContent: 'flex-start',
-    alignItems: 'flex-end',
+    justifyContent: "flex-start",
+    alignItems: "flex-end",
   },
   menuContainer: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 20,
     borderTopLeftRadius: 20,
     borderBottomLeftRadius: 20,
-    width: '70%',
-    height: '100%',
+    width: "70%",
+    height: "100%",
   },
   menuContent: {
     marginTop: 60, // Added to move menu items lower
   },
   menuItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   menuItemText: {
     fontSize: 18,
-    color: '#333',
+    color: "#333",
   },
 });

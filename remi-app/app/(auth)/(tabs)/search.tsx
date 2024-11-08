@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import {
   FlatList,
@@ -33,13 +32,12 @@ interface User {
 }
 
 const SearchFriendsScreen: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [filteredFriends, setFilteredFriends] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentUserFriends, setCurrentUserFriends] = useState<string[]>([]);
   const currentUser = auth.currentUser;
-
 
   useEffect(() => {
     if (!currentUser) {
@@ -47,27 +45,34 @@ const SearchFriendsScreen: React.FC = () => {
       return;
     }
 
-    const userDocRef = doc(db, 'RemiUsers', currentUser.uid);
-    const unsubscribeFriendsList = onSnapshot(userDocRef, (docSnapshot) => {
-      if (docSnapshot.exists()) {
-        setCurrentUserFriends(docSnapshot.data().friends_list || []);
+    const userDocRef = doc(db, "RemiUsers", currentUser.uid);
+    const unsubscribeFriendsList = onSnapshot(
+      userDocRef,
+      (docSnapshot) => {
+        if (docSnapshot.exists()) {
+          setCurrentUserFriends(docSnapshot.data().friends_list || []);
+        }
+      },
+      (error) => {
+        console.error("Error fetching friends list:", error);
       }
-    }, (error) => {
-      console.error("Error fetching friends list:", error);
-    });
-
+    );
 
     const fetchAllUsers = () => {
-      const usersCollection = collection(db, 'RemiUsers');
-      const unsubscribeUsers = onSnapshot(usersCollection, (snapshot) => {
-        const usersList = snapshot.docs.map(doc => ({
-          username: doc.data().username,
-          email: doc.data().email,
-        })) as User[];
-        setAllUsers(usersList);
-      }, (error) => {
-        console.error('Error fetching users:', error);
-      });
+      const usersCollection = collection(db, "RemiUsers");
+      const unsubscribeUsers = onSnapshot(
+        usersCollection,
+        (snapshot) => {
+          const usersList = snapshot.docs.map((doc) => ({
+            username: doc.data().username,
+            email: doc.data().email,
+          })) as User[];
+          setAllUsers(usersList);
+        },
+        (error) => {
+          console.error("Error fetching users:", error);
+        }
+      );
 
       return unsubscribeUsers;
     };
@@ -84,14 +89,15 @@ const SearchFriendsScreen: React.FC = () => {
     if (!currentUser) return;
 
     setSearchQuery(query);
-    if (query.trim() === '') {
+    if (query.trim() === "") {
       setFilteredFriends([]);
       return;
     }
-    const filtered = allUsers.filter(person =>
-      person.email !== currentUser.email &&
-      (person.username.toLowerCase().startsWith(query.toLowerCase()) ||
-       person.email.toLowerCase().startsWith(query.toLowerCase()))
+    const filtered = allUsers.filter(
+      (person) =>
+        person.email !== currentUser.email &&
+        (person.username.toLowerCase().startsWith(query.toLowerCase()) ||
+          person.email.toLowerCase().startsWith(query.toLowerCase()))
     );
     setFilteredFriends(filtered);
   };
@@ -105,7 +111,9 @@ const SearchFriendsScreen: React.FC = () => {
         <Text style={styles.email}>{item.email}</Text>
         {isAlreadyFriend ? (
           <View style={styles.centeredTextContainer}>
-            <Text style={styles.alreadyFriendText}>Already friends with this user!</Text>
+            <Text style={styles.alreadyFriendText}>
+              Already friends with this user!
+            </Text>
           </View>
         ) : (
           <Button title="Invite" onPress={() => handleInvite(item)} />
@@ -150,11 +158,12 @@ const SearchFriendsScreen: React.FC = () => {
   if (!auth.currentUser) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.emptyText}>User not authenticated. Please sign in.</Text>
+        <Text style={styles.emptyText}>
+          User not authenticated. Please sign in.
+        </Text>
       </View>
     );
   }
-
 
   if (loading) {
     return (
@@ -171,16 +180,19 @@ const SearchFriendsScreen: React.FC = () => {
         onChangeText={onChangeSearch}
         value={searchQuery}
         style={{
-          marginTop: Platform.OS === 'ios' ? 0 : 40,
+          marginTop: Platform.OS === "ios" ? 0 : 40,
           margin: 10,
-          backgroundColor: '#BCD5AC'}}
+          backgroundColor: "#BCD5AC",
+        }}
       />
       <FlatList
         data={filteredFriends}
-        keyExtractor={item => item.username}
+        keyExtractor={(item) => item.username}
         renderItem={renderItem}
         ListEmptyComponent={
-          searchQuery ? <Text style={styles.emptyText}>No users found</Text> : null
+          searchQuery ? (
+            <Text style={styles.emptyText}>No users found</Text>
+          ) : null
         }
       />
     </SafeAreaView>
@@ -190,7 +202,7 @@ const SearchFriendsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF9E6',
+    backgroundColor: "#FFF9E6",
   },
   item: {
     padding: 20,
@@ -206,13 +218,13 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   centeredTextContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 5,
   },
   alreadyFriendText: {
     fontSize: 14,
-    color: '#888',
-    fontStyle: 'italic',
+    color: "#888",
+    fontStyle: "italic",
   },
   emptyText: {
     textAlign: "center",
@@ -228,12 +240,12 @@ const styles = StyleSheet.create({
 
   inviteButton: {
     margin: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   inviteButtonText: {
-    color: '#0D5F13',
+    color: "#0D5F13",
     fontSize: 16,
-    fontFamily: 'Nunito_600SemiBold',
+    fontFamily: "Nunito_600SemiBold",
   },
 });
 

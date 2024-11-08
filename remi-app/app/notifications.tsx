@@ -131,39 +131,37 @@ const Notifs = () => {
                 <Avatar
                   size={50}
                   rounded
-                  source={require('../assets/placeholders/user-avatar.png')}
+                  source={require("../assets/placeholders/user-avatar.png")}
                   containerStyle={{
                     marginLeft: 20,
                     marginRight: 10,
                     marginTop: 5,
                     borderWidth: 3,
-                    borderColor: '#0D5F13',
+                    borderColor: "#0D5F13",
                   }}
                 />
                 <View style={styles.chatBubbleContainer}>
-                
                   <View style={styles.notifButton}>
-                    <Text style={Ustyles.notif_text}>{item.from} wants to add you as a friend!</Text>
+                    <Text style={Ustyles.notif_text}>
+                      {item.from} wants to add you as a friend!
+                    </Text>
                   </View>
 
                   <View style={styles.container2}>
                     <TouchableOpacity
-                    onPress={() => handleAccept(item)}
-                    style={styles.acceptButton}
+                      onPress={() => handleAccept(item)}
+                      style={styles.acceptButton}
                     >
                       <Text style={styles.green_text}>Accept</Text>
                     </TouchableOpacity>
-                   
+
                     <TouchableOpacity
-                    onPress={() => handleReject(item)}
-                    style={styles.rejectButton}
+                      onPress={() => handleReject(item)}
+                      style={styles.rejectButton}
                     >
                       <Text style={styles.red_text}>Reject</Text>
                     </TouchableOpacity>
-
                   </View>
-
-                 
                 </View>
               </View>
               <Spacer size={40} />
@@ -190,19 +188,18 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   notifButton: {
-    textAlignVertical: 'center',
-    alignSelf: 'center',
-    alignItems: 'center',
+    textAlignVertical: "center",
+    alignSelf: "center",
+    alignItems: "center",
     paddingHorizontal: 15,
     paddingVertical: 15,
     borderRadius: 15,
     borderWidth: 2,
-    borderColor: '#0D5F13',
-    backgroundColor: '#BCD5AC',
-    flexWrap: 'wrap',
-    width: '90%',
-    
-},
+    borderColor: "#0D5F13",
+    backgroundColor: "#BCD5AC",
+    flexWrap: "wrap",
+    width: "90%",
+  },
   chatBubble: {
     padding: 10,
   },
@@ -213,41 +210,41 @@ const styles = StyleSheet.create({
     color: "white",
   },
   chatBubbleContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingRight: 50,
   },
   acceptButton: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 15,
     borderWidth: 2,
-    borderColor: '#0D5F13',
+    borderColor: "#0D5F13",
     marginHorizontal: 5,
   },
   rejectButton: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 15,
     borderWidth: 2,
-    borderColor: '#871717',
+    borderColor: "#871717",
     marginHorizontal: 5,
   },
   green_text: {
-    fontFamily: 'Nunito_400Regular',
+    fontFamily: "Nunito_400Regular",
     fontSize: 12,
-    color: '#0D5F13',
-    alignSelf: 'center',
+    color: "#0D5F13",
+    alignSelf: "center",
     //paddingBottom: 0,
-  }, red_text: {
-    fontFamily: 'Nunito_400Regular',
-    fontSize: 12,
-    color: '#871717',
-    alignSelf: 'center',
-    //paddingBottom: 0,
-    
   },
-  });
+  red_text: {
+    fontFamily: "Nunito_400Regular",
+    fontSize: 12,
+    color: "#871717",
+    alignSelf: "center",
+    //paddingBottom: 0,
+  },
+});
 
 export default Notifs;

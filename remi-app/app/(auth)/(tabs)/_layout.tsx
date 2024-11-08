@@ -1,11 +1,12 @@
-import {Tabs} from "expo-router"
-import { Ionicons } from '@expo/vector-icons'; // For icons
+import { Tabs } from "expo-router";
+import { Ionicons } from "@expo/vector-icons"; // For icons
 const TabsLayout = () => {
-    return <Tabs>
-       <Tabs.Screen
+  return (
+    <Tabs>
+      <Tabs.Screen
         name="home"
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: "Home",
           headerShown: false, // This hides the header
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" color={color} size={size} />
@@ -43,7 +44,8 @@ const TabsLayout = () => {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="search-outline" color={color} size={size} />
           ),
-        }} />
+        }}
+      />
       <Tabs.Screen
         name="profile"
         options={{
@@ -56,7 +58,7 @@ const TabsLayout = () => {
         }}
       />
     </Tabs>
-    ;
-}
+  );
+};
 
 export default TabsLayout;

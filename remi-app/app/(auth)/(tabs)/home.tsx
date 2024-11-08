@@ -153,13 +153,12 @@ const RecipePost: React.FC<RecipePostProps> = ({
   }, [userID]);
 
   const hashtagNames = hashtags
-    .split(',')
-    .map(id => {
+    .split(",")
+    .map((id) => {
       const name = hashtagMap[id.trim()];
       return name ? `#${name}` : undefined; // Add "#" to the name if it exists
     })
     .filter(Boolean); // Filter out any undefined values
-
 
   return (
     <View style={Ustyles.post}>
@@ -198,7 +197,7 @@ const RecipePost: React.FC<RecipePostProps> = ({
             />
           </View>
           <Text style={Ustyles.recipeName}>{recipeName}</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={Ustyles.seeNotesButton}
             onPress={handleSeeNotesPress}
           >
@@ -214,7 +213,10 @@ const RecipePost: React.FC<RecipePostProps> = ({
               <View style={styles.modalContent}>
                 <Text style={styles.modalText}>{caption}</Text>
                 {/* Add more content as needed */}
-                <TouchableOpacity style={styles.closeButton} onPress={handleCloseModal}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={handleCloseModal}
+                >
                   <Text style={styles.closeButtonText}>Close</Text>
                 </TouchableOpacity>
               </View>
@@ -358,10 +360,9 @@ const Home: React.FC = () => {
     return () => unsubscribe();
   }, [user]);
 
-
   return (
     <SafeAreaView style={Ustyles.background}>
-     <View style={Ustyles.background}>
+      <View style={Ustyles.background}>
         <ScrollView stickyHeaderIndices={[0]} style={Ustyles.feed}>
           <View
             style={[
@@ -410,7 +411,7 @@ const Home: React.FC = () => {
                   likes={post.likesCount || 0}
                   comments={post.comments || 0}
                   recipeName={post.title || "Untitled Recipe"}
-                  price={post.Price || 0.00}
+                  price={post.Price || 0.0}
                   difficulty={post.Difficulty || 0}
                   time={post.Time || 0}
                   caption={post.caption || "No caption"}
