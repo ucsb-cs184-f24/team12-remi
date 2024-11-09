@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,23 +10,29 @@ import {
   Dimensions,
   Platform,
   Switch,
+  TextInput,
 } from 'react-native';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../../../firebaseConfig';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import Modal from 'react-native-modal';
 import { Ionicons } from '@expo/vector-icons';
+import Ustyles from "@/components/UniversalStyles";
 
 const { width, height } = Dimensions.get('window');
 const ARCH_HEIGHT = height * 0.73;
+const MAX_BIO_LENGTH = 150;
 
 export default function Component() {
   const user = auth.currentUser;
   const [profilePic, setProfilePic] = useState('https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png');
   const [username, setUsername] = useState('');
+  const [bio, setBio] = useState('');
+  const [isEditingBio, setIsEditingBio] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const bioInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -38,6 +44,7 @@ export default function Component() {
             const userData = userSnapshot.data();
             setIsPublic(userData.visibility === 'public');
             setUsername(userData.username || '');
+            setBio(userData.bio || '');
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -49,6 +56,12 @@ export default function Component() {
 
     fetchUserData();
   }, [user]);
+
+  useEffect(() => {
+    if (isEditingBio && bioInputRef.current) {
+      bioInputRef.current.focus();
+    }
+  }, [isEditingBio]);
 
   const toggleVisibility = async (value: boolean) => {
     if (!user) return;
@@ -62,6 +75,23 @@ export default function Component() {
     } catch (error) {
       console.error('Error updating visibility:', error);
       alert('Failed to update profile visibility');
+    }
+  };
+
+  const saveBio = async () => {
+    if (!user) return;
+    if (bio.trim().length === 0) {
+      alert('Bio cannot be empty');
+      return;
+    }
+    try {
+      const userDocRef = doc(db, 'RemiUsers', user.uid);
+      await updateDoc(userDocRef, { bio });
+      setIsEditingBio(false);
+      alert('Bio updated successfully');
+    } catch (error) {
+      console.error('Error updating bio:', error);
+      alert('Failed to update bio');
     }
   };
 
@@ -105,13 +135,42 @@ export default function Component() {
               <Text style={styles.replaceText}>Click to replace</Text>
             </TouchableOpacity>
 
-            <Text style={styles.username}>{username}</Text>
+            <Text style={[Ustyles.header_text, styles.username]}>
+              {username}
+            </Text>
             <Text style={styles.friendsCount}>9 friends</Text>
 
             <View style={styles.bioContainer}>
-              <Text style={styles.bioText}>
-                Bio goes here...
-              </Text>
+              {isEditingBio ? (
+                <View style={styles.bioEditContainer}>
+                  <View style={styles.bioInputWrapper}>
+                    <TextInput
+                      ref={bioInputRef}
+                      style={styles.bioInput}
+                      value={bio}
+                      onChangeText={(text) => setBio(text.slice(0, MAX_BIO_LENGTH))}
+                      placeholder="Enter your bio"
+                      multiline
+                      maxLength={MAX_BIO_LENGTH}
+                    />
+                  </View>
+                  <Text style={styles.characterCount}>
+                    {MAX_BIO_LENGTH - bio.length} characters remaining
+                  </Text>
+                  <TouchableOpacity style={styles.saveButton} onPress={saveBio}>
+                    <Text style={styles.saveButtonText}>Save Bio</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.bioTextContainer}>
+                  <Text style={styles.bioText}>
+                    {bio || "Tap to add a bio..."}
+                  </Text>
+                  <TouchableOpacity onPress={() => setIsEditingBio(true)} style={styles.editIcon}>
+                    <Ionicons name="pencil-outline" size={16} color="#666" />
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           </View>
         </ScrollView>
@@ -230,14 +289,56 @@ const styles = StyleSheet.create({
   bioContainer: {
     width: '100%',
     marginTop: 20,
-    padding: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 12,
+    alignItems: 'center',
+  },
+  bioEditContainer: {
+    width: '100%',
+    alignItems: 'stretch',
+  },
+  bioInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    paddingBottom: 5,
+  },
+  bioInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#444',
+    minHeight: 40,
+    paddingHorizontal: 0,
+  },
+  characterCount: {
+    alignSelf: 'flex-end',
+    fontSize: 12,
+    color: '#666',
+    marginTop: 5,
+  },
+  saveButton: {
+    backgroundColor: '#BCD5AC',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#333',
+    fontWeight: 'bold',
+  },
+  bioTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bioText: {
     fontSize: 16,
     color: '#444',
     lineHeight: 22,
+  },
+  editIcon: {
+    marginLeft: 8,
+    padding: 4,
   },
   loadingContainer: {
     flex: 1,
@@ -259,7 +360,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   menuContent: {
-    marginTop: 60, // Added to move menu items lower
+    marginTop: 60,
   },
   menuItem: {
     flexDirection: 'row',
