@@ -529,6 +529,7 @@ import {
   ScrollView,
   Platform,
   StatusBar,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons"; // For icons
@@ -655,10 +656,54 @@ const RecipePost: React.FC<RecipePostProps> = ({
   const [username, setUsername] = useState<string>("");
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [commentVisible, setCommentVisible] = useState(false);
 
   const [likesCount, setLikesCount] = useState(likes);
   const [likedBy, setLikedBy] = useState<string[]>([]);
   const [commentsCount, setCommentsCount] = useState(comments);
+  const [newComment, setNewComment] = useState("");
+  const [commentText, setCommentText] = useState<string>("");
+  const [postComments, setPostComments] = useState<any[]>([]); // Store comments here
+
+  const fetchComments = async () => {
+    try {
+      const commentsRef = collection(db, "Comments"); // Assume you have a 'Comments' collection
+      const commentsQuery = query(commentsRef, where("postId", "==", userID)); // Adjust the field as necessary
+      const querySnapshot = await getDocs(commentsQuery);
+      const fetchedComments = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setPostComments(fetchedComments);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+    }
+  };
+
+  const handleAddComment = async (commentText: string) => {
+    if (!commentText.trim()) return; // Prevent empty comments
+
+    try {
+      await addDoc(collection(db, "Comments"), {
+        postId: userID, // Link to the post
+        text: commentText,
+        userId: auth.currentUser?.uid, // Current user's ID
+        createdAt: new Date(),
+      });
+      setCommentText(""); // Clear the input field
+      fetchComments(); // Refresh comments
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
+  };
+
+  // Handle submit logic
+  const onSubmitComment = () => {
+    if (newComment.trim() === "") return; // Prevent empty comments
+    handleAddComment(newComment); // Call parent function to handle comment submission
+    setNewComment(""); // Clear the text input
+    setCommentVisible(false); // Close modal after submitting
+  };
 
   const handleSeeNotesPress = () => {
     setModalVisible(true); // Show the modal
@@ -666,6 +711,16 @@ const RecipePost: React.FC<RecipePostProps> = ({
 
   const handleCloseModal = () => {
     setModalVisible(false); // Hide the modal
+  };
+
+  const handleCommentsPress = () => {
+    setModalVisible(true); // Show the modal
+    fetchComments(); // Fetch comments when modal is opened
+  };
+
+  const hanldeCloseComments = () => {
+    setModalVisible(false); // Hide the modal
+    setCommentText(""); // Reset comment input
   };
 
   const handleLikePress = async () => {
@@ -778,8 +833,46 @@ const RecipePost: React.FC<RecipePostProps> = ({
             <Text style={Ustyles.engagementText}>{likesCount}</Text>
           </View>
           <View style={Ustyles.engagementItem}>
-            <Ionicons name="chatbox-outline" size={27} color="gray" />
+            {/* Comment Icon */}
+            <Ionicons
+              name="chatbox-outline"
+              size={27}
+              color="gray"
+              onPress={handleCommentsPress} // Opens the comment modal
+            />
             <Text style={Ustyles.engagementText}>{comments}</Text>
+
+            {/* Modal for adding a comment */}
+            <Modal
+              visible={commentVisible}
+              animationType="slide"
+              transparent={true}
+              onRequestClose={() => setCommentVisible(false)} // Close modal on back press
+            >
+              <View style={styles.overlay}>
+                <View style={styles.modalContainer}>
+                  <Text style={styles.title}>Add a Comment</Text>
+
+                  {/* TextInput for comment */}
+                  <TextInput
+                    style={styles.textInput}
+                    value={newComment}
+                    onChangeText={setNewComment} // Updates the comment text
+                    placeholder="Type your comment here..."
+                    multiline={true} // Allows multiple lines if the comment is long
+                  />
+
+                  {/* Submit Comment Button */}
+                  <Button title="Submit Comment" onPress={onSubmitComment} />
+
+                  {/* Close Modal Button */}
+                  <Button
+                    title="Close"
+                    onPress={() => setCommentVisible(false)}
+                  />
+                </View>
+              </View>
+            </Modal>
           </View>
         </View>
       </View>
@@ -1080,7 +1173,7 @@ const styles = StyleSheet.create({
   contentText: {
     fontSize: 16,
   },
-  modalContainer: {
+  commentContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -1116,6 +1209,33 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
     fontSize: 15,
     color: "#0D5F13",
+  },
+  overlay: {
+    flex: 1,
+    justifyContent: "flex-end", // Align the modal at the bottom of the screen
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
+  },
+  modalContainer: {
+    width: "100%",
+    padding: 20,
+    backgroundColor: "white",
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  textInput: {
+    height: 100,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+    textAlignVertical: "top", // Ensures the text input starts from the top when typing
   },
 });
 
