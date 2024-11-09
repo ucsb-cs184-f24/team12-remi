@@ -714,12 +714,12 @@ const RecipePost: React.FC<RecipePostProps> = ({
   };
 
   const handleCommentsPress = () => {
-    setModalVisible(true); // Show the modal
+    setCommentVisible(true); // Show the modal
     fetchComments(); // Fetch comments when modal is opened
   };
 
   const hanldeCloseComments = () => {
-    setModalVisible(false); // Hide the modal
+    setCommentVisible(false); // Hide the modal
     setCommentText(""); // Reset comment input
   };
 
