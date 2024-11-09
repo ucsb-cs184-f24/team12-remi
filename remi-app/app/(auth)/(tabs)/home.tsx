@@ -133,6 +133,20 @@ const RecipePost: React.FC<RecipePostProps> = ({
   mediaUrl,
 }) => {
   const [username, setUsername] = useState<string>("");
+  const [profilePic, setProfilePic] = useState<string>("");
+  const getProfilePhoto = async (userID: string): Promise<string> => {
+    try {
+      const userDocRef = doc(db, "RemiUsers", userID);
+      const userSnapshot = await getDoc(userDocRef);
+      if (userSnapshot.exists()) {
+        const userData = userSnapshot.data();
+        return userData.profilePic || "";
+      }
+    } catch (error) {
+      console.error("Error fetching profile photo:", error);
+    }
+    return "";
+  };
 
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -151,22 +165,35 @@ const RecipePost: React.FC<RecipePostProps> = ({
     };
     fetchUsername();
   }, [userID]);
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const name = await getUsername(userID);
+      setUsername(name);
+
+      const photoUrl = await getProfilePhoto(userID);
+      setProfilePic(photoUrl);
+    };
+    fetchUserData();
+  }, [userID]);
 
   const hashtagNames = hashtags
-    .split(',')
-    .map(id => {
+    .split(",")
+    .map((id) => {
       const name = hashtagMap[id.trim()];
       return name ? `#${name}` : undefined; // Add "#" to the name if it exists
     })
     .filter(Boolean); // Filter out any undefined values
-
 
   return (
     <View style={Ustyles.post}>
       <View style={Ustyles.postHeader}>
         <View style={Ustyles.userInfo}>
           <Image
-            source={require("../../../assets/placeholders/user-avatar.png")}
+            source={
+              profilePic
+                ? { uri: profilePic }
+                : require("../../../assets/placeholders/recipe-image.png")
+            }
             style={Ustyles.avatar}
           />
           <View>
@@ -198,10 +225,9 @@ const RecipePost: React.FC<RecipePostProps> = ({
             />
           </View>
           <Text style={Ustyles.recipeName}>{recipeName}</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={Ustyles.seeNotesButton}
-            onPress={handleSeeNotesPress}
-          >
+            onPress={handleSeeNotesPress}>
             <Text style={Ustyles.seeNotesText}>See Notes</Text>
           </TouchableOpacity>
           <Modal
@@ -214,7 +240,9 @@ const RecipePost: React.FC<RecipePostProps> = ({
               <View style={styles.modalContent}>
                 <Text style={styles.modalText}>{caption}</Text>
                 {/* Add more content as needed */}
-                <TouchableOpacity style={styles.closeButton} onPress={handleCloseModal}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={handleCloseModal}>
                   <Text style={styles.closeButtonText}>Close</Text>
                 </TouchableOpacity>
               </View>
@@ -358,10 +386,9 @@ const Home: React.FC = () => {
     return () => unsubscribe();
   }, [user]);
 
-
   return (
     <SafeAreaView style={Ustyles.background}>
-     <View style={Ustyles.background}>
+      <View style={Ustyles.background}>
         <ScrollView stickyHeaderIndices={[0]} style={Ustyles.feed}>
           <View
             style={[
@@ -369,13 +396,11 @@ const Home: React.FC = () => {
               {
                 backgroundColor: "#FFF9E6",
               },
-            ]}
-          >
+            ]}>
             <View style={styles.headerContent}>
               <Text style={styles.logoText}>Remi</Text>
               <TouchableOpacity
-                onPress={() => router.push("../../notifications")}
-              >
+                onPress={() => router.push("../../notifications")}>
                 <Ionicons
                   name="notifications-outline"
                   size={27}
@@ -398,7 +423,7 @@ const Home: React.FC = () => {
               return dateB.getTime() - dateA.getTime();
             })
             .map((post, index) => (
-              <View>
+              <View key={post.id}>
                 <RecipePost
                   key={index}
                   userID={post.userId || "Anonymous"}
@@ -410,7 +435,7 @@ const Home: React.FC = () => {
                   likes={post.likesCount || 0}
                   comments={post.comments || 0}
                   recipeName={post.title || "Untitled Recipe"}
-                  price={post.Price || 0.00}
+                  price={post.Price || 0.0}
                   difficulty={post.Difficulty || 0}
                   time={post.Time || 0}
                   caption={post.caption || "No caption"}
