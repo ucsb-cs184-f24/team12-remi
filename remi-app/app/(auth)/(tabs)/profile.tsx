@@ -25,6 +25,7 @@ import Modal from "react-native-modal";
 import { Ionicons } from "@expo/vector-icons";
 import Ustyles from "@/components/UniversalStyles";
 import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 const ARCH_HEIGHT = height * 0.73;
@@ -110,6 +111,7 @@ export default function Component() {
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const { image, pickImage } = useImagePicker();
   const bioInputRef = useRef<TextInput>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -199,15 +201,10 @@ export default function Component() {
     }
   };
 
-  const handleSignOut = () => {
-    signOut(auth)
-      .then(() => {
-        // Handle successful sign out
-      })
-      .catch((error) => {
-        console.error("Error signing out:", error);
-      });
+  const handleSignOut = async () => {
     setIsMenuVisible(false);
+    router.push("../../poo");
+    await signOut(auth);
   };
 
   if (loading) {
