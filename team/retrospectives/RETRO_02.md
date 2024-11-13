@@ -22,5 +22,5 @@
 
 ## Retro Outcome
 
-* We experimented with being more detailed in creating issues and cards for new features/bugs, and making sure not to work on the same issue. The outcome of this experiment was successful, as we are better documenting which features we are working on through Discord and creating cards for issues before we start actually implementing them.
+* We experimented with being more detailed in creating issues and cards for new features/bugs, and making sure not to work on the same issue. The outcome of this experiment was successful, as we are better documenting which features we are working on through Discord and creating cards for issues before we start actually implementing them. This has helped us better keep track of progress and prevent people from working on the same issues.
 
