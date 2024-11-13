@@ -127,7 +127,7 @@ export default function Explore() {
           )}
           {activeTab === "bookmarks" && (
             <BookmarksTab searchQuery={searchQuery} />
-          )}
+          )} 
         </View>
       </ScrollView>
     </SafeAreaView>
