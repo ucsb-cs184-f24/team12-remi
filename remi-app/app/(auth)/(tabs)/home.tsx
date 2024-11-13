@@ -90,7 +90,6 @@ const hashtagMap: { [key: string]: string } = {
   "29": "Beverages",
   "30": "Japanese",
 };
-
 interface RecipePostProps {
   userID: string;
   timeAgo: Date;
@@ -119,7 +118,7 @@ const getUsername = async (userID: string): Promise<string> => {
   return "Unknown User";
 };
 
-const RecipePost: React.FC<RecipePostProps> = ({
+export const RecipePost: React.FC<RecipePostProps> = ({
   userID,
   timeAgo,
   likes,
@@ -227,7 +226,8 @@ const RecipePost: React.FC<RecipePostProps> = ({
           <Text style={Ustyles.recipeName}>{recipeName}</Text>
           <TouchableOpacity
             style={Ustyles.seeNotesButton}
-            onPress={handleSeeNotesPress}>
+            onPress={handleSeeNotesPress}
+          >
             <Text style={Ustyles.seeNotesText}>See Notes</Text>
           </TouchableOpacity>
           <Modal
@@ -242,7 +242,8 @@ const RecipePost: React.FC<RecipePostProps> = ({
                 {/* Add more content as needed */}
                 <TouchableOpacity
                   style={styles.closeButton}
-                  onPress={handleCloseModal}>
+                  onPress={handleCloseModal}
+                >
                   <Text style={styles.closeButtonText}>Close</Text>
                 </TouchableOpacity>
               </View>
@@ -396,11 +397,13 @@ const Home: React.FC = () => {
               {
                 backgroundColor: "#FFF9E6",
               },
-            ]}>
+            ]}
+          >
             <View style={styles.headerContent}>
               <Text style={styles.logoText}>Remi</Text>
               <TouchableOpacity
-                onPress={() => router.push("../../notifications")}>
+                onPress={() => router.push("../../notifications")}
+              >
                 <Ionicons
                   name="notifications-outline"
                   size={27}

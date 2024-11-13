@@ -1,29 +1,23 @@
 import React, { useEffect, useState } from "react";
 import {
-  FlatList,
-  SafeAreaView,
-  StyleSheet,
-  Text,
   View,
-  ActivityIndicator,
-  TouchableOpacity,
+  Text,
+  ScrollView,
   Button,
   Alert,
-  Platform,
+  ActivityIndicator,
+  StyleSheet,
 } from "react-native";
-import { Searchbar } from "react-native-paper";
+import { db, auth } from "../../firebaseConfig";
 import {
   collection,
-  addDoc,
   doc,
+  onSnapshot,
   getDocs,
   query,
   where,
-  QuerySnapshot,
-  DocumentData,
-  onSnapshot,
+  addDoc,
 } from "firebase/firestore";
-import { db, auth } from "../../../firebaseConfig";
 
 interface User {
   friends_list: Array<string>;
@@ -31,8 +25,11 @@ interface User {
   email: string;
 }
 
-const SearchFriendsScreen: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+interface UsersTabProps {
+  searchQuery: string;
+}
+
+const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [filteredFriends, setFilteredFriends] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,6 +42,7 @@ const SearchFriendsScreen: React.FC = () => {
       return;
     }
 
+    // Fetch current user's friends list
     const userDocRef = doc(db, "RemiUsers", currentUser.uid);
     const unsubscribeFriendsList = onSnapshot(
       userDocRef,
@@ -58,6 +56,7 @@ const SearchFriendsScreen: React.FC = () => {
       }
     );
 
+    // Fetch all users from Firestore
     const fetchAllUsers = () => {
       const usersCollection = collection(db, "RemiUsers");
       const unsubscribeUsers = onSnapshot(
@@ -85,42 +84,23 @@ const SearchFriendsScreen: React.FC = () => {
     };
   }, [currentUser]);
 
-  const onChangeSearch = (query: string) => {
+  // Filter users based on the search query
+  useEffect(() => {
     if (!currentUser) return;
 
-    setSearchQuery(query);
-    if (query.trim() === "") {
+    if (searchQuery.trim() === "") {
       setFilteredFriends([]);
       return;
     }
+
     const filtered = allUsers.filter(
       (person) =>
         person.email !== currentUser.email &&
-        (person.username.toLowerCase().startsWith(query.toLowerCase()) ||
-          person.email.toLowerCase().startsWith(query.toLowerCase()))
+        (person.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          person.email.toLowerCase().includes(searchQuery.toLowerCase()))
     );
     setFilteredFriends(filtered);
-  };
-
-  const renderItem = ({ item }: { item: User }) => {
-    const isAlreadyFriend = currentUserFriends.includes(item.email);
-
-    return (
-      <View style={styles.item}>
-        <Text style={styles.username}>{item.username}</Text>
-        <Text style={styles.email}>{item.email}</Text>
-        {isAlreadyFriend ? (
-          <View style={styles.centeredTextContainer}>
-            <Text style={styles.alreadyFriendText}>
-              Already friends with this user!
-            </Text>
-          </View>
-        ) : (
-          <Button title="Invite" onPress={() => handleInvite(item)} />
-        )}
-      </View>
-    );
-  };
+  }, [searchQuery, allUsers, currentUser]);
 
   const handleInvite = async (user: User) => {
     if (!currentUser) return;
@@ -155,6 +135,26 @@ const SearchFriendsScreen: React.FC = () => {
     }
   };
 
+  const renderItem = ({ item }: { item: User }) => {
+    const isAlreadyFriend = currentUserFriends.includes(item.email);
+
+    return (
+      <View style={styles.item}>
+        <Text style={styles.username}>{item.username}</Text>
+        <Text style={styles.email}>{item.email}</Text>
+        {isAlreadyFriend ? (
+          <View style={styles.centeredTextContainer}>
+            <Text style={styles.alreadyFriendText}>
+              Already friends with this user!
+            </Text>
+          </View>
+        ) : (
+          <Button title="Invite" onPress={() => handleInvite(item)} />
+        )}
+      </View>
+    );
+  };
+
   if (!auth.currentUser) {
     return (
       <View style={styles.loadingContainer}>
@@ -174,28 +174,15 @@ const SearchFriendsScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Searchbar
-        placeholder="Search by username or email"
-        onChangeText={onChangeSearch}
-        value={searchQuery}
-        style={{
-          marginTop: Platform.OS === "ios" ? 0 : 40,
-          margin: 10,
-          backgroundColor: "#BCD5AC",
-        }}
-      />
-      <FlatList
-        data={filteredFriends}
-        keyExtractor={(item) => item.username}
-        renderItem={renderItem}
-        ListEmptyComponent={
-          searchQuery ? (
-            <Text style={styles.emptyText}>No users found</Text>
-          ) : null
-        }
-      />
-    </SafeAreaView>
+    <View style={styles.container}>
+      <ScrollView>
+        {filteredFriends.length > 0
+          ? filteredFriends.map((item) => (
+              <View key={item.username}>{renderItem({ item })}</View>
+            ))
+          : searchQuery && <Text style={styles.emptyText}>No users found</Text>}
+      </ScrollView>
+    </View>
   );
 };
 
@@ -237,16 +224,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
-  inviteButton: {
-    margin: 10,
-    alignItems: "center",
-  },
-  inviteButtonText: {
-    color: "#0D5F13",
-    fontSize: 16,
-    fontFamily: "Nunito_600SemiBold",
-  },
 });
 
-export default SearchFriendsScreen;
+export default UsersTab;
