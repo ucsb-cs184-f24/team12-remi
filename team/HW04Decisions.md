@@ -11,20 +11,20 @@ We decided the easiest method of evaulation would be to have the implementees as
 
 # Implementation
 - Helen - Search by Tags 
-Will be assessed by Peter
+- Will be assessed by Peter
 
 # Implementation 
 - Anushka - Bookmarks on Posts
-Will be assessed by Helen
+- Will be assessed by Helen
 
 # Implementation
 - Peter - Seeing recent activity profile page
-Will be assessed by Anushka
+- Will be assessed by Anushka
 
 # Testing
 - Sunhu - Unit Testing on Logout
-Will be assessed by Kavi
+- Will be assessed by Kavi
 
 # Design
 - Kavi - Changing UI on Create Account
-Will be asssessed by Raina
+- Will be asssessed by Raina
