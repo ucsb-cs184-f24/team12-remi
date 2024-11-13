@@ -6,9 +6,8 @@
 
 ## Action item
 
-* Start testing code, writing unit tests for frontend and backend
-* Add some issues for basic testing such as user workflows of signing up / login, and posting
-* These changes should be moved to DONE, or at the very least an experimental commit is put up containing unit tests
+* Before creating a branch and working on some feature or bug, make sure to create a card, any acceptance criteria, and to assign the issue to other team members if necessary. Have clear acceptance criteria on these cards, and associate/create any user stories if necessary.
+* Once starting an issue, try to alert the team through Discord / during meetings to make sure we aren't working on the same issue on different branches.
 
 ## Retro Assessment
 
@@ -23,5 +22,5 @@
 
 ## Retro Outcome
 
-* We experimented with being more responsive and detailed in our PRs and reviews -- I believe it turned out pretty well as we started to put fleshed out PRs including images or videos of our changes and pinging everyone in a discord channel when it was put up. We still do not really delete branches after they have been merged, which is not blocking progress at all but just clutters the Github page a bit. Overall though, this experiment was successful.
+* We experimented with being more detailed in creating issues and cards for new features/bugs, and making sure not to work on the same issue. The outcome of this experiment was successful, as we are better documenting which features we are working on through Discord and creating cards for issues before we start actually implementing them. This has helped us better keep track of progress and prevent people from working on the same issues.
 
