@@ -132,7 +132,7 @@ const getUsername = async (userID: string): Promise<string> => {
   return "Unknown User";
 };
 
-const RecipePost: React.FC<RecipePostProps> = ({
+export const RecipePost: React.FC<RecipePostProps> = ({
   userID,
   timeAgo,
   likes,
@@ -161,7 +161,7 @@ const RecipePost: React.FC<RecipePostProps> = ({
   // const [postComments, setPostComments] = useState<any[]>([]);
   const [postComments, setPostComments] = useState<Comment[]>([]);
 
-  const postRef = doc(db, "Posts", postID);
+  const postRef = doc(db, "Posts", "1730323847170");
 
   // const fetchComments = async () => {
   //   try {
