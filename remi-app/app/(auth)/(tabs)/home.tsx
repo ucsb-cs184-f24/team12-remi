@@ -12,6 +12,7 @@ import {
   ScrollView,
   Platform,
   StatusBar,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons"; // For icons
@@ -28,6 +29,7 @@ import {
   onSnapshot,
   updateDoc,
   arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { db, auth } from "../../../firebaseConfig"; // Ensure correct imports
 import { signOut } from "firebase/auth";
@@ -90,7 +92,9 @@ const hashtagMap: { [key: string]: string } = {
   "29": "Beverages",
   "30": "Japanese",
 };
+
 interface RecipePostProps {
+  postID: string;
   userID: string;
   timeAgo: Date;
   mediaUrl: string;
@@ -102,6 +106,16 @@ interface RecipePostProps {
   time: number;
   caption: string;
   hashtags: string;
+  userHasCommented: boolean;
+}
+
+interface Comment {
+  id: string;
+  postId: string;
+  userId: string;
+  text: string;
+  createdAt: Date;
+  username?: string; // Make username optional
 }
 
 const getUsername = async (userID: string): Promise<string> => {
@@ -130,24 +144,91 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   caption,
   hashtags,
   mediaUrl,
+  postID,
+  userHasCommented,
 }) => {
   const [username, setUsername] = useState<string>("");
-  const [profilePic, setProfilePic] = useState<string>("");
-  const getProfilePhoto = async (userID: string): Promise<string> => {
-    try {
-      const userDocRef = doc(db, "RemiUsers", userID);
-      const userSnapshot = await getDoc(userDocRef);
-      if (userSnapshot.exists()) {
-        const userData = userSnapshot.data();
-        return userData.profilePic || "";
-      }
-    } catch (error) {
-      console.error("Error fetching profile photo:", error);
-    }
-    return "";
-  };
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [commentVisible, setCommentVisible] = useState(false);
+  // const [userHasCommented, setUserHasCommented] = useState(false);
+
+  const [likesCount, setLikesCount] = useState(likes);
+  const [likedBy, setLikedBy] = useState<string[]>([]);
+  const [commentsCount, setCommentsCount] = useState(comments);
+  const [newComment, setNewComment] = useState("");
+  const [commentText, setCommentText] = useState<string>("");
+  // const [postComments, setPostComments] = useState<any[]>([]);
+  const [postComments, setPostComments] = useState<Comment[]>([]);
+
+  const postRef = doc(db, "Posts", postID);
+
+  const fetchComments = async () => {
+    try {
+      const commentsRef = collection(db, "Comments");
+      const commentsQuery = query(commentsRef, where("postId", "==", postID));
+      const querySnapshot = await getDocs(commentsQuery);
+
+      const mappedComments: Comment[] = await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
+          const commentData = doc.data() as Omit<Comment, "username" | "id">;
+
+          // Use the getUsername function to fetch the username
+          const username = await getUsername(commentData.userId);
+
+          return {
+            ...commentData,
+            id: doc.id,
+            username, // Attach username here
+          } as Comment;
+        })
+      );
+
+      setPostComments(mappedComments); // Set the combined data in state
+    } catch (error) {
+      console.error("Error fetching comments with usernames:", error);
+    }
+  };
+
+  const handleAddComment = async (commentText: string) => {
+    if (!commentText.trim()) return;
+
+    try {
+      await addDoc(collection(db, "Comments"), {
+        postId: postID,
+        text: commentText,
+        userId: auth.currentUser?.uid, // Current user's ID
+        createdAt: new Date(),
+      });
+
+      await updateDoc(postRef, {
+        comments: commentsCount + 1, // Update the count in the Firestore post document
+      });
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
+  };
+
+  useEffect(() => {
+    const postRef = doc(db, "Posts", postID);
+
+    const unsubscribe = onSnapshot(postRef, (doc) => {
+      if (doc.exists()) {
+        const postData = doc.data();
+        setCommentsCount(postData.comments || 0); // Ensure comments count is updated
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup listener
+  }, [postID]);
+
+  // Handle submit logic
+  const onSubmitComment = () => {
+    if (newComment.trim() === "") return; // Prevent empty comments
+    handleAddComment(newComment); // Call parent function to handle comment submission
+    setNewComment(""); // Clear the text input
+    setCommentVisible(false); // Close modal after submitting
+  };
 
   const handleSeeNotesPress = () => {
     setModalVisible(true); // Show the modal
@@ -157,22 +238,98 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     setModalVisible(false); // Hide the modal
   };
 
+  const handleCommentsPress = () => {
+    setCommentVisible(true);
+
+    const commentsRef = collection(db, "Comments");
+    const commentsQuery = query(commentsRef, where("postId", "==", postID));
+
+    const unsubscribe = onSnapshot(commentsQuery, async (snapshot) => {
+      const liveComments = await Promise.all(
+        snapshot.docs.map(async (doc) => {
+          const commentData = doc.data() as Omit<Comment, "id" | "username">;
+
+          const username = await getUsername(commentData.userId);
+
+          return {
+            ...commentData,
+            id: doc.id,
+            username,
+          } as Comment;
+        })
+      );
+
+      setPostComments(liveComments);
+    });
+
+    return unsubscribe;
+  };
+
+  const hanldeCloseComments = () => {
+    setCommentVisible(false); // Hide the modal
+    setCommentText(""); // Reset comment input
+  };
+
+  const handleLikePress = async () => {
+    if (!auth.currentUser) {
+      Alert.alert("Error", "You must be logged in to like posts.");
+      return;
+    }
+
+    const userId = auth.currentUser.uid;
+
+    try {
+      const postSnapshot = await getDoc(postRef);
+
+      if (postSnapshot.exists()) {
+        const postData = postSnapshot.data();
+        const likedByArray: string[] = postData.likedBy || [];
+
+        if (likedByArray.includes(userId)) {
+          // User already liked the post, so remove their like
+          await updateDoc(postRef, {
+            likesCount: postData.likesCount - 1, // Directly update Firestore
+            likedBy: arrayRemove(userId), // Remove user ID
+          });
+        } else {
+          // User has not liked the post, so add their like
+          await updateDoc(postRef, {
+            likesCount: postData.likesCount + 1, // Directly update Firestore
+            likedBy: arrayUnion(userId), // Add user ID
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error updating like:", error);
+      Alert.alert("Error", "Failed to update like. Please try again.");
+    }
+  };
+
+  useEffect(() => {
+    const postRef = doc(db, "Posts", postID);
+
+    const unsubscribe = onSnapshot(postRef, (doc) => {
+      if (doc.exists()) {
+        const postData = doc.data();
+        setLikesCount(postData.likesCount || 0); // Real-time update
+        setLikedBy(postData.likedBy || []); // Real-time update of likedBy array
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup listener
+  }, [postID]);
+
   useEffect(() => {
     const fetchUsername = async () => {
-      const name = await getUsername(userID);
-      setUsername(name);
+      try {
+        const name = await getUsername(userID);
+        setUsername(name);
+      } catch (error) {
+        console.error("Error fetching username:", error);
+      }
     };
-    fetchUsername();
-  }, [userID]);
-  useEffect(() => {
-    const fetchUserData = async () => {
-      const name = await getUsername(userID);
-      setUsername(name);
 
-      const photoUrl = await getProfilePhoto(userID);
-      setProfilePic(photoUrl);
-    };
-    fetchUserData();
+    fetchUsername();
   }, [userID]);
 
   const hashtagNames = hashtags
@@ -188,11 +345,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
       <View style={Ustyles.postHeader}>
         <View style={Ustyles.userInfo}>
           <Image
-            source={
-              profilePic
-                ? { uri: profilePic }
-                : require("../../../assets/placeholders/recipe-image.png")
-            }
+            source={require("../../../assets/placeholders/user-avatar.png")}
             style={Ustyles.avatar}
           />
           <View>
@@ -202,12 +355,75 @@ export const RecipePost: React.FC<RecipePostProps> = ({
         </View>
         <View style={Ustyles.engagement}>
           <View style={Ustyles.engagementItem}>
-            <Ionicons name="heart-outline" size={27} color="red" />
-            <Text style={Ustyles.engagementText}>{likes}</Text>
+            <Ionicons
+              name={
+                likedBy.includes(auth.currentUser?.uid ?? "")
+                  ? "heart"
+                  : "heart-outline"
+              }
+              size={27}
+              color={
+                likedBy.includes(auth.currentUser?.uid ?? "") ? "red" : "gray"
+              }
+              onPress={handleLikePress}
+            />
+            <Text style={Ustyles.engagementText}>{likesCount}</Text>
           </View>
           <View style={Ustyles.engagementItem}>
-            <Ionicons name="chatbox-outline" size={27} color="gray" />
-            <Text style={Ustyles.engagementText}>{comments}</Text>
+            {/* Comment Icon */}
+            <Ionicons
+              name={userHasCommented ? "chatbox" : "chatbox-outline"} // Filled icon when user has commented
+              size={27}
+              color={userHasCommented ? "green" : "gray"} // Filled green when user has commented
+              onPress={handleCommentsPress} // Opens the comment modal
+            />
+            <Text style={Ustyles.engagementText}>{commentsCount}</Text>
+
+            {/* Modal for adding a comment */}
+            <Modal
+              visible={commentVisible}
+              animationType="slide"
+              transparent={true}
+              onRequestClose={() => setCommentVisible(false)}
+            >
+              <View style={styles.overlay}>
+                <View style={styles.modalContainer}>
+                  <Text style={styles.title}>Comments</Text>
+
+                  {/* Display existing comments */}
+                  <FlatList
+                    data={postComments}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                      <View style={styles.commentItem}>
+                        <Text style={styles.commentUser}>
+                          {item.username || "Unknown User"}
+                        </Text>
+                        <Text style={styles.commentText}>{item.text}</Text>
+                      </View>
+                    )}
+                    ListEmptyComponent={
+                      <Text style={styles.emptyComments}>
+                        No comments yet. Be the first!
+                      </Text>
+                    }
+                  />
+
+                  <TextInput
+                    style={styles.textInput}
+                    value={newComment}
+                    onChangeText={setNewComment}
+                    placeholder="Add a comment..."
+                    multiline
+                  />
+                  <Button title="Submit" onPress={onSubmitComment} />
+                  <Button
+                    title="Close"
+                    onPress={() => setCommentVisible(false)}
+                  />
+                </View>
+              </View>
+            </Modal>
           </View>
         </View>
       </View>
@@ -311,30 +527,44 @@ const Home: React.FC = () => {
   const [friendsList, setFriendsList] = useState<string[]>([]);
 
   // Fetch all posts from Firestore
-  const fetchAllPosts = async () => {
-    try {
-      if (friendsList.length === 0) {
-        return;
-      }
-      const postsRef = collection(db, "Posts");
-      console.log(friendsList);
-      const q = query(postsRef, where("userId", "in", friendsList));
-      const querySnapshot = await getDocs(q);
-      console.log(querySnapshot);
-      const filteredPosts = querySnapshot.docs.map((doc) => doc.data());
-      setPosts(filteredPosts);
-    } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert("Error", `Failed to fetch posts: ${error.message}`);
-      } else {
-        Alert.alert("Error", "An unknown error occurred.");
-      }
-    }
-  };
-
-  // Use `useEffect` to fetch posts when the component mounts
   useEffect(() => {
-    fetchAllPosts();
+    if (friendsList.length === 0) return;
+
+    const fetchPostsWithCommentsFlag = async () => {
+      const postsRef = collection(db, "Posts");
+      const postsQuery = query(postsRef, where("userId", "in", friendsList));
+
+      const querySnapshot = await getDocs(postsQuery);
+      const currentUserId = auth.currentUser?.uid;
+
+      const postsWithCommentsFlag = await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
+          const postData = doc.data();
+          const postId = doc.id;
+
+          // Check if the current user has commented on this post
+          const commentsRef = collection(db, "Comments");
+          const commentsQuery = query(
+            commentsRef,
+            where("postId", "==", postId),
+            where("userId", "==", currentUserId)
+          );
+
+          const userHasCommentedSnapshot = await getDocs(commentsQuery);
+          const userHasCommented = !userHasCommentedSnapshot.empty;
+
+          return {
+            ...postData,
+            postID: postId,
+            userHasCommented,
+          };
+        })
+      );
+
+      setPosts(postsWithCommentsFlag);
+    };
+
+    fetchPostsWithCommentsFlag();
   }, [friendsList]);
 
   useEffect(() => {
@@ -426,7 +656,7 @@ const Home: React.FC = () => {
               return dateB.getTime() - dateA.getTime();
             })
             .map((post, index) => (
-              <View key={post.id}>
+              <View>
                 <RecipePost
                   key={index}
                   userID={post.userId || "Anonymous"}
@@ -444,6 +674,8 @@ const Home: React.FC = () => {
                   caption={post.caption || "No caption"}
                   hashtags={post.hashtags || ["None"]}
                   mediaUrl={post.mediaUrl || ""}
+                  postID={post.postID}
+                  userHasCommented={post.userHasCommented}
                 />
                 <View style={Ustyles.separator} />
               </View>
@@ -504,7 +736,7 @@ const styles = StyleSheet.create({
   contentText: {
     fontSize: 16,
   },
-  modalContainer: {
+  commentContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -540,6 +772,59 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
     fontSize: 15,
     color: "#0D5F13",
+  },
+  overlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContainer: {
+    width: "100%",
+    padding: 20,
+    backgroundColor: "white",
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  textInput: {
+    height: 60,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+  },
+  commentItem: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  commentUser: {
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  commentText: {
+    fontSize: 14,
+  },
+  emptyComments: {
+    textAlign: "center",
+    marginVertical: 10,
+    color: "#666",
+  },
+  engagementItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  engagementText: {
+    marginLeft: 5,
+    fontSize: 16,
+    color: "#555",
   },
 });
 
