@@ -12,6 +12,7 @@ import {
   TextInput,
   Animated,
   ImageBackground,
+  Button,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { signOut } from "firebase/auth";
@@ -107,6 +108,7 @@ export default function Component() {
   const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const [isBookmarkVisible, setBookmarkVisible] = useState(false);
   const { image, pickImage } = useImagePicker();
   const bioInputRef = useRef<TextInput>(null);
   const router = useRouter();
@@ -211,9 +213,11 @@ export default function Component() {
     await signOut(auth);
   };
 
-  const handleBookmarks = () => {
+  const handleBookmarksPress = () => {
     // Implement bookmarks functionality here
-    alert("Bookmarks functionality to be implemented");
+    // alert("Bookmarks functionality to be implemented");
+    setBookmarkVisible(true);
+    console.log("user wants to see bookmarks!");
   };
 
   if (loading) {
@@ -351,11 +355,41 @@ export default function Component() {
                 </View>
                 <TouchableOpacity
                   style={styles.menuItem}
-                  onPress={handleBookmarks}
+                  onPress={handleBookmarksPress}
                 >
                   <Text style={styles.menuItemText}>Bookmarks</Text>
                   <Ionicons name="bookmark-outline" size={24} color="#0D5F13" />
                 </TouchableOpacity>
+
+                <Modal
+                  visible={isBookmarkVisible}
+                  animationType="slide"
+                  transparent={true}
+                  onRequestClose={() => setBookmarkVisible(false)}
+                >
+                  {/* Overlay */}
+                  <View style={styles.overlay}>
+                    <View style={styles.modalContainer}>
+                      <Text style={styles.title}>Bookmarks</Text>
+
+                      {/* Add any additional bookmark-related UI here */}
+                      {/* Example: */}
+                      {/* <FlatList
+                          data={bookmarks}
+                          keyExtractor={(item) => item.id}
+                          renderItem={({ item }) => (
+                            <View style={styles.bookmarkItem}>
+                              <Text>{item.title}</Text>
+                            </View>
+                          )}
+                        /> */}
+                      <Button
+                        title="Close"
+                        onPress={() => setBookmarkVisible(false)}
+                      />
+                    </View>
+                  </View>
+                </Modal>
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={handleSignOut}
@@ -578,5 +612,23 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontSize: 18,
     color: "#333",
+  },
+  overlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContainer: {
+    width: "100%",
+    padding: 20,
+    backgroundColor: "white",
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
   },
 });
