@@ -150,6 +150,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   const [username, setUsername] = useState<string>("");
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [savedBy, setSavedBy] = useState<string[]>([]);
   const [commentVisible, setCommentVisible] = useState(false);
   // const [userHasCommented, setUserHasCommented] = useState(false);
 
@@ -206,6 +207,58 @@ export const RecipePost: React.FC<RecipePostProps> = ({
       });
     } catch (error) {
       console.error("Error adding comment:", error);
+    }
+  };
+
+  const handleSavePost = async () => {
+    console.log("in handle save post");
+    try {
+      await addDoc(collection(db, "Bookmarks"), {
+        postId: postID,
+        userId: auth.currentUser?.uid, // Current user's ID
+      });
+      console.log("added to Bookmarks");
+    } catch (error) {
+      console.error("Error saving post:", error);
+    }
+  };
+
+  const handleSavePress = async () => {
+    if (!auth.currentUser) {
+      Alert.alert("Error", "You must be logged in to like posts.");
+      return;
+    }
+
+    const userId = auth.currentUser.uid;
+
+    try {
+      const postSnapshot = await getDoc(postRef);
+
+      if (postSnapshot.exists()) {
+        const postData = postSnapshot.data();
+        const savedByArray: string[] = postData.savedBy || [];
+        console.log(postID);
+        if (savedByArray.includes(userId)) {
+          console.log(postID);
+          console.log("includes userId");
+          // User already liked the post, so remove their like
+          await updateDoc(postRef, {
+            // savesCount: postData.savesCount - 1, // Directly update Firestore
+            savedBy: arrayRemove(userId), // Remove user ID
+          });
+        } else {
+          console.log("need to add it");
+          // User has not saved the post, so add their save
+          await updateDoc(postRef, {
+            savedBy: arrayUnion(userId), // Add user ID
+          });
+          handleSavePost();
+        }
+        console.log(savedByArray);
+      }
+    } catch (error) {
+      console.error("Error updating like:", error);
+      Alert.alert("Error", "Failed to update like. Please try again.");
     }
   };
 
@@ -378,7 +431,20 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               onPress={handleCommentsPress} // Opens the comment modal
             />
             <Text style={Ustyles.engagementText}>{commentsCount}</Text>
-
+            <View style={Ustyles.engagementItem}>
+              <Ionicons
+                name={
+                  savedBy.includes(auth.currentUser?.uid ?? "")
+                    ? "bookmark"
+                    : "bookmark-outline"
+                }
+                size={27}
+                color={
+                  savedBy.includes(auth.currentUser?.uid ?? "") ? "red" : "gray"
+                }
+                onPress={handleSavePress}
+              />
+            </View>
             {/* Modal for adding a comment */}
             <Modal
               visible={commentVisible}
