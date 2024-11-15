@@ -57,6 +57,17 @@ const TabsLayout = () => {
           ),
         }}
       />
+      <Tabs.Screen
+        name="test"
+        options={{
+          headerTitle: "Profile",
+          headerShown: false,
+          title: "Profile",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" color={color} size={size} />
+          ),
+        }}
+      />
     </Tabs>
   );
 };

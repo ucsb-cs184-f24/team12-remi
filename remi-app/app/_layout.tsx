@@ -51,6 +51,7 @@ export default function RootLayout() {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="poo" options={{ headerShown: false }} />
       <Stack.Screen
         name="notifications"
         options={{
