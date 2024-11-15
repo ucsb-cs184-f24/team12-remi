@@ -13,7 +13,7 @@ import {
   Animated,
   ImageBackground,
 } from "react-native";
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from "expo-linear-gradient";
 import { signOut } from "firebase/auth";
 import { auth, db, storage } from "../../../firebaseConfig";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
@@ -227,7 +227,7 @@ export default function Component() {
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <LinearGradient
-        colors={['#FFF9E6', '#BCD5AC']}
+        colors={["#FFF9E6", "#BCD5AC"]}
         style={styles.backgroundGradient}
       >
         <ImageBackground
@@ -237,16 +237,28 @@ export default function Component() {
         >
           <View style={styles.header}>
             <Text style={styles.username}>{username}</Text>
-            <TouchableOpacity onPress={() => setIsMenuVisible(true)} style={styles.menuButton}>
+            <TouchableOpacity
+              onPress={() => setIsMenuVisible(true)}
+              style={styles.menuButton}
+            >
               <Ionicons name="menu" size={24} color="#0D5F13" />
             </TouchableOpacity>
           </View>
-          
-          <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
+
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollViewContent}
+          >
             <View style={styles.profileSection}>
               <View style={styles.profileTopSection}>
-                <TouchableOpacity style={styles.profileImageContainer} onPress={pickImage}>
-                  <Image source={{ uri: profilePic }} style={styles.profileImage} />
+                <TouchableOpacity
+                  style={styles.profileImageContainer}
+                  onPress={pickImage}
+                >
+                  <Image
+                    source={{ uri: profilePic }}
+                    style={styles.profileImage}
+                  />
                   <View style={styles.editOverlay}>
                     <Ionicons name="camera" size={24} color="#FFF" />
                   </View>
@@ -283,16 +295,27 @@ export default function Component() {
                     <Text style={styles.characterCount}>
                       {MAX_BIO_LENGTH - bio.length} characters remaining
                     </Text>
-                    <TouchableOpacity style={styles.saveButton} onPress={saveBio}>
+                    <TouchableOpacity
+                      style={styles.saveButton}
+                      onPress={saveBio}
+                    >
                       <Text style={styles.saveButtonText}>Save Bio</Text>
                     </TouchableOpacity>
                   </View>
                 ) : (
-                  <TouchableOpacity onPress={() => setIsEditingBio(true)} style={styles.bioTextContainer}>
+                  <TouchableOpacity
+                    onPress={() => setIsEditingBio(true)}
+                    style={styles.bioTextContainer}
+                  >
                     <Text style={styles.bioText}>
                       {bio || "Tap to add a bio..."}
                     </Text>
-                    <Ionicons name="pencil-outline" size={16} color="#666" style={styles.editIcon} />
+                    <Ionicons
+                      name="pencil-outline"
+                      size={16}
+                      color="#666"
+                      style={styles.editIcon}
+                    />
                   </TouchableOpacity>
                 )}
               </View>
@@ -301,7 +324,9 @@ export default function Component() {
             <View style={styles.contentSection}>
               <Text style={styles.recentActivityTitle}>Recent Activity</Text>
               {/* Add your recent activity content here */}
-              <Text style={styles.placeholderText}>No recent activity to show.</Text>
+              <Text style={styles.placeholderText}>
+                No recent activity to show.
+              </Text>
             </View>
           </ScrollView>
 
@@ -324,11 +349,17 @@ export default function Component() {
                     value={isPublic}
                   />
                 </View>
-                <TouchableOpacity style={styles.menuItem} onPress={handleBookmarks}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleBookmarks}
+                >
                   <Text style={styles.menuItemText}>Bookmarks</Text>
                   <Ionicons name="bookmark-outline" size={24} color="#0D5F13" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.menuItem} onPress={handleSignOut}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleSignOut}
+                >
                   <Text style={styles.menuItemText}>Sign Out</Text>
                   <Ionicons name="log-out-outline" size={24} color="#0D5F13" />
                 </TouchableOpacity>
@@ -355,9 +386,9 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     paddingTop: 60,
   },
@@ -394,12 +425,12 @@ const styles = StyleSheet.create({
     }),
   },
   profileTopSection: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 20,
   },
   profileImageContainer: {
     marginRight: 20,
-    position: 'relative',
+    position: "relative",
   },
   profileImage: {
     width: 120,
@@ -409,25 +440,25 @@ const styles = StyleSheet.create({
     borderColor: "#0D5F13",
   },
   editOverlay: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     right: 0,
-    backgroundColor: 'rgba(13, 95, 19, 0.7)',
+    backgroundColor: "rgba(13, 95, 19, 0.7)",
     borderRadius: 20,
     padding: 8,
   },
   statsContainer: {
     flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
   },
   statItem: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   statNumber: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: "#0D5F13",
   },
   statLabel: {
@@ -447,7 +478,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#444",
     minHeight: 80,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
     padding: 10,
     backgroundColor: "#FFF",
     borderRadius: 10,
@@ -506,13 +537,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "#0D5F13",
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 15,
   },
   placeholderText: {
-    textAlign: 'center',
-    color: '#666',
-    fontStyle: 'italic',
+    textAlign: "center",
+    color: "#666",
+    fontStyle: "italic",
   },
   loadingContainer: {
     flex: 1,

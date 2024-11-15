@@ -50,7 +50,7 @@ const Ustyles = StyleSheet.create({
   },
   separator: {
     height: 1,
-    backgroundColor: '#BCD5AC', // Adjust color to fit your theme
+    backgroundColor: "#BCD5AC", // Adjust color to fit your theme
     marginVertical: 16,
   },
   userInfo: {
