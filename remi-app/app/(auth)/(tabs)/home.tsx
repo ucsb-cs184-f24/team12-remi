@@ -28,6 +28,7 @@ import {
   onSnapshot,
   updateDoc,
   arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { db, auth } from "../../../firebaseConfig"; // Ensure correct imports
 import { signOut } from "firebase/auth";
@@ -103,6 +104,7 @@ interface RecipePostProps {
   time: number;
   caption: string;
   hashtags: string;
+  postID: string;
 }
 
 const getUsername = async (userID: string): Promise<string> => {
@@ -149,6 +151,8 @@ const RecipePost: React.FC<RecipePostProps> = ({
   };
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [savedBy, setSavedBy] = useState<string[]>([]);
+  const postRef = doc(db, "Posts", postID);
 
   const handleSeeNotesPress = () => {
     setModalVisible(true); // Show the modal
@@ -157,6 +161,53 @@ const RecipePost: React.FC<RecipePostProps> = ({
   const handleCloseModal = () => {
     setModalVisible(false); // Hide the modal
   };
+
+  const handleSavePress = async () => {
+    if (!auth.currentUser) {
+      Alert.alert("Error", "You must be logged in to like posts.");
+      return;
+    }
+
+    const userId = auth.currentUser.uid;
+
+    try {
+      const postSnapshot = await getDoc(postRef);
+
+      if (postSnapshot.exists()) {
+        const postData = postSnapshot.data();
+        const likedByArray: string[] = postData.likedBy || [];
+
+        if (likedByArray.includes(userId)) {
+          // User already liked the post, so remove their like
+          await updateDoc(postRef, {
+            likesCount: postData.likesCount - 1, // Directly update Firestore
+            likedBy: arrayRemove(userId), // Remove user ID
+          });
+        } else {
+          // User has not liked the post, so add their like
+          await updateDoc(postRef, {
+            savedBy: arrayUnion(userId), // Add user ID
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error updating like:", error);
+      Alert.alert("Error", "Failed to update like. Please try again.");
+    }
+  };
+
+  useEffect(() => {
+    const postRef = doc(db, "Posts", postID);
+
+    const unsubscribe = onSnapshot(postRef, (doc) => {
+      if (doc.exists()) {
+        const postData = doc.data();
+        setSavedBy(postData.savedBy || []); // Real-time update of likedBy array
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup listener
+  }, [postID]);
 
   useEffect(() => {
     const fetchUsername = async () => {
@@ -210,6 +261,20 @@ const RecipePost: React.FC<RecipePostProps> = ({
             <Ionicons name="chatbox-outline" size={27} color="gray" />
             <Text style={Ustyles.engagementText}>{comments}</Text>
           </View>
+          <View style={Ustyles.engagementItem}>
+            <Ionicons
+              name={
+                savedBy.includes(auth.currentUser?.uid ?? "")
+                  ? "bookmark"
+                  : "bookmark-outline"
+              }
+              size={27}
+              color={
+                savedBy.includes(auth.currentUser?.uid ?? "") ? "red" : "gray"
+              }
+              onPress={handleSavePress}
+            />
+          </View>
         </View>
       </View>
       <View style={Ustyles.recipeContent}>
@@ -227,7 +292,8 @@ const RecipePost: React.FC<RecipePostProps> = ({
           <Text style={Ustyles.recipeName}>{recipeName}</Text>
           <TouchableOpacity
             style={Ustyles.seeNotesButton}
-            onPress={handleSeeNotesPress}>
+            onPress={handleSeeNotesPress}
+          >
             <Text style={Ustyles.seeNotesText}>See Notes</Text>
           </TouchableOpacity>
           <Modal
@@ -242,7 +308,8 @@ const RecipePost: React.FC<RecipePostProps> = ({
                 {/* Add more content as needed */}
                 <TouchableOpacity
                   style={styles.closeButton}
-                  onPress={handleCloseModal}>
+                  onPress={handleCloseModal}
+                >
                   <Text style={styles.closeButtonText}>Close</Text>
                 </TouchableOpacity>
               </View>
@@ -396,11 +463,13 @@ const Home: React.FC = () => {
               {
                 backgroundColor: "#FFF9E6",
               },
-            ]}>
+            ]}
+          >
             <View style={styles.headerContent}>
               <Text style={styles.logoText}>Remi</Text>
               <TouchableOpacity
-                onPress={() => router.push("../../notifications")}>
+                onPress={() => router.push("../../notifications")}
+              >
                 <Ionicons
                   name="notifications-outline"
                   size={27}
