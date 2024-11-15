@@ -161,33 +161,8 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   // const [postComments, setPostComments] = useState<any[]>([]);
   const [postComments, setPostComments] = useState<Comment[]>([]);
 
-  const postRef = doc(db, "Posts", "1730323847170");
+  const postRef = doc(db, "Posts", postID);
 
-  // const fetchComments = async () => {
-  //   try {
-  //     const commentsRef = collection(db, "Comments");
-  //     const commentsQuery = query(commentsRef, where("postId", "==", postID));
-  //     const querySnapshot = await getDocs(commentsQuery);
-
-  //     const fetchedComments: Comment[] = querySnapshot.docs.map(
-  //       (doc) =>
-  //         ({
-  //           ...doc.data(),
-  //           id: doc.id,
-  //         }) as Comment
-  //     );
-
-  //     setPostComments(fetchedComments);
-
-  //     const currentUserId = auth.currentUser?.uid;
-  //     const userComment = fetchedComments.some(
-  //       (comment) => comment.userId === currentUserId
-  //     );
-  //     setUserHasCommented(userComment);
-  //   } catch (error) {
-  //     console.error("Error fetching comments:", error);
-  //   }
-  // };
   const fetchComments = async () => {
     try {
       const commentsRef = collection(db, "Comments");
@@ -263,29 +238,6 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     setModalVisible(false); // Hide the modal
   };
 
-  // const handleCommentsPress = () => {
-  //   setCommentVisible(true);
-
-  //   const commentsRef = collection(db, "Comments");
-  //   const commentsQuery = query(commentsRef, where("postId", "==", postID));
-
-  //   const unsubscribe = onSnapshot(commentsQuery, (snapshot) => {
-  //     const liveComments: Comment[] = snapshot.docs.map((doc) => {
-  //       const data = doc.data() as Omit<Comment, "id">;
-  //       return { ...data, id: doc.id };
-  //     });
-
-  //     setPostComments(liveComments);
-
-  //     const currentUserId = auth.currentUser?.uid;
-  //     const userComment = liveComments.some(
-  //       (comment) => comment.userId === currentUserId
-  //     );
-  //     setUserHasCommented(userComment);
-  //   });
-
-  //   return unsubscribe;
-  // };
   const handleCommentsPress = () => {
     setCommentVisible(true);
 
@@ -575,23 +527,6 @@ const Home: React.FC = () => {
   const [friendsList, setFriendsList] = useState<string[]>([]);
 
   // Fetch all posts from Firestore
-  // useEffect(() => {
-  //   if (friendsList.length === 0) return;
-
-  //   const postsRef = collection(db, "Posts");
-  //   const postsQuery = query(postsRef, where("userId", "in", friendsList));
-
-  //   const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
-  //     const updatedPosts = querySnapshot.docs.map((doc) => ({
-  //       ...doc.data(),
-  //       postID: doc.id,
-  //     }));
-
-  //     setPosts(updatedPosts); // Update posts state with real-time data
-  //   });
-
-  //   return () => unsubscribe(); // Cleanup the subscription on unmount
-  // }, [friendsList]);
   useEffect(() => {
     if (friendsList.length === 0) return;
 

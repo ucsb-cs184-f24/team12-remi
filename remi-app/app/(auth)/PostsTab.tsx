@@ -60,7 +60,11 @@ const PostsTab: React.FC<PostsTabProps> = ({ searchQuery }) => {
       );
       const querySnapshot = await getDocs(postsQuery);
       console.log(querySnapshot);
-      const filteredPosts = querySnapshot.docs.map((doc) => doc.data());
+      // const filteredPosts = querySnapshot.docs.map((doc) => doc.data());
+      const filteredPosts = querySnapshot.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      }));
       setPosts(filteredPosts);
     } catch (error) {
       if (error instanceof Error) {
