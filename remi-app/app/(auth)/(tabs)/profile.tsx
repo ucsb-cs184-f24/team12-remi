@@ -28,6 +28,7 @@ import Modal from "react-native-modal";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
+import RecipePost from "./home";
 
 const { width, height } = Dimensions.get("window");
 const MAX_BIO_LENGTH = 150;
@@ -215,7 +216,6 @@ export default function Component() {
 
   const handleBookmarksPress = () => {
     // Implement bookmarks functionality here
-    // alert("Bookmarks functionality to be implemented");
     setBookmarkVisible(true);
     console.log("user wants to see bookmarks!");
   };
