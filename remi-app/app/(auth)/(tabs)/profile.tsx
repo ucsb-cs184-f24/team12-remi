@@ -214,10 +214,14 @@ export default function Component() {
     await signOut(auth);
   };
 
+  // const handleBookmarksPress = () => {
+  //   // Implement bookmarks functionality here
+  //   setBookmarkVisible(true);
+  //   console.log("user wants to see bookmarks!");
+  // };
   const handleBookmarksPress = () => {
-    // Implement bookmarks functionality here
-    setBookmarkVisible(true);
-    console.log("user wants to see bookmarks!");
+    setBookmarkVisible(false); // Close menu if applicable
+    router.push("../../bookmarks"); // Adjust path as needed for your project structure
   };
 
   if (loading) {
@@ -355,41 +359,11 @@ export default function Component() {
                 </View>
                 <TouchableOpacity
                   style={styles.menuItem}
-                  onPress={handleBookmarksPress}
+                  onPress={() => router.push("../../bookmarks")}
                 >
                   <Text style={styles.menuItemText}>Bookmarks</Text>
                   <Ionicons name="bookmark-outline" size={24} color="#0D5F13" />
                 </TouchableOpacity>
-
-                <Modal
-                  visible={isBookmarkVisible}
-                  animationType="slide"
-                  transparent={true}
-                  onRequestClose={() => setBookmarkVisible(false)}
-                >
-                  {/* Overlay */}
-                  <View style={styles.overlay}>
-                    <View style={styles.modalContainer}>
-                      <Text style={styles.title}>Bookmarks</Text>
-
-                      {/* Add any additional bookmark-related UI here */}
-                      {/* Example: */}
-                      {/* <FlatList
-                          data={bookmarks}
-                          keyExtractor={(item) => item.id}
-                          renderItem={({ item }) => (
-                            <View style={styles.bookmarkItem}>
-                              <Text>{item.title}</Text>
-                            </View>
-                          )}
-                        /> */}
-                      <Button
-                        title="Close"
-                        onPress={() => setBookmarkVisible(false)}
-                      />
-                    </View>
-                  </View>
-                </Modal>
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={handleSignOut}

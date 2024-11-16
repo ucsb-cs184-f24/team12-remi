@@ -211,7 +211,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   };
 
   const handleSavePost = async () => {
-    console.log("in handle save post");
+    // console.log("in handle save post");
     try {
       await addDoc(collection(db, "Bookmarks"), {
         postId: postID,
@@ -237,24 +237,30 @@ export const RecipePost: React.FC<RecipePostProps> = ({
       if (postSnapshot.exists()) {
         const postData = postSnapshot.data();
         const savedByArray: string[] = postData.savedBy || [];
-        console.log(postID);
+        // console.log(postID);
         if (savedByArray.includes(userId)) {
-          console.log(postID);
-          console.log("includes userId");
+          // console.log(postID);
+          // console.log("includes userId");
+          // console.log("savedBy array looks like this: ", postData.savedBy);
           // User already liked the post, so remove their like
           await updateDoc(postRef, {
             // savesCount: postData.savesCount - 1, // Directly update Firestore
             savedBy: arrayRemove(userId), // Remove user ID
           });
         } else {
-          console.log("need to add it");
+          // console.log("need to add it");
           // User has not saved the post, so add their save
           await updateDoc(postRef, {
             savedBy: arrayUnion(userId), // Add user ID
           });
           handleSavePost();
         }
-        console.log(savedByArray);
+        // console.log("local savedBy: ", savedByArray);
+        // console.log("updated saved by: ", postData.savedBy);
+        // console.log(
+        //   "is user in this? ",
+        //   savedBy.includes(auth.currentUser?.uid ?? "")
+        // );
       }
     } catch (error) {
       console.error("Error updating like:", error);
@@ -366,6 +372,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
         const postData = doc.data();
         setLikesCount(postData.likesCount || 0); // Real-time update
         setLikedBy(postData.likedBy || []); // Real-time update of likedBy array
+        setSavedBy(postData.savedBy || []);
       }
     });
 
@@ -440,7 +447,9 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                 }
                 size={27}
                 color={
-                  savedBy.includes(auth.currentUser?.uid ?? "") ? "red" : "gray"
+                  savedBy.includes(auth.currentUser?.uid ?? "")
+                    ? "#FBC02D"
+                    : "gray"
                 }
                 onPress={handleSavePress}
               />
