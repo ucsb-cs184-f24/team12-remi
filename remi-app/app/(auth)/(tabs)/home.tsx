@@ -657,27 +657,19 @@ const Home: React.FC = () => {
 
   return (
     <SafeAreaView style={Ustyles.background}>
-      <View style={Ustyles.background}>
+      <View>
         <View style={[styles.header, { backgroundColor: "#FFF9E6" }]}>
-          <View style={styles.headerContent}>
-            <Text style={styles.logoText}>Remi</Text>
-            <TouchableOpacity
-              onPress={() => router.push("../../notifications")}
-            >
-              <Ionicons
-                name="notifications-outline"
-                size={27}
-                color="#0D5F13"
-              />
-              {friendRequests.length > 0 && (
-                <View style={Ustyles.notificationBadge}>
-                  <Text style={Ustyles.notificationText}>
-                    {friendRequests.length}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.logoText}>Remi</Text>
+          <TouchableOpacity onPress={() => router.push("../../notifications")}>
+            <Ionicons name="notifications-outline" size={27} color="#0D5F13" />
+            {friendRequests.length > 0 && (
+              <View style={Ustyles.notificationBadge}>
+                <Text style={Ustyles.notificationText}>
+                  {friendRequests.length}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
         <FlatList
           data={posts.sort((a, b) => {
@@ -718,13 +710,10 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    justifyContent: "center", // Center the logo
-    height: 60,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#BCD5AC",
-    position: "relative", // Add this to allow absolute positioning of children
+    height: 60,
   },
   logoText: {
     fontFamily: "OrelegaOne_400Regular",
