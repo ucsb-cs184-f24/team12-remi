@@ -16,7 +16,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { signOut } from "firebase/auth";
 import { auth, db, storage } from "../../../firebaseConfig";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc, collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import {
   ref,
   uploadBytes,
@@ -112,6 +112,10 @@ export default function Component() {
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  const [friendCount, setFriendCount] = useState(0);
+  const [postCount, setPostCount] = useState(0);
+  const [likesCount, setLikesCount] = useState(0);
+
   useEffect(() => {
     const fetchUserData = async () => {
       if (user) {
@@ -124,6 +128,31 @@ export default function Component() {
             setUsername(userData.username || "");
             setProfilePic(userData.profilePic || profilePic);
             setBio(userData.bio || "");
+            
+            setFriendCount(userData.friends_list?.length || 0);
+
+            const postsQuery = query(collection(db, "Posts"), where("userId", "==", user.uid));
+            const postsSnapshot = await getDocs(postsQuery);
+            setPostCount(postsSnapshot.size);
+
+            // Initial likes count calculation
+            let initialLikesCount = 0;
+            postsSnapshot.forEach((doc) => {
+              initialLikesCount += doc.data().likesCount || 0;
+            });
+            setLikesCount(initialLikesCount);
+
+            // Set up real-time listener for posts
+            const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
+              let newLikesCount = 0;
+              snapshot.forEach((doc) => {
+                newLikesCount += doc.data().likesCount || 0;
+              });
+              setLikesCount(newLikesCount);
+            });
+
+            // Clean up the listener when the component unmounts
+            return () => unsubscribe();
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
@@ -265,15 +294,15 @@ export default function Component() {
                 </TouchableOpacity>
                 <View style={styles.statsContainer}>
                   <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>9</Text>
+                    <Text style={styles.statNumber}>{friendCount}</Text>
                     <Text style={styles.statLabel}>friends</Text>
                   </View>
                   <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>10</Text>
+                    <Text style={styles.statNumber}>{postCount}</Text>
                     <Text style={styles.statLabel}>posts</Text>
                   </View>
                   <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>5</Text>
+                    <Text style={styles.statNumber}>{likesCount}</Text>
                     <Text style={styles.statLabel}>likes</Text>
                   </View>
                 </View>
