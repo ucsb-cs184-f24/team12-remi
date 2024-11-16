@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -6,60 +6,214 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  ImageBackground,
   Dimensions,
   Platform,
-  Switch
-} from 'react-native';
-import { signOut } from 'firebase/auth';
-import { auth, db } from '../../../firebaseConfig';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+  Switch,
+  TextInput,
+  Animated,
+  ImageBackground,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { signOut } from "firebase/auth";
+import { auth, db, storage } from "../../../firebaseConfig";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  uploadBytesResumable,
+} from "firebase/storage";
+import Modal from "react-native-modal";
+import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
 
-const { width, height } = Dimensions.get('window');
-const ARCH_HEIGHT = height * 0.80; // Arch height covers 92% of the screen
+const { width, height } = Dimensions.get("window");
+const MAX_BIO_LENGTH = 150;
+
+const uploadImageToStorage = async (uri: string): Promise<string> => {
+  try {
+    if (!uri) throw new Error("Image URI is null or undefined.");
+    const response = await fetch(uri);
+    if (!response.ok) throw new Error("Failed to fetch the image.");
+    const blob = await response.blob();
+    const storageRef = ref(storage, `images/${Date.now()}.jpg`);
+    const uploadTask = uploadBytesResumable(storageRef, blob);
+
+    return await new Promise((resolve, reject) => {
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          console.log(
+            `Upload is ${((snapshot.bytesTransferred / snapshot.totalBytes) * 100).toFixed(2)}% done`
+          );
+        },
+        (error) => {
+          console.error("Upload failed", error);
+          reject(error);
+        },
+        async () => {
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            resolve(downloadURL);
+          } catch (error) {
+            reject(error);
+          }
+        }
+      );
+    });
+  } catch (error) {
+    alert(`Image upload failed: ${(error as Error).message}`);
+    throw error;
+  }
+};
+
+const useImagePicker = () => {
+  const [image, setImage] = useState<string | null>(null);
+
+  const pickImage = async () => {
+    try {
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        alert("Permission to access camera roll is required!");
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+      if (!result.canceled) {
+        setImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      alert("An error occurred while selecting an image. Please try again.");
+    }
+  };
+
+  return { image, pickImage };
+};
 
 export default function Component() {
   const user = auth.currentUser;
-  const [profilePic, setProfilePic] = useState('https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png');
-  const [username, setUsername] = useState('');
+  const [profilePic, setProfilePic] = useState(
+    "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png"
+  );
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
+  const [isEditingBio, setIsEditingBio] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const { image, pickImage } = useImagePicker();
+  const bioInputRef = useRef<TextInput>(null);
+  const router = useRouter();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const fetchUserData = async () => {
       if (user) {
         try {
-          const userDocRef = doc(db, 'RemiUsers', user.uid);
+          const userDocRef = doc(db, "RemiUsers", user.uid);
           const userSnapshot = await getDoc(userDocRef);
           if (userSnapshot.exists()) {
             const userData = userSnapshot.data();
-            setIsPublic(userData.visibility === 'public');
-            setUsername(userData.username || '');
+            setIsPublic(userData.visibility === "public");
+            setUsername(userData.username || "");
+            setProfilePic(userData.profilePic || profilePic);
+            setBio(userData.bio || "");
           }
         } catch (error) {
-          console.error('Error fetching user data:', error);
+          console.error("Error fetching user data:", error);
         } finally {
           setLoading(false);
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }).start();
         }
       }
     };
 
     fetchUserData();
-  }, [user]);
+  }, [user, fadeAnim]);
 
-  const toggleSwitch = async () => {
+  useEffect(() => {
+    if (image) {
+      setProfilePic(image);
+      updateProfilePicture(image);
+    }
+  }, [image]);
+
+  const updateProfilePicture = async (imageUri: string) => {
     if (!user) return;
-    const newVisibility = !isPublic ? 'public' : 'private';
-    setIsPublic(!isPublic);
 
     try {
-      const userDocRef = doc(db, 'RemiUsers', user.uid);
+      setLoading(true);
+      const mediaUrl = await uploadImageToStorage(imageUri);
+
+      const userDocRef = doc(db, "RemiUsers", user.uid);
+      await updateDoc(userDocRef, { profilePic: mediaUrl });
+      alert("Profile picture updated successfully!");
+      setProfilePic(mediaUrl);
+    } catch (error) {
+      console.error("Error updating profile picture:", error);
+      alert("Failed to update profile picture");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isEditingBio && bioInputRef.current) {
+      bioInputRef.current.focus();
+    }
+  }, [isEditingBio]);
+
+  const toggleVisibility = async (value: boolean) => {
+    if (!user) return;
+    const newVisibility = value ? "public" : "private";
+    setIsPublic(value);
+
+    try {
+      const userDocRef = doc(db, "RemiUsers", user.uid);
       await updateDoc(userDocRef, { visibility: newVisibility });
       alert(`Profile visibility updated to ${newVisibility}`);
     } catch (error) {
-      console.error('Error updating visibility:', error);
-      alert('Failed to update profile visibility');
+      console.error("Error updating visibility:", error);
+      alert("Failed to update profile visibility");
     }
+  };
+
+  const saveBio = async () => {
+    if (!user) return;
+    if (bio.trim().length === 0) {
+      alert("Bio cannot be empty");
+      return;
+    }
+    try {
+      const userDocRef = doc(db, "RemiUsers", user.uid);
+      await updateDoc(userDocRef, { bio });
+      setIsEditingBio(false);
+      alert("Bio updated successfully");
+    } catch (error) {
+      console.error("Error updating bio:", error);
+      alert("Failed to update bio");
+    }
+  };
+
+  const handleSignOut = async () => {
+    setIsMenuVisible(false);
+    router.push("../../poo");
+    await signOut(auth);
+  };
+
+  const handleBookmarks = () => {
+    // Implement bookmarks functionality here
+    alert("Bookmarks functionality to be implemented");
   };
 
   if (loading) {
@@ -71,114 +225,198 @@ export default function Component() {
   }
 
   return (
-    <View style={styles.container}>
-      <ImageBackground
-        source={require("../../../assets/images/background-lineart.png")}
-        style={styles.backgroundImage}
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+      <LinearGradient
+        colors={["#FFF9E6", "#BCD5AC"]}
+        style={styles.backgroundGradient}
       >
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
-          {/* Flipped tan arch overlay */}
-          <View style={styles.archOverlay} />
-
-          {/* Profile section */}
-          <View style={styles.profileSection}>
-            <TouchableOpacity style={styles.profileImageContainer}>
-              <Image
-                source={{ uri: profilePic }}
-                style={styles.profileImage}
-              />
-              <Text style={styles.replaceText}>Click to replace</Text>
-            </TouchableOpacity>
-
+        <ImageBackground
+          source={require("../../../assets/images/background-lineart.png")}
+          style={styles.backgroundImage}
+          imageStyle={styles.backgroundImageStyle}
+        >
+          <View style={styles.header}>
             <Text style={styles.username}>{username}</Text>
-            <Text style={styles.friendsCount}>9 friends</Text>
+            <TouchableOpacity
+              onPress={() => setIsMenuVisible(true)}
+              style={styles.menuButton}
+            >
+              <Ionicons name="menu" size={24} color="#0D5F13" />
+            </TouchableOpacity>
+          </View>
 
-            <View style={styles.bioContainer}>
-              <Text style={styles.bioText}>
-                Bio goes here...
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollViewContent}
+          >
+            <View style={styles.profileSection}>
+              <View style={styles.profileTopSection}>
+                <TouchableOpacity
+                  style={styles.profileImageContainer}
+                  onPress={pickImage}
+                >
+                  <Image
+                    source={{ uri: profilePic }}
+                    style={styles.profileImage}
+                  />
+                  <View style={styles.editOverlay}>
+                    <Ionicons name="camera" size={24} color="#FFF" />
+                  </View>
+                </TouchableOpacity>
+                <View style={styles.statsContainer}>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>9</Text>
+                    <Text style={styles.statLabel}>friends</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>10</Text>
+                    <Text style={styles.statLabel}>posts</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>5</Text>
+                    <Text style={styles.statLabel}>likes</Text>
+                  </View>
+                </View>
+              </View>
+              <View style={styles.bioContainer}>
+                {isEditingBio ? (
+                  <View style={styles.bioEditContainer}>
+                    <TextInput
+                      ref={bioInputRef}
+                      style={styles.bioInput}
+                      value={bio}
+                      onChangeText={(text) =>
+                        setBio(text.slice(0, MAX_BIO_LENGTH))
+                      }
+                      placeholder="Enter your bio"
+                      multiline
+                      maxLength={MAX_BIO_LENGTH}
+                    />
+                    <Text style={styles.characterCount}>
+                      {MAX_BIO_LENGTH - bio.length} characters remaining
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.saveButton}
+                      onPress={saveBio}
+                    >
+                      <Text style={styles.saveButtonText}>Save Bio</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => setIsEditingBio(true)}
+                    style={styles.bioTextContainer}
+                  >
+                    <Text style={styles.bioText}>
+                      {bio || "Tap to add a bio..."}
+                    </Text>
+                    <Ionicons
+                      name="pencil-outline"
+                      size={16}
+                      color="#666"
+                      style={styles.editIcon}
+                    />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.contentSection}>
+              <Text style={styles.recentActivityTitle}>Recent Activity</Text>
+              {/* Add your recent activity content here */}
+              <Text style={styles.placeholderText}>
+                No recent activity to show.
               </Text>
             </View>
+          </ScrollView>
 
-            {/* Visibility toggle */}
-            <View style={styles.visibilityContainer}>
-              <Text style={styles.visibilityText}>Profile Visibility: {isPublic ? 'Public' : 'Private'}</Text>
-              <Switch
-                trackColor={{ false: "#767577", true: "#81B784" }}
-                thumbColor={isPublic ? "#0D5F13" : "#f4f3f4"}
-                ios_backgroundColor="#3e3e3e"
-                onValueChange={toggleSwitch}
-                value={isPublic}
-              />
-            </View>
-          </View>
-
-          {/* Recent Activity section */}
-          <View style={styles.activitySection}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
-            <ScrollView style={styles.postsContainer}>
-              {/* Placeholder for posts */}
-              {[1, 2, 3].map((item) => (
-                <View key={item} style={styles.postItem}>
-                  <Text style={styles.postText}>Post {item}</Text>
+          <Modal
+            isVisible={isMenuVisible}
+            onBackdropPress={() => setIsMenuVisible(false)}
+            animationIn="slideInRight"
+            animationOut="slideOutRight"
+            style={styles.modal}
+          >
+            <View style={styles.menuContainer}>
+              <View style={styles.menuContent}>
+                <View style={styles.menuItem}>
+                  <Text style={styles.menuItemText}>Profile Visibility</Text>
+                  <Switch
+                    trackColor={{ false: "#767577", true: "#0D5F13" }}
+                    thumbColor={isPublic ? "#BCD5AC" : "#f4f3f4"}
+                    ios_backgroundColor="#3e3e3e"
+                    onValueChange={toggleVisibility}
+                    value={isPublic}
+                  />
                 </View>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* Sign Out Button */}
-          <TouchableOpacity style={styles.signOutButton} onPress={() => signOut(auth)}>
-            <Text style={styles.signOutText}>Sign out</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </ImageBackground>
-    </View>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleBookmarks}
+                >
+                  <Text style={styles.menuItemText}>Bookmarks</Text>
+                  <Ionicons name="bookmark-outline" size={24} color="#0D5F13" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleSignOut}
+                >
+                  <Text style={styles.menuItemText}>Sign Out</Text>
+                  <Ionicons name="log-out-outline" size={24} color="#0D5F13" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        </ImageBackground>
+      </LinearGradient>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+  },
+  backgroundGradient: {
+    flex: 1,
   },
   backgroundImage: {
     flex: 1,
-    width: '100%',
-    height: '100%',
   },
-  archOverlay: {
-    position: 'absolute',
-    bottom: 0, // Changed from top to bottom
-    left: 0,
-    right: 0,
-    height: ARCH_HEIGHT,
-    backgroundColor: '#FFF9E6',
-    borderTopLeftRadius: ARCH_HEIGHT, // Changed from borderBottomLeftRadius
-    borderTopRightRadius: ARCH_HEIGHT, // Changed from borderBottomRightRadius
-    opacity: 0.9,
+  backgroundImageStyle: {
+    opacity: 0.5,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    paddingTop: 60,
+  },
+  menuButton: {
+    padding: 5,
+  },
+  username: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#0D5F13",
   },
   scrollView: {
     flex: 1,
   },
   scrollViewContent: {
-    minHeight: '100%',
-    paddingTop: 40, // Increased from 20
+    flexGrow: 1,
+    paddingBottom: 20,
   },
   profileSection: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    zIndex: 1,
-  },
-  profileImageContainer: {
-    width: 150, // Increased from 120
-    height: 150, // Increased from 120
-    borderRadius: 75, // Increased from 60
-    backgroundColor: '#fff',
-    marginTop: 40, // Added to move it lower
+    backgroundColor: "rgba(255, 249, 230, 0.8)",
+    borderRadius: 20,
+    margin: 20,
+    padding: 20,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.1,
         shadowRadius: 4,
       },
       android: {
@@ -186,97 +424,159 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  profileTopSection: {
+    flexDirection: "row",
+    marginBottom: 20,
+  },
+  profileImageContainer: {
+    marginRight: 20,
+    position: "relative",
+  },
   profileImage: {
-    width: 150, // Increased from 120
-    height: 150, // Increased from 120
-    borderRadius: 75, // Increased from 60
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: "#0D5F13",
   },
-  replaceText: {
-    position: 'absolute',
-    bottom: -30, // Adjusted from -24
-    width: '100%',
-    textAlign: 'center',
-    color: '#666',
-    fontSize: 12,
+  editOverlay: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    backgroundColor: "rgba(13, 95, 19, 0.7)",
+    borderRadius: 20,
+    padding: 8,
   },
-  username: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginTop: 30,
-    color: '#333',
+  statsContainer: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
   },
-  friendsCount: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 4,
+  statItem: {
+    alignItems: "center",
+  },
+  statNumber: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#0D5F13",
+  },
+  statLabel: {
+    fontSize: 14,
+    color: "#0D5F13",
   },
   bioContainer: {
-    width: '100%',
-    marginTop: 20,
+    backgroundColor: "rgba(188, 213, 172, 0.8)",
+    borderRadius: 15,
     padding: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 12,
+  },
+  bioEditContainer: {
+    width: "100%",
+    alignItems: "stretch",
+  },
+  bioInput: {
+    fontSize: 16,
+    color: "#444",
+    minHeight: 80,
+    textAlignVertical: "top",
+    padding: 10,
+    backgroundColor: "#FFF",
+    borderRadius: 10,
+  },
+  characterCount: {
+    alignSelf: "flex-end",
+    fontSize: 12,
+    color: "#666",
+    marginTop: 5,
+  },
+  saveButton: {
+    backgroundColor: "#FFCCCB",
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    alignItems: "center",
+  },
+  saveButtonText: {
+    color: "#333",
+    fontWeight: "bold",
+  },
+  bioTextContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   bioText: {
     fontSize: 16,
-    color: '#444',
     lineHeight: 22,
+    flex: 1,
+    color: "#333",
   },
-  visibilityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginTop: 20,
-    padding: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 12,
+  editIcon: {
+    marginLeft: 8,
   },
-  visibilityText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  activitySection: {
+  contentSection: {
+    flex: 1,
+    backgroundColor: "rgba(255, 249, 230, 0.8)",
+    borderRadius: 20,
+    margin: 20,
     padding: 20,
-    marginTop: 20,
+    minHeight: 200,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
-  sectionTitle: {
+  recentActivityTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#0D5F13",
+    textAlign: "center",
     marginBottom: 15,
   },
-  postsContainer: {
-    maxHeight: 300,
-  },
-  postItem: {
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 10,
-  },
-  postText: {
-    fontSize: 16,
-    color: '#444',
-  },
-  signOutButton: {
-    backgroundColor: '#FFE5E5',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 40,
-    marginHorizontal: 20,
-  },
-  signOutText: {
-    color: '#D32F2F',
-    fontSize: 16,
-    fontWeight: '600',
+  placeholderText: {
+    textAlign: "center",
+    color: "#666",
+    fontStyle: "italic",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)', 
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFF9E6",
+  },
+  modal: {
+    margin: 0,
+    justifyContent: "flex-start",
+    alignItems: "flex-end",
+  },
+  menuContainer: {
+    backgroundColor: "#FFF9E6",
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+    width: "70%",
+    height: "100%",
+  },
+  menuContent: {
+    marginTop: 60,
+  },
+  menuItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  menuItemText: {
+    fontSize: 18,
+    color: "#333",
   },
 });

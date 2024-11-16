@@ -51,17 +51,18 @@ export default function RootLayout() {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="poo" options={{ headerShown: false }} />
       <Stack.Screen
         name="notifications"
         options={{
           headerTitle: "Notifications",
           headerStyle: {
-            backgroundColor: '#FFF9E6', // Background color of the header
+            backgroundColor: "#FFF9E6", // Background color of the header
           },
           headerTitleStyle: {
             fontFamily: "Nunito_700Bold",
             fontSize: 25,
-            color: '#0D5F13', // Text color
+            color: "#0D5F13", // Text color
           },
         }}
       />
