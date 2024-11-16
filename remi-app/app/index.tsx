@@ -1,12 +1,11 @@
-import { useRouter } from "expo-router"; // Add this import
-import { useEffect, useState } from "react";
+import { useRouter } from "expo-router";
+import { useEffect, useState, useCallback } from "react";
 import {
   Text,
   View,
   StyleSheet,
   KeyboardAvoidingView,
   TextInput,
-  Button,
   ActivityIndicator,
   ImageBackground,
   TouchableWithoutFeedback,
@@ -20,7 +19,6 @@ import {
 import { FirebaseError } from "firebase/app";
 import { auth } from "../firebaseConfig";
 import * as Font from "expo-font";
-import AppLoading from "expo-app-loading";
 import {
   useFonts,
   OrelegaOne_400Regular,
@@ -31,13 +29,16 @@ import {
   Nunito_700Bold,
 } from "@expo-google-fonts/nunito";
 import Ustyles from "../components/UniversalStyles";
-// export var isCreateAccount = useState(false);
+import * as SplashScreen from "expo-splash-screen";
+
+SplashScreen.preventAutoHideAsync();
 
 export default function Index() {
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [appIsReady, setAppIsReady] = useState(false);
 
   const signIn = async () => {
     setLoading(true);
@@ -58,8 +59,20 @@ export default function Index() {
     Nunito_400Regular,
   });
 
-  if (!fontsLoaded) {
-    return <AppLoading />;
+  // Prepare the app and hide the splash screen once fonts are loaded
+  useEffect(() => {
+    async function prepare() {
+      if (fontsLoaded) {
+        await SplashScreen.hideAsync();
+        setAppIsReady(true);
+      }
+    }
+    prepare();
+  }, [fontsLoaded]);
+
+  // Avoid rendering the main content until the splash screen is hidden
+  if (!appIsReady) {
+    return null;
   }
 
   return (
@@ -67,14 +80,12 @@ export default function Index() {
       <View style={Ustyles.background}>
         <ImageBackground
           source={require("../assets/images/background-lineart.png")}
-          style={Ustyles.backgroundImage}
-        >
+          style={Ustyles.backgroundImage}>
           <View style={styles.container}>
             <ImageBackground
               source={require("../assets/images/bg-ellipse.png")}
               style={{ justifyContent: "center" }}
-              resizeMode="contain"
-            >
+              resizeMode="contain">
               <Text style={Ustyles.logotext}>remi</Text>
             </ImageBackground>
             <KeyboardAvoidingView behavior="padding">
@@ -105,14 +116,12 @@ export default function Index() {
                   <TouchableOpacity style={Ustyles.button} onPress={signIn}>
                     <Text style={Ustyles.header_2}>Sign In</Text>
                   </TouchableOpacity>
-                  {/* Navigate to Register Page */}
                   <TouchableOpacity
                     style={Ustyles.button}
-                    onPress={() => router.push("./(auth)/register")}
-                  >
+                    onPress={() => router.push("./(auth)/register")}>
                     <Text style={Ustyles.header_2}>Create Account</Text>
                   </TouchableOpacity>
-                </View> // this was not working for rainas laptop idk
+                </View>
               )}
             </KeyboardAvoidingView>
           </View>
@@ -121,6 +130,7 @@ export default function Index() {
     </TouchableWithoutFeedback>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 20,
