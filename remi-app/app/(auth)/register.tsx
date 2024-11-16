@@ -12,8 +12,10 @@ import {
   TouchableOpacity,
   Text,
   Image,
+  ImageBackground,
 } from "react-native";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router"; // Add this import
 import Ionicons from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
@@ -39,9 +41,8 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
-  const [profilePic, setProfilePic] = useState(
-    "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png"
-  );
+  const profilePicPlaceholder = require("../../assets/placeholders/profile-pic.png");
+  const [profilePic, setProfilePic] = useState<any>(profilePicPlaceholder);
   const router = useRouter(); // Initialize router
 
   // Image Picker Handler
@@ -111,16 +112,22 @@ export default function Register() {
       const user = userCredential.user;
 
       // Upload profile picture if one is chosen
-      const mediaUrl = profilePic.startsWith("http")
-        ? null
-        : await uploadImageToStorage(profilePic);
+      let mediaUrl = null;
+      if (profilePic) {
+        // If profilePic is not already a URL, upload it to storage
+        if (typeof profilePic === "string" && !profilePic.startsWith("http")) {
+          mediaUrl = await uploadImageToStorage(profilePic);
+        } else {
+          mediaUrl = null; // No upload needed for local placeholder or external URLs
+        }
+      }
 
       await setDoc(doc(db, "RemiUsers", user.uid), {
         username: username,
         email: email,
         friends_list: [],
         visibility: "private",
-        profilePic: mediaUrl || profilePic,
+        profilePic: mediaUrl || profilePic || "",
       });
 
       alert("Account created successfully!");
@@ -142,58 +149,83 @@ export default function Register() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <KeyboardAvoidingView behavior="padding" style={styles.container}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
+        <LinearGradient
+          colors={["#FFF9E6", "#BCD5AC"]}
+          style={styles.backgroundGradient}
         >
-          <Ionicons name="arrow-back" size={24} color="#0D5F13" />
-          <Text style={styles.backButtonText}>Back to Login</Text>
-        </TouchableOpacity>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <TouchableOpacity
-            style={styles.profileImageContainer}
-            onPress={pickImage}
+          <ImageBackground
+            source={require("../../assets/images/background-lineart.png")}
+            style={styles.backgroundImage}
+            imageStyle={styles.backgroundImageStyle}
           >
-            <Image source={{ uri: profilePic }} style={styles.profileImage} />
-            <Text style={styles.replaceText}>Click to replace</Text>
-          </TouchableOpacity>
-          <TextInput
-            style={styles.input}
-            placeholder="Username"
-            value={username}
-            onChangeText={setUsername}
-            autoCorrect={false}
-            autoCapitalize="none"
-            placeholderTextColor="#BCD5AC"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            autoCorrect={false}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            placeholderTextColor="#BCD5AC"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            autoCorrect={false}
-            autoCapitalize="none"
-            secureTextEntry
-            placeholderTextColor="#BCD5AC"
-          />
-          {loading ? (
-            <ActivityIndicator size={"small"} style={{ margin: 28 }} />
-          ) : (
-            <TouchableOpacity style={Ustyles.button} onPress={signUp}>
-              <Text style={Ustyles.header_2}>Create Account</Text>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="arrow-back" size={24} color="#0D5F13" />
+              <Text style={styles.backButtonText}>Back to Login</Text>
             </TouchableOpacity>
-          )}
-        </ScrollView>
+
+            <Text style={Ustyles.header_2}> Create your account! </Text>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+              <TouchableOpacity
+                style={styles.profileImageContainer}
+                onPress={pickImage}
+              >
+                <View style={styles.outerCircle}>
+                  <Image
+                    source={
+                      typeof profilePic === "string"
+                        ? { uri: profilePic }
+                        : profilePic
+                    }
+                    style={styles.profileImage}
+                  />
+                  <View style={styles.editOverlay}>
+                    <Ionicons name="camera" size={24} color="#0D5F13" />
+                  </View>
+                </View>
+                <Text style={Ustyles.seeNotesText}>Click to replace</Text>
+              </TouchableOpacity>
+              <TextInput
+                style={styles.input}
+                placeholder="Username"
+                value={username}
+                onChangeText={setUsername}
+                autoCorrect={false}
+                autoCapitalize="none"
+                placeholderTextColor="#BCD5AC"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                autoCorrect={false}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholderTextColor="#BCD5AC"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                autoCorrect={false}
+                autoCapitalize="none"
+                secureTextEntry
+                placeholderTextColor="#BCD5AC"
+              />
+              {loading ? (
+                <ActivityIndicator size={"small"} style={{ margin: 28 }} />
+              ) : (
+                <TouchableOpacity style={styles.button} onPress={signUp}>
+                  <Text style={Ustyles.header_2}>Submit</Text>
+                </TouchableOpacity>
+              )}
+            </ScrollView>
+          </ImageBackground>
+        </LinearGradient>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
@@ -206,7 +238,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-evenly",
   },
   scrollContent: {
-    marginVertical: 50,
+    marginVertical: 0,
     padding: 20,
     justifyContent: "center",
   },
@@ -215,6 +247,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 4,
     padding: 10,
+    marginTop: 4,
     marginVertical: 10,
     backgroundColor: "#fff",
     borderColor: "#0D5F13",
@@ -225,29 +258,40 @@ const styles = StyleSheet.create({
     marginTop: 50,
     marginLeft: 10,
     padding: 10,
+    marginBottom: 20,
   },
   backButtonText: {
     marginLeft: 5,
     color: "#0D5F13",
     fontSize: 16,
+    fontFamily: "Nunito_600SemiBold",
   },
   profileImageContainer: {
     width: 150,
     height: 150,
     borderRadius: 75,
-    borderWidth: 5,
-    borderColor: "#0D5F13",
-    backgroundColor: "#fff",
+    backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
     marginTop: 40,
     alignSelf: "center",
-    marginVertical: 60,
+    marginVertical: 0,
+    marginBottom: 40,
+  },
+  outerCircle: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: 160, // Adjust size as needed
+    height: 160, // Adjust size as needed
+    borderRadius: 90, // Half of width/height for a perfect circle
+    borderColor: "#0D5F13", // Green color for the outer circle
+    borderWidth: 4,
+    marginBottom: 5,
   },
   profileImage: {
-    width: 140,
+    width: 140, // Image size smaller than the inner circle
     height: 140,
-    borderRadius: 70,
+    borderRadius: 70, // Half of width/height for a perfect circle
   },
   replaceText: {
     position: "absolute",
@@ -258,13 +302,35 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   button: {
-    backgroundColor: "#0D5F13",
-    padding: 10,
-    borderRadius: 5,
+    alignSelf: "center",
     alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: "#0D5F13",
+    backgroundColor: "transparent",
+    marginVertical: 20,
   },
   buttonText: {
     color: "#fff",
     fontSize: 16,
+  },
+  backgroundGradient: {
+    flex: 1,
+  },
+  backgroundImage: {
+    flex: 1,
+  },
+  backgroundImageStyle: {
+    opacity: 0.2,
+  },
+  editOverlay: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    backgroundColor: "rgba(255, 249, 230, 0.7)",
+    borderRadius: 20,
+    padding: 8,
   },
 });
