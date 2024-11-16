@@ -29,6 +29,7 @@ import {
   onSnapshot,
   updateDoc,
   arrayUnion,
+  deleteDoc,
   arrayRemove,
 } from "firebase/firestore";
 import { db, auth } from "../../../firebaseConfig"; // Ensure correct imports
@@ -107,6 +108,7 @@ interface RecipePostProps {
   caption: string;
   hashtags: string;
   userHasCommented: boolean;
+  handleUnsavePost?: (postID: string) => void; // Add this callback
 }
 
 interface Comment {
@@ -210,6 +212,32 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     }
   };
 
+  const handleUnsavePost = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      // Remove bookmark from Firestore
+      const bookmarksRef = collection(db, "Bookmarks");
+      const q = query(
+        bookmarksRef,
+        where("userId", "==", user.uid),
+        where("postId", "==", postID)
+      );
+      const querySnapshot = await getDocs(q);
+
+      querySnapshot.forEach(async (doc) => {
+        await deleteDoc(doc.ref);
+      });
+      console.log("unbookmarked post with ID ", postID);
+
+      // // Call the callback to update the state in BookmarksPage
+      // if (handleUnsavePost) handleUnsavePost(postID);
+    } catch (error) {
+      console.error("Error unbookmarking post:", error);
+    }
+  };
+
   const handleSavePost = async () => {
     // console.log("in handle save post");
     try {
@@ -224,6 +252,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   };
 
   const handleSavePress = async () => {
+    console.log("user tryna save");
     if (!auth.currentUser) {
       Alert.alert("Error", "You must be logged in to like posts.");
       return;
@@ -247,6 +276,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
             // savesCount: postData.savesCount - 1, // Directly update Firestore
             savedBy: arrayRemove(userId), // Remove user ID
           });
+          handleUnsavePost();
         } else {
           // console.log("need to add it");
           // User has not saved the post, so add their save
@@ -298,6 +328,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   };
 
   const handleCommentsPress = () => {
+    console.log("press comments");
     setCommentVisible(true);
 
     const commentsRef = collection(db, "Comments");

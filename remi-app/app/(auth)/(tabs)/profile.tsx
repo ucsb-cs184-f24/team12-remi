@@ -359,7 +359,7 @@ export default function Component() {
                 </View>
                 <TouchableOpacity
                   style={styles.menuItem}
-                  onPress={() => router.push("../../bookmarks")}
+                  onPress={handleBookmarksPress}
                 >
                   <Text style={styles.menuItemText}>Bookmarks</Text>
                   <Ionicons name="bookmark-outline" size={24} color="#0D5F13" />
