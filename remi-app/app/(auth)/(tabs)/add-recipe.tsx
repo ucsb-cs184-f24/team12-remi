@@ -135,15 +135,13 @@ const App = () => {
               {image ? (
                 <TouchableOpacity
                   onPress={pickImage}
-                  style={styles.changeImageButton}
-                >
+                  style={styles.changeImageButton}>
                   <Text style={styles.changeImageText}>Change Image</Text>
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
                   onPress={pickImage}
-                  style={styles.iconContainer}
-                >
+                  style={styles.iconContainer}>
                   <Ionicons name="camera-outline" size={100} color="#0D5F13" />
                 </TouchableOpacity>
               )}
@@ -230,8 +228,7 @@ const App = () => {
               <Spacer size={10} />
               <TouchableOpacity
                 style={styles.buttonContainer}
-                onPress={handleNext}
-              >
+                onPress={handleNext}>
                 <View style={styles.button}>
                   <Text style={Ustyles.header_2}>Next</Text>
                 </View>

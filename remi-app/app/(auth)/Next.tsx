@@ -193,8 +193,7 @@ export default function App() {
         <TouchableOpacity
           style={styles.buttonContainer}
           onPress={handleSubmit}
-          disabled={loading}
-        >
+          disabled={loading}>
           <Text>{loading ? "Submitting..." : "Submit Recipe"}</Text>
         </TouchableOpacity>
       </View>
@@ -233,7 +232,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     overflow: "hidden",
     backgroundColor: "#BCD5AC",
-    padding: 35,
+    // padding: 35,
     width: 200,
     height: 200,
     borderRadius: 100,
