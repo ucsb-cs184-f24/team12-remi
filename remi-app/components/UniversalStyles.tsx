@@ -229,6 +229,13 @@ const Ustyles = StyleSheet.create({
     resizeMode: "contain", // Or 'contain' depending on how you want the image to fit
     justifyContent: "center",
   },
+  low_opacity_bgImage: {
+    flex: 1,
+    resizeMode: "contain", // Or 'contain' depending on how you want the image to fit
+    justifyContent: "center",
+    opacity: 0.5,
+    backgroundColor: "#FFF9E6",
+  },
   background: {
     flex: 1,
     backgroundColor: "#FFF9E6", // Background color behind the ImageBackground
