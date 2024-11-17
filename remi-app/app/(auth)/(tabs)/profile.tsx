@@ -13,11 +13,27 @@ import {
   Animated,
   ImageBackground,
   Button,
+  FlatList,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { signOut } from "firebase/auth";
 import { auth, db, storage } from "../../../firebaseConfig";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  getDoc,
+  getDocs,
+  doc,
+  query,
+  QuerySnapshot,
+  DocumentData,
+  where,
+  onSnapshot,
+  updateDoc,
+  arrayUnion,
+  deleteDoc,
+  arrayRemove,
+} from "firebase/firestore";
 import {
   ref,
   uploadBytes,
@@ -28,7 +44,7 @@ import Modal from "react-native-modal";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import RecipePost from "./home";
+import { RecipePost } from "./home";
 
 const { width, height } = Dimensions.get("window");
 const MAX_BIO_LENGTH = 150;
@@ -114,9 +130,11 @@ export default function Component() {
   const bioInputRef = useRef<TextInput>(null);
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [userPosts, setUserPosts] = useState<any[]>([]); // To store user posts
 
   useEffect(() => {
     const fetchUserData = async () => {
+      setLoading(true);
       if (user) {
         try {
           const userDocRef = doc(db, "RemiUsers", user.uid);
@@ -140,9 +158,38 @@ export default function Component() {
         }
       }
     };
-
     fetchUserData();
   }, [user, fadeAnim]);
+
+  useEffect(() => {
+    fetchUserPosts(); // Fetch posts when the component mounts
+  }, []);
+
+  const fetchUserPosts = async () => {
+    try {
+      console.log("fetching users' posts");
+      const postsRef = collection(db, "Posts");
+      const q = query(postsRef, where("userId", "==", user?.uid));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        console.log("No posts found for this user.");
+        setUserPosts([]); // Set empty state if no posts found
+        return;
+      }
+
+      const posts = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setUserPosts(posts);
+      setLoading(false);
+      console.log("Fetched posts:", posts); // Verify data
+    } catch (error) {
+      console.error("Error fetching user posts:", error);
+    }
+  };
+  // fetchUserPosts();
 
   useEffect(() => {
     if (image) {
@@ -214,15 +261,12 @@ export default function Component() {
     await signOut(auth);
   };
 
-  // const handleBookmarksPress = () => {
-  //   // Implement bookmarks functionality here
-  //   setBookmarkVisible(true);
-  //   console.log("user wants to see bookmarks!");
-  // };
   const handleBookmarksPress = () => {
     setBookmarkVisible(false); // Close menu if applicable
     router.push("../../bookmarks"); // Adjust path as needed for your project structure
   };
+
+  console.log("loading: ", loading);
 
   if (loading) {
     return (
@@ -253,9 +297,9 @@ export default function Component() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollViewContent}
+          <View
+          // style={styles.scrollView}
+          // contentContainerStyle={styles.scrollViewContent}
           >
             <View style={styles.profileSection}>
               <View style={styles.profileTopSection}>
@@ -331,12 +375,40 @@ export default function Component() {
 
             <View style={styles.contentSection}>
               <Text style={styles.recentActivityTitle}>Recent Activity</Text>
-              {/* Add your recent activity content here */}
+              userPosts.length === 0 ? (
               <Text style={styles.placeholderText}>
-                No recent activity to show.
+                No recent activity to show----.
               </Text>
+              ) : (
+              <FlatList
+                data={userPosts}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <RecipePost
+                    postID={item.id}
+                    userID={item.userId}
+                    timeAgo={new Date(item.createdAt)}
+                    mediaUrl={item.mediaUrl}
+                    likes={item.likesCount}
+                    comments={item.comments}
+                    recipeName={item.title || "Untitled"}
+                    price={item.Price || 0.0}
+                    difficulty={item.Difficulty || 0}
+                    time={item.Time || 0}
+                    caption={item.caption || ""}
+                    hashtags={item.hashtags || ""}
+                    userHasCommented={false} // Placeholder, adjust if you track this
+                  />
+                )}
+                ListEmptyComponent={
+                  <Text style={styles.emptyText}>
+                    No Recent Activity found.
+                  </Text>
+                }
+              />
+              )
             </View>
-          </ScrollView>
+          </View>
 
           <Modal
             isVisible={isMenuVisible}
@@ -604,5 +676,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
     textAlign: "center",
+  },
+  emptyText: {
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+    color: "#666",
   },
 });
