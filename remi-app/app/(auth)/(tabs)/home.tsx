@@ -761,7 +761,7 @@ const Home: React.FC = () => {
               return dateB.getTime() - dateA.getTime();
             })
             .map((post, index) => (
-              <View>
+              <View key={post.postID}>
                 <RecipePost
                   key={index}
                   userID={post.userId || "Anonymous"}
