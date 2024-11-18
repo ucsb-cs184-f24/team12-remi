@@ -34,6 +34,7 @@ import {
   deleteDoc,
   arrayRemove,
 } from "firebase/firestore";
+
 import {
   ref,
   uploadBytes,
@@ -132,6 +133,10 @@ export default function Component() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [userPosts, setUserPosts] = useState<any[]>([]); // To store user posts
 
+  const [friendCount, setFriendCount] = useState(0);
+  const [postCount, setPostCount] = useState(0);
+  const [likesCount, setLikesCount] = useState(0);
+
   useEffect(() => {
     const fetchUserData = async () => {
       if (user) {
@@ -144,6 +149,31 @@ export default function Component() {
             setUsername(userData.username || "");
             setProfilePic(userData.profilePic || profilePic);
             setBio(userData.bio || "");
+            
+            setFriendCount(userData.friends_list?.length || 0);
+
+            const postsQuery = query(collection(db, "Posts"), where("userId", "==", user.uid));
+            const postsSnapshot = await getDocs(postsQuery);
+            setPostCount(postsSnapshot.size);
+
+            // Initial likes count calculation
+            let initialLikesCount = 0;
+            postsSnapshot.forEach((doc) => {
+              initialLikesCount += doc.data().likesCount || 0;
+            });
+            setLikesCount(initialLikesCount);
+
+            // Set up real-time listener for posts
+            const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
+              let newLikesCount = 0;
+              snapshot.forEach((doc) => {
+                newLikesCount += doc.data().likesCount || 0;
+              });
+              setLikesCount(newLikesCount);
+            });
+
+            // Clean up the listener when the component unmounts
+            return () => unsubscribe();
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
