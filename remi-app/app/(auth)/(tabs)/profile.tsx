@@ -296,104 +296,6 @@ export default function Component() {
             </TouchableOpacity>
           </View>
 
-          {/* <FlatList
-            data={userPosts}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <RecipePost
-                postID={item.id}
-                userID={item.userId}
-                timeAgo={new Date(item.createdAt)}
-                mediaUrl={item.mediaUrl}
-                likes={item.likesCount}
-                comments={item.comments}
-                recipeName={item.title || "Untitled"}
-                price={item.Price || 0.0}
-                difficulty={item.Difficulty || 0}
-                time={item.Time || 0}
-                caption={item.caption || ""}
-                hashtags={item.hashtags || ""}
-                userHasCommented={item.userHasCommented || false} // Placeholder, adjust if you track this
-              />
-            )}
-            ListEmptyComponent={
-              <Text style={styles.emptyText}>No Recent Activity found.</Text>
-            }
-            ListHeaderComponent={
-              <View style={styles.profileSection}>
-                <View style={styles.profileTopSection}>
-                  <TouchableOpacity
-                    style={styles.profileImageContainer}
-                    onPress={pickImage}
-                  >
-                    <Image
-                      source={{ uri: profilePic }}
-                      style={styles.profileImage}
-                    />
-                    <View style={styles.editOverlay}>
-                      <Ionicons name="camera" size={24} color="#FFF" />
-                    </View>
-                  </TouchableOpacity>
-                  <View style={styles.statsContainer}>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statNumber}>9</Text>
-                      <Text style={styles.statLabel}>friends</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statNumber}>10</Text>
-                      <Text style={styles.statLabel}>posts</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statNumber}>5</Text>
-                      <Text style={styles.statLabel}>likes</Text>
-                    </View>
-                  </View>
-                </View>
-                <View style={styles.bioContainer}>
-                  {isEditingBio ? (
-                    <View style={styles.bioEditContainer}>
-                      <TextInput
-                        ref={bioInputRef}
-                        style={styles.bioInput}
-                        value={bio}
-                        onChangeText={(text) =>
-                          setBio(text.slice(0, MAX_BIO_LENGTH))
-                        }
-                        placeholder="Enter your bio"
-                        multiline
-                        maxLength={MAX_BIO_LENGTH}
-                      />
-                      <Text style={styles.characterCount}>
-                        {MAX_BIO_LENGTH - bio.length} characters remaining
-                      </Text>
-                      <TouchableOpacity
-                        style={styles.saveButton}
-                        onPress={saveBio}
-                      >
-                        <Text style={styles.saveButtonText}>Save Bio</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <TouchableOpacity
-                      onPress={() => setIsEditingBio(true)}
-                      style={styles.bioTextContainer}
-                    >
-                      <Text style={styles.bioText}>
-                        {bio || "Tap to add a bio..."}
-                      </Text>
-                      <Ionicons
-                        name="pencil-outline"
-                        size={16}
-                        color="#666"
-                        style={styles.editIcon}
-                      />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
-            }
-            contentContainerStyle={{ paddingBottom: 20 }}
-          /> */}
           <FlatList
             data={userPosts}
             keyExtractor={(item) => item.id}
@@ -491,8 +393,6 @@ export default function Component() {
                     )}
                   </View>
                 </View>
-
-                {/* Recent Activity Title */}
                 <Text style={styles.recentActivityTitle}>Recent Activity</Text>
               </View>
             }
