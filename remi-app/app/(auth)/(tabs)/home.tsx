@@ -29,6 +29,7 @@ import {
   onSnapshot,
   updateDoc,
   arrayUnion,
+  deleteDoc,
   arrayRemove,
 } from "firebase/firestore";
 import { db, auth } from "../../../firebaseConfig"; // Ensure correct imports
@@ -107,6 +108,7 @@ interface RecipePostProps {
   caption: string;
   hashtags: string;
   userHasCommented: boolean;
+  handleUnsavePost?: (postID: string) => void; // Add this callback
 }
 
 interface Comment {
@@ -150,6 +152,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   const [username, setUsername] = useState<string>("");
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [savedBy, setSavedBy] = useState<string[]>([]);
   const [commentVisible, setCommentVisible] = useState(false);
   // const [userHasCommented, setUserHasCommented] = useState(false);
 
@@ -209,6 +212,92 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     }
   };
 
+  const handleUnsavePost = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      // Remove bookmark from Firestore
+      const bookmarksRef = collection(db, "Bookmarks");
+      const q = query(
+        bookmarksRef,
+        where("userId", "==", user.uid),
+        where("postId", "==", postID)
+      );
+      const querySnapshot = await getDocs(q);
+
+      querySnapshot.forEach(async (doc) => {
+        await deleteDoc(doc.ref);
+      });
+      console.log("unbookmarked post with ID ", postID);
+
+      // // Call the callback to update the state in BookmarksPage
+      // if (handleUnsavePost) handleUnsavePost(postID);
+    } catch (error) {
+      console.error("Error unbookmarking post:", error);
+    }
+  };
+
+  const handleSavePost = async () => {
+    // console.log("in handle save post");
+    try {
+      await addDoc(collection(db, "Bookmarks"), {
+        postId: postID,
+        userId: auth.currentUser?.uid, // Current user's ID
+      });
+      console.log("added to Bookmarks");
+    } catch (error) {
+      console.error("Error saving post:", error);
+    }
+  };
+
+  const handleSavePress = async () => {
+    console.log("user tryna save");
+    if (!auth.currentUser) {
+      Alert.alert("Error", "You must be logged in to like posts.");
+      return;
+    }
+
+    const userId = auth.currentUser.uid;
+
+    try {
+      const postSnapshot = await getDoc(postRef);
+
+      if (postSnapshot.exists()) {
+        const postData = postSnapshot.data();
+        const savedByArray: string[] = postData.savedBy || [];
+        // console.log(postID);
+        if (savedByArray.includes(userId)) {
+          // console.log(postID);
+          // console.log("includes userId");
+          // console.log("savedBy array looks like this: ", postData.savedBy);
+          // User already liked the post, so remove their like
+          await updateDoc(postRef, {
+            // savesCount: postData.savesCount - 1, // Directly update Firestore
+            savedBy: arrayRemove(userId), // Remove user ID
+          });
+          handleUnsavePost();
+        } else {
+          // console.log("need to add it");
+          // User has not saved the post, so add their save
+          await updateDoc(postRef, {
+            savedBy: arrayUnion(userId), // Add user ID
+          });
+          handleSavePost();
+        }
+        // console.log("local savedBy: ", savedByArray);
+        // console.log("updated saved by: ", postData.savedBy);
+        // console.log(
+        //   "is user in this? ",
+        //   savedBy.includes(auth.currentUser?.uid ?? "")
+        // );
+      }
+    } catch (error) {
+      console.error("Error updating like:", error);
+      Alert.alert("Error", "Failed to update like. Please try again.");
+    }
+  };
+
   useEffect(() => {
     const postRef = doc(db, "Posts", postID);
 
@@ -239,6 +328,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   };
 
   const handleCommentsPress = () => {
+    console.log("press comments");
     setCommentVisible(true);
 
     const commentsRef = collection(db, "Comments");
@@ -313,6 +403,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
         const postData = doc.data();
         setLikesCount(postData.likesCount || 0); // Real-time update
         setLikedBy(postData.likedBy || []); // Real-time update of likedBy array
+        setSavedBy(postData.savedBy || []);
       }
     });
 
@@ -378,7 +469,22 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               onPress={handleCommentsPress} // Opens the comment modal
             />
             <Text style={Ustyles.engagementText}>{commentsCount}</Text>
-
+            <View style={Ustyles.engagementItem}>
+              <Ionicons
+                name={
+                  savedBy.includes(auth.currentUser?.uid ?? "")
+                    ? "bookmark"
+                    : "bookmark-outline"
+                }
+                size={27}
+                color={
+                  savedBy.includes(auth.currentUser?.uid ?? "")
+                    ? "#FBC02D"
+                    : "gray"
+                }
+                onPress={handleSavePress}
+              />
+            </View>
             {/* Modal for adding a comment */}
             <Modal
               visible={commentVisible}

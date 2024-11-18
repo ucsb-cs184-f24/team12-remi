@@ -12,6 +12,7 @@ import {
   TextInput,
   Animated,
   ImageBackground,
+  Button,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { signOut } from "firebase/auth";
@@ -27,6 +28,7 @@ import Modal from "react-native-modal";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
+import RecipePost from "./home";
 
 const { width, height } = Dimensions.get("window");
 const MAX_BIO_LENGTH = 150;
@@ -107,6 +109,7 @@ export default function Component() {
   const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const [isBookmarkVisible, setBookmarkVisible] = useState(false);
   const { image, pickImage } = useImagePicker();
   const bioInputRef = useRef<TextInput>(null);
   const router = useRouter();
@@ -240,9 +243,14 @@ export default function Component() {
     await signOut(auth);
   };
 
-  const handleBookmarks = () => {
-    // Implement bookmarks functionality here
-    alert("Bookmarks functionality to be implemented");
+  // const handleBookmarksPress = () => {
+  //   // Implement bookmarks functionality here
+  //   setBookmarkVisible(true);
+  //   console.log("user wants to see bookmarks!");
+  // };
+  const handleBookmarksPress = () => {
+    setBookmarkVisible(false); // Close menu if applicable
+    router.push("../../bookmarks"); // Adjust path as needed for your project structure
   };
 
   if (loading) {
@@ -380,7 +388,7 @@ export default function Component() {
                 </View>
                 <TouchableOpacity
                   style={styles.menuItem}
-                  onPress={handleBookmarks}
+                  onPress={handleBookmarksPress}
                 >
                   <Text style={styles.menuItemText}>Bookmarks</Text>
                   <Ionicons name="bookmark-outline" size={24} color="#0D5F13" />
@@ -607,5 +615,23 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontSize: 18,
     color: "#333",
+  },
+  overlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContainer: {
+    width: "100%",
+    padding: 20,
+    backgroundColor: "white",
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
   },
 });
