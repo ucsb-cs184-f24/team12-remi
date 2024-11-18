@@ -13,6 +13,7 @@ import {
   Platform,
   StatusBar,
   TextInput,
+  Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons"; // For icons
@@ -149,7 +150,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   userHasCommented,
 }) => {
   const [username, setUsername] = useState<string>("");
-
+  const [imageModalVisible, setImageModalVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [commentVisible, setCommentVisible] = useState(false);
   // const [userHasCommented, setUserHasCommented] = useState(false);
@@ -340,7 +341,13 @@ export const RecipePost: React.FC<RecipePostProps> = ({
       return name ? `#${name}` : undefined; // Add "#" to the name if it exists
     })
     .filter(Boolean); // Filter out any undefined values
+  const handleImagePress = () => {
+    setImageModalVisible(true);
+  };
 
+  const handleCloseModalTwo = () => {
+    setImageModalVisible(false);
+  };
   return (
     <View style={Ustyles.post}>
       <View style={Ustyles.postHeader}>
@@ -431,6 +438,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
       <View style={Ustyles.recipeContent}>
         <View style={Ustyles.leftColumn}>
           <View style={Ustyles.imageContainer}>
+            {/* <TouchableOpacity onPress={handleImagePress}> */}
             <Image
               source={
                 mediaUrl
@@ -439,6 +447,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               }
               style={Ustyles.recipeImage}
             />
+            {/* </TouchableOpacity> */}
           </View>
           <Text style={Ustyles.recipeName}>{recipeName}</Text>
           <TouchableOpacity
@@ -510,6 +519,28 @@ export const RecipePost: React.FC<RecipePostProps> = ({
         {/* <Text style={Ustyles.caption}>{caption}</Text> */}
         <Text style={Ustyles.hashtags}>{hashtagNames.join(", ")}</Text>
       </View>
+      {/* {imageModalVisible && (
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={true}
+          onRequestClose={handleCloseModalTwo}
+        >
+          <View style={styles.modalContainer2}>
+            <TouchableOpacity
+              style={styles.closeButton2}
+              onPress={handleCloseModalTwo}
+            >
+              <Ionicons name="close" size={30} color="#FFF" />
+            </TouchableOpacity>
+            <Image
+              source={{ uri: mediaUrl }}
+              style={styles.fullScreenImage}
+              resizeMode="contain"
+            />
+          </View>
+        </Modal>
+      )} */}
     </View>
   );
 };
@@ -712,6 +743,22 @@ const Home: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  modalContainer2: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fullScreenImage: {
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height,
+  },
+  closeButton2: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    zIndex: 1,
+  },
   headerContent: {
     flexDirection: "row",
     justifyContent: "space-between",
