@@ -13,6 +13,7 @@ import {
   Platform,
   StatusBar,
   TextInput,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons"; // For icons
@@ -528,6 +529,15 @@ const Home: React.FC = () => {
   const [friendsList, setFriendsList] = useState<string[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const setResetScroll = useContext(ScrollResetContext);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    console.log("Trying to refresh");
+    fetchPostsWithCommentsFlag().then(() => setRefreshing(false));
+
+    console.log("Done w refresh");
+  }, []);
 
   const fetchPostsWithCommentsFlag = async () => {
     const postsRef = collection(db, "Posts");
@@ -644,6 +654,9 @@ const Home: React.FC = () => {
           ref={scrollViewRef}
           stickyHeaderIndices={[0]}
           style={Ustyles.feed}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
           <View
             style={[
