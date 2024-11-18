@@ -11,14 +11,18 @@ import {
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 
-// Define the type for a recipe document 
+// Define the type for a recipe document
 type RecipePost = {
   id: string;
   caption: string;
-  hashtags: string; // Assuming hashtags are stored as a comma-separated string 
+  hashtags: string; // Assuming hashtags are stored as a comma-separated string
 };
 
-const HashtagsTab = () => {
+type HashTagProps = {
+  searchQuery: string;
+};
+
+const HashtagsTab: React.FC<HashTagProps> = ({ searchQuery }) => {
   const [searchTag, setSearchTag] = useState<string>("");
   const [posts, setPosts] = useState<RecipePost[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +35,7 @@ const HashtagsTab = () => {
       return;
     }
 
-    setError(null); // Reset error message 
+    setError(null); // Reset error message
     try {
       const postsRef = collection(db, "Posts");
       const snapshot = await getDocs(postsRef);
@@ -42,7 +46,10 @@ const HashtagsTab = () => {
           const data = doc.data() as Omit<RecipePost, "id">;
           return { id: doc.id, ...data };
         })
-        .filter((post) => post.hashtags && post.hashtags.split(",").includes(searchTag));
+        .filter(
+          (post) =>
+            post.hashtags && post.hashtags.split(",").includes(searchTag)
+        );
 
       setPosts(filteredPosts);
 
@@ -55,7 +62,7 @@ const HashtagsTab = () => {
     }
   };
 
-  // Handle search on button press 
+  // Handle search on button press
   const handleSearch = () => {
     searchPostsByTag();
   };

@@ -29,7 +29,7 @@ import PostsTab from "../PostsTab";
 import UsersTab from "../UsersTab";
 import HashtagsTab from "../HashtagsTab";
 import BookmarksTab from "../BookmarksTab";
-
+import Ustyles from "../../../components/UniversalStyles";
 type SearchTab = "posts" | "users" | "hashtags" | "bookmarks";
 
 export default function Explore() {
@@ -75,7 +75,7 @@ export default function Explore() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Explore</Text>
+        <Text style={Ustyles.header_text}>Explore</Text>
 
         <View style={styles.searchContainer}>
           <Ionicons
@@ -130,6 +130,18 @@ export default function Explore() {
 }
 
 const styles = StyleSheet.create({
+  tempFont: {
+    fontFamily: "Nunito_700Bold",
+    fontWeight: "bold",
+    fontSize: 30,
+    color: "#0D5F13",
+    padding: 0,
+    justifyContent: "center",
+    alignContent: "center",
+    textAlign: "center",
+    alignSelf: "center",
+    paddingBottom: 10,
+  },
   container: {
     flex: 1,
     backgroundColor: "#FFFBF0",

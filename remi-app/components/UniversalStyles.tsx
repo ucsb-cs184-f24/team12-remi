@@ -117,7 +117,7 @@ const Ustyles = StyleSheet.create({
     color: "#0D5F13",
     fontWeight: "bold",
     fontSize: 16,
-    fontFamily: "Nunito_600SemiBold",
+    fontFamily: "_600SemiBold",
   },
   rightColumn: {
     width: "35%",

@@ -619,7 +619,6 @@ const Home: React.FC = () => {
 
   return (
     <SafeAreaView style={Ustyles.background}>
-      <View style={Ustyles.background}>
         <ScrollView stickyHeaderIndices={[0]} style={Ustyles.feed}>
           <View
             style={[
@@ -681,8 +680,6 @@ const Home: React.FC = () => {
               </View>
             ))}
         </ScrollView>
-        {/* <Button title="Sign out" onPress={() => signOut(auth)} color="#0D5F13" /> */}
-      </View>
     </SafeAreaView>
   );
 };
