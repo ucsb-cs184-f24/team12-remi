@@ -13,11 +13,28 @@ import {
   Animated,
   ImageBackground,
   Button,
+  FlatList,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { signOut } from "firebase/auth";
 import { auth, db, storage } from "../../../firebaseConfig";
-import { doc, updateDoc, getDoc, collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  getDoc,
+  getDocs,
+  doc,
+  query,
+  QuerySnapshot,
+  DocumentData,
+  where,
+  onSnapshot,
+  updateDoc,
+  arrayUnion,
+  deleteDoc,
+  arrayRemove,
+} from "firebase/firestore";
+
 import {
   ref,
   uploadBytes,
@@ -28,7 +45,7 @@ import Modal from "react-native-modal";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import RecipePost from "./home";
+import { RecipePost } from "./home";
 
 const { width, height } = Dimensions.get("window");
 const MAX_BIO_LENGTH = 150;
@@ -114,6 +131,7 @@ export default function Component() {
   const bioInputRef = useRef<TextInput>(null);
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [userPosts, setUserPosts] = useState<any[]>([]); // To store user posts
 
   const [friendCount, setFriendCount] = useState(0);
   const [postCount, setPostCount] = useState(0);
@@ -169,9 +187,38 @@ export default function Component() {
         }
       }
     };
-
     fetchUserData();
   }, [user, fadeAnim]);
+
+  useEffect(() => {
+    fetchUserPosts(); // Fetch posts when the component mounts
+  }, []);
+
+  const fetchUserPosts = async () => {
+    try {
+      console.log("fetching users' posts");
+      const postsRef = collection(db, "Posts");
+      const q = query(postsRef, where("userId", "==", user?.uid));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        console.log("No posts found for this user.");
+        setUserPosts([]); // Set empty state if no posts found
+        return;
+      }
+
+      const posts = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setUserPosts(posts);
+      setLoading(false);
+      console.log("Fetched posts:", posts); // Verify data
+    } catch (error) {
+      console.error("Error fetching user posts:", error);
+    }
+  };
+  // fetchUserPosts();
 
   useEffect(() => {
     if (image) {
@@ -243,15 +290,12 @@ export default function Component() {
     await signOut(auth);
   };
 
-  // const handleBookmarksPress = () => {
-  //   // Implement bookmarks functionality here
-  //   setBookmarkVisible(true);
-  //   console.log("user wants to see bookmarks!");
-  // };
   const handleBookmarksPress = () => {
     setBookmarkVisible(false); // Close menu if applicable
     router.push("../../bookmarks"); // Adjust path as needed for your project structure
   };
+
+  console.log("loading: ", loading);
 
   if (loading) {
     return (
@@ -282,90 +326,108 @@ export default function Component() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollViewContent}
-          >
-            <View style={styles.profileSection}>
-              <View style={styles.profileTopSection}>
-                <TouchableOpacity
-                  style={styles.profileImageContainer}
-                  onPress={pickImage}
-                >
-                  <Image
-                    source={{ uri: profilePic }}
-                    style={styles.profileImage}
-                  />
-                  <View style={styles.editOverlay}>
-                    <Ionicons name="camera" size={24} color="#FFF" />
+          <FlatList
+            data={userPosts}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <RecipePost
+                postID={item.id}
+                userID={item.userId}
+                timeAgo={new Date(item.createdAt)}
+                mediaUrl={item.mediaUrl}
+                likes={item.likesCount}
+                comments={item.comments}
+                recipeName={item.title || "Untitled"}
+                price={item.Price || 0.0}
+                difficulty={item.Difficulty || 0}
+                time={item.Time || 0}
+                caption={item.caption || ""}
+                hashtags={item.hashtags || ""}
+                userHasCommented={item.userHasCommented || false} // Placeholder, adjust if you track this
+              />
+            )}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>No Recent Activity found.</Text>
+            }
+            ListHeaderComponent={
+              <View>
+                {/* Profile Section */}
+                <View style={styles.profileSection}>
+                  <View style={styles.profileTopSection}>
+                    <TouchableOpacity
+                      style={styles.profileImageContainer}
+                      onPress={pickImage}
+                    >
+                      <Image
+                        source={{ uri: profilePic }}
+                        style={styles.profileImage}
+                      />
+                      <View style={styles.editOverlay}>
+                        <Ionicons name="camera" size={24} color="#FFF" />
+                      </View>
+                    </TouchableOpacity>
+                    <View style={styles.statsContainer}>
+                      <View style={styles.statItem}>
+                        <Text style={styles.statNumber}>9</Text>
+                        <Text style={styles.statLabel}>friends</Text>
+                      </View>
+                      <View style={styles.statItem}>
+                        <Text style={styles.statNumber}>10</Text>
+                        <Text style={styles.statLabel}>posts</Text>
+                      </View>
+                      <View style={styles.statItem}>
+                        <Text style={styles.statNumber}>5</Text>
+                        <Text style={styles.statLabel}>likes</Text>
+                      </View>
+                    </View>
                   </View>
-                </TouchableOpacity>
-                <View style={styles.statsContainer}>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>{friendCount}</Text>
-                    <Text style={styles.statLabel}>friends</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>{postCount}</Text>
-                    <Text style={styles.statLabel}>posts</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>{likesCount}</Text>
-                    <Text style={styles.statLabel}>likes</Text>
+                  <View style={styles.bioContainer}>
+                    {isEditingBio ? (
+                      <View style={styles.bioEditContainer}>
+                        <TextInput
+                          ref={bioInputRef}
+                          style={styles.bioInput}
+                          value={bio}
+                          onChangeText={(text) =>
+                            setBio(text.slice(0, MAX_BIO_LENGTH))
+                          }
+                          placeholder="Enter your bio"
+                          multiline
+                          maxLength={MAX_BIO_LENGTH}
+                        />
+                        <Text style={styles.characterCount}>
+                          {MAX_BIO_LENGTH - bio.length} characters remaining
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.saveButton}
+                          onPress={saveBio}
+                        >
+                          <Text style={styles.saveButtonText}>Save Bio</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        onPress={() => setIsEditingBio(true)}
+                        style={styles.bioTextContainer}
+                      >
+                        <Text style={styles.bioText}>
+                          {bio || "Tap to add a bio..."}
+                        </Text>
+                        <Ionicons
+                          name="pencil-outline"
+                          size={16}
+                          color="#666"
+                          style={styles.editIcon}
+                        />
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
+                <Text style={styles.recentActivityTitle}>Recent Activity</Text>
               </View>
-              <View style={styles.bioContainer}>
-                {isEditingBio ? (
-                  <View style={styles.bioEditContainer}>
-                    <TextInput
-                      ref={bioInputRef}
-                      style={styles.bioInput}
-                      value={bio}
-                      onChangeText={(text) =>
-                        setBio(text.slice(0, MAX_BIO_LENGTH))
-                      }
-                      placeholder="Enter your bio"
-                      multiline
-                      maxLength={MAX_BIO_LENGTH}
-                    />
-                    <Text style={styles.characterCount}>
-                      {MAX_BIO_LENGTH - bio.length} characters remaining
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.saveButton}
-                      onPress={saveBio}
-                    >
-                      <Text style={styles.saveButtonText}>Save Bio</Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    onPress={() => setIsEditingBio(true)}
-                    style={styles.bioTextContainer}
-                  >
-                    <Text style={styles.bioText}>
-                      {bio || "Tap to add a bio..."}
-                    </Text>
-                    <Ionicons
-                      name="pencil-outline"
-                      size={16}
-                      color="#666"
-                      style={styles.editIcon}
-                    />
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-
-            <View style={styles.contentSection}>
-              <Text style={styles.recentActivityTitle}>Recent Activity</Text>
-              {/* Add your recent activity content here */}
-              <Text style={styles.placeholderText}>
-                No recent activity to show.
-              </Text>
-            </View>
-          </ScrollView>
+            }
+            contentContainerStyle={{ paddingBottom: 20 }}
+          />
 
           <Modal
             isVisible={isMenuVisible}
@@ -633,5 +695,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
     textAlign: "center",
+  },
+  emptyText: {
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+    color: "#666",
   },
 });
