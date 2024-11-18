@@ -163,6 +163,10 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   const [commentText, setCommentText] = useState<string>("");
   // const [postComments, setPostComments] = useState<any[]>([]);
   const [postComments, setPostComments] = useState<Comment[]>([]);
+  if (!postID) {
+    console.error("postID is undefined");
+    return null; // Or handle the error appropriately
+  }
 
   const postRef = doc(db, "Posts", postID);
 
@@ -423,7 +427,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     fetchUsername();
   }, [userID]);
 
-  const hashtagNames = hashtags
+  const hashtagNames = (hashtags ?? "")
     .split(",")
     .map((id) => {
       const name = hashtagMap[id.trim()];
@@ -490,8 +494,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               visible={commentVisible}
               animationType="slide"
               transparent={true}
-              onRequestClose={() => setCommentVisible(false)}
-            >
+              onRequestClose={() => setCommentVisible(false)}>
               <View style={styles.overlay}>
                 <View style={styles.modalContainer}>
                   <Text style={styles.title}>Comments</Text>
@@ -548,8 +551,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
           <Text style={Ustyles.recipeName}>{recipeName}</Text>
           <TouchableOpacity
             style={Ustyles.seeNotesButton}
-            onPress={handleSeeNotesPress}
-          >
+            onPress={handleSeeNotesPress}>
             <Text style={Ustyles.seeNotesText}>See Notes</Text>
           </TouchableOpacity>
           <Modal
@@ -564,8 +566,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                 {/* Add more content as needed */}
                 <TouchableOpacity
                   style={styles.closeButton}
-                  onPress={handleCloseModal}
-                >
+                  onPress={handleCloseModal}>
                   <Text style={styles.closeButtonText}>Close</Text>
                 </TouchableOpacity>
               </View>
@@ -733,13 +734,11 @@ const Home: React.FC = () => {
               {
                 backgroundColor: "#FFF9E6",
               },
-            ]}
-          >
+            ]}>
             <View style={styles.headerContent}>
               <Text style={styles.logoText}>Remi</Text>
               <TouchableOpacity
-                onPress={() => router.push("../../notifications")}
-              >
+                onPress={() => router.push("../../notifications")}>
                 <Ionicons
                   name="notifications-outline"
                   size={27}
