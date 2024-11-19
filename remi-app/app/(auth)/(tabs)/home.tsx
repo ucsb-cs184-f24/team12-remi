@@ -438,16 +438,16 @@ export const RecipePost: React.FC<RecipePostProps> = ({
       <View style={Ustyles.recipeContent}>
         <View style={Ustyles.leftColumn}>
           <View style={Ustyles.imageContainer}>
-            {/* <TouchableOpacity onPress={handleImagePress}> */}
-            <Image
-              source={
-                mediaUrl
-                  ? { uri: mediaUrl }
-                  : require("../../../assets/placeholders/recipe-image.png")
-              }
-              style={Ustyles.recipeImage}
-            />
-            {/* </TouchableOpacity> */}
+            <TouchableOpacity onPress={handleImagePress}>
+              <Image
+                source={
+                  mediaUrl
+                    ? { uri: mediaUrl }
+                    : require("../../../assets/placeholders/recipe-image.png")
+                }
+                style={Ustyles.recipeImage}
+              />
+            </TouchableOpacity>
           </View>
           <Text style={Ustyles.recipeName}>{recipeName}</Text>
           <TouchableOpacity
@@ -519,7 +519,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
         {/* <Text style={Ustyles.caption}>{caption}</Text> */}
         <Text style={Ustyles.hashtags}>{hashtagNames.join(", ")}</Text>
       </View>
-      {/* {imageModalVisible && (
+      {imageModalVisible && (
         <Modal
           animationType="fade"
           transparent={true}
@@ -540,7 +540,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
             />
           </View>
         </Modal>
-      )} */}
+      )}
     </View>
   );
 };

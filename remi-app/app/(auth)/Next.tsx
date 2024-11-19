@@ -22,6 +22,7 @@ import {
   uploadBytesResumable,
 } from "firebase/storage";
 import * as FileSystem from "expo-file-system";
+import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 
 interface Params {
   image: string;
@@ -32,9 +33,14 @@ interface Params {
 
 const uploadImageToStorage = async (uri: string): Promise<string> => {
   try {
-    console.log("What am i now: ", uri);
     if (!uri) throw new Error("Image URI is null or undefined.");
-    const response = await fetch(uri);
+
+    const manipulateResult = await manipulateAsync(uri, [], {
+      compress: 0.5,
+      format: SaveFormat.JPEG,
+    });
+
+    const response = await fetch(manipulateResult.uri);
     if (!response.ok) throw new Error("Failed to fetch the image.");
     const blob = await response.blob();
     const storageRef = ref(storage, `images/${Date.now()}.jpg`);
