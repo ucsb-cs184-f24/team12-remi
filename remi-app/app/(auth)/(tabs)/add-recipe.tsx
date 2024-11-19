@@ -174,7 +174,7 @@ export default function RecipeCreationScreen() {
         </ImageBackground>
       </LinearGradient>
     </TouchableWithoutFeedback>
-  );
+  ); 
 }
 
 const styles = StyleSheet.create({
@@ -193,22 +193,22 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     flexGrow: 1,
     padding: 20,
-    paddingTop: 80, // Increased padding to move everything down more
+    paddingTop: 80,
   },
   headerContainer: {
     alignItems: 'center',
-    marginBottom: 30, // Increased margin to add more space between header texts
+    marginBottom: 30,
   },
   headerText: {
-    fontSize: 32, // Increased font size
+    fontSize: 32,
     fontWeight: '800',
     color: '#0D5F13',
     fontFamily: 'Nunito_600SemiBold',
     textAlign: 'center',
-    marginBottom: 15, // Added margin to increase space between texts
+    marginBottom: 15,
   },
   subHeaderText: {
-    fontSize: 20, // Increased font size
+    fontSize: 20,
     fontWeight: '700',
     color: '#0D5F13',
     fontFamily: 'Nunito_600SemiBold',
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   titleInput: {
     height: 50,
     borderWidth: 2,
-    borderRadius: 4,
+    borderRadius: 15,
     paddingHorizontal: 10,
     backgroundColor: '#FFF9E6',
     borderColor: '#0D5F13',
@@ -231,13 +231,13 @@ const styles = StyleSheet.create({
     height: 200,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFF9E6', // Changed background color
+    backgroundColor: '#FFF9E6',
     borderRadius: 100,
     borderWidth: 3,
     borderColor: '#FFF9E6',
     overflow: 'hidden',
     marginBottom: 20,
-    shadowColor: "#000", // Added shadow
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   captionInput: {
     height: 150,
     borderWidth: 2,
-    borderRadius: 4,
+    borderRadius: 15,
     padding: 10,
     backgroundColor: '#FFF9E6',
     borderColor: '#0D5F13',
@@ -294,7 +294,7 @@ const multiSelectStyles = {
     borderColor: '#0D5F13',
     borderWidth: 2,
     padding: 12,
-    borderRadius: 4,
+    borderRadius: 15,
   },
   selectToggleText: {
     fontSize: 16,
