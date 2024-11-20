@@ -595,24 +595,13 @@ export const RecipePost: React.FC<RecipePostProps> = ({
       </View>
       <View style={Ustyles.recipeContent}>
         <View style={Ustyles.leftColumn}>
-          <View style={Ustyles.imageContainer}>
-            handleImageStartLoad(postID)
-            {loadingStates[postID] && (
-              <View style={styles.spinnerContainer}>
-                <ActivityIndicator size="large" color="#0D5F13" />
-              </View>
-            )}
-            <Image
-              source={
-                mediaUrl
-                  ? { uri: mediaUrl }
-                  : require("../../../assets/placeholders/recipe-image.png")
-              }
-              style={Ustyles.recipeImage}
-              onLoad={() => handleImageLoad(postID)}
-              onError={() => handleImageError(postID)}
-            />
-            <TouchableOpacity onPress={handleImagePress}>
+          <TouchableOpacity onPress={handleImagePress}>
+            <View style={Ustyles.imageContainer}>
+              {loadingStates[postID] && (
+                <View style={styles.spinnerContainer}>
+                  <ActivityIndicator size="large" color="#0D5F13" />
+                </View>
+              )}
               <Image
                 source={
                   mediaUrl
@@ -620,9 +609,11 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                     : require("../../../assets/placeholders/recipe-image.png")
                 }
                 style={Ustyles.recipeImage}
+                onLoad={() => handleImageLoad(postID)} // Updates loading state to false
+                onError={() => handleImageError(postID)} // Handles errors
               />
-            </TouchableOpacity>
-          </View>
+            </View>
+          </TouchableOpacity>
           <Text style={Ustyles.recipeName}>{recipeName}</Text>
           <TouchableOpacity
             style={Ustyles.seeNotesButton}
