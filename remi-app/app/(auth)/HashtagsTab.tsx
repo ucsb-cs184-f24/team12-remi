@@ -100,6 +100,8 @@ const HashtagsTab: React.FC<HashtagsTabProps> = ({ selectedTags }) => {
                   caption={post.caption || "No caption"}
                   hashtags={post.hashtags || ["None"]}
                   mediaUrl={post.mediaUrl || ""}
+                  postID={post.id}
+                  userHasCommented={post.userHasCommented}
                 />
                 <View style={Ustyles.separator} />
               </View>
