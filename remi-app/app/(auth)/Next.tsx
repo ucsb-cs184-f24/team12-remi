@@ -27,39 +27,47 @@ const recipeTagItems = [
     { name: "Breakfast", id: 1 },
     { name: "Lunch", id: 2 },
     { name: "Dinner", id: 3 },
-    { name: "Snacks", id: 23 },
-    { name: "Dessert", id: 22 },
-    { name: "Beverages", id: 29 },
+    { name: "Snacks", id: 4 },
+    { name: "Dessert", id: 5 },
+    { name: "Beverages", id: 6 },
   ]},
   { name: "Diet", id: 100, children: [
-    { name: "Vegetarian", id: 4 },
-    { name: "Vegan", id: 5 },
-    { name: "Gluten-Free", id: 6 },
-    { name: "Dairy-Free", id: 7 },
-    { name: "Keto", id: 8 },
-    { name: "Paleo", id: 9 },
-    { name: "Low Carb", id: 10 },
+    { name: "Vegetarian", id: 101 },
+    { name: "Pescatarian", id: 102 },
+    { name: "Halal", id: 103 },
+    { name: "Vegan", id: 104 },
+    { name: "Jain", id: 105 },
+    { name: "Gluten-Free", id: 106 },
+    { name: "Dairy-Free", id: 107 },
+    { name: "Keto", id: 108 },
+    { name: "Paleo", id: 109 },
+    { name: "Low Carb", id: 110 },
   ]},
   { name: "Cuisine", id: 200, children: [
-    { name: "Italian", id: 13 },
-    { name: "Mexican", id: 14 },
-    { name: "Asian", id: 12 },
-    { name: "Indian", id: 15 },
-    { name: "Mediterranean", id: 11 },
-    { name: "American", id: 18 },
-    { name: "Middle Eastern", id: 16 },
-    { name: "French", id: 17 },
-    { name: "African", id: 19 },
-    { name: "Caribbean", id: 20 },
+    { name: "Italian", id: 201 },
+    { name: "French", id: 202 },
+    { name: "Mexican", id: 203 },
+    { name: "Japanese", id: 204 },
+    { name: "Chinese", id: 205 },
+    { name: "Korean", id: 206 },
+    { name: "Thai", id: 207 },
+    { name: "Malaysian", id: 208 },
+    { name: "Vietnamese", id: 209 },
+    { name: "Indian", id: 210 },
+    { name: "Pakistani", id: 211 },
+    { name: "Mediterranean", id: 212 },
+    { name: "American", id: 213 },
+    { name: "Southern", id: 214 },
+    { name: "Middle Eastern", id: 215 },
+    { name: "African", id: 216 },
+    { name: "Caribbean", id: 217 },
+    { name: "Creole", id: 218 },
+    { name: "Cajun", id: 219 },
   ]},
   { name: "Course", id: 300, children: [
-    { name: "Appetizers", id: 24 },
-    { name: "Main Course", id: 301 },
-    { name: "Side Dish", id: 302 },
-    { name: "Salads", id: 28 },
-    { name: "Soups & Stews", id: 27 },
-    { name: "BBQ", id: 25 },
-    { name: "Seafood", id: 26 },
+    { name: "Appetizers", id: 301 },
+    { name: "Main Course", id: 302 },
+    { name: "Side Dish", id: 303 },
   ]},
 ];
 
@@ -194,8 +202,8 @@ export default function RecipeSubmissionPage() {
                 <Slider
                   style={styles.slider}
                   minimumValue={0}
-                  maximumValue={10}
-                  step={0.1}
+                  maximumValue={100}
+                  step={1}
                   value={price}
                   onValueChange={(value) => setPrice(value)}
                   minimumTrackTintColor="#0D5F13"
@@ -330,18 +338,18 @@ const styles = StyleSheet.create({
     }),
   },
   sliderContainer: {
-    marginBottom: 20,
+    marginBottom: 10, // Reduced from 20 to 10
   },
   label: {
-    fontSize: 18,
+    fontSize: 16, // Reduced from 18 to 16
     fontWeight: "700",
-    marginBottom: 10,
+    marginBottom: 5, // Reduced from 10 to 5
     color: "#0D5F13",
     fontFamily: 'Nunito_600SemiBold',
   },
   slider: {
     width: "100%",
-    height: 40,
+    height: 30, // Reduced from 40 to 30
   },
   description: {
     fontSize: 16,
