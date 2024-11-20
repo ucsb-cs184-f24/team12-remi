@@ -100,6 +100,8 @@ const Ustyles = StyleSheet.create({
     borderWidth: 3,
     borderRadius: 10,
     overflow: "hidden",
+    verticalAlign: "middle",
+    alignItems: "center",
   },
   recipeImage: {
     width: "100%",
