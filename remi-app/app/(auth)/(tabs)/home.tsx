@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useContext } from "react";
 import {
   Text,
   View,
@@ -14,6 +14,7 @@ import {
   StatusBar,
   TextInput,
   ActivityIndicator,
+  Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons"; // For icons
@@ -40,6 +41,7 @@ import Spacer from "../../../components/Spacer";
 import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ScrollResetContext } from "./_layout";
 
 const formatTimeAgo = (date: Date) => {
   const now = new Date();
@@ -155,7 +157,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   }
 
   const [username, setUsername] = useState<string>("");
-
+  const [imageModalVisible, setImageModalVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [savedBy, setSavedBy] = useState<string[]>([]);
   const [commentVisible, setCommentVisible] = useState(false);
@@ -482,7 +484,13 @@ export const RecipePost: React.FC<RecipePostProps> = ({
       return name ? `#${name}` : undefined; // Add "#" to the name if it exists
     })
     .filter(Boolean); // Filter out any undefined values
+  const handleImagePress = () => {
+    setImageModalVisible(true);
+  };
 
+  const handleCloseModalTwo = () => {
+    setImageModalVisible(false);
+  };
   return (
     <View style={Ustyles.post}>
       <View style={Ustyles.postHeader}>
@@ -604,6 +612,16 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               onLoad={() => handleImageLoad(postID)}
               onError={() => handleImageError(postID)}
             />
+            <TouchableOpacity onPress={handleImagePress}>
+              <Image
+                source={
+                  mediaUrl
+                    ? { uri: mediaUrl }
+                    : require("../../../assets/placeholders/recipe-image.png")
+                }
+                style={Ustyles.recipeImage}
+              />
+            </TouchableOpacity>
           </View>
           <Text style={Ustyles.recipeName}>{recipeName}</Text>
           <TouchableOpacity
@@ -675,6 +693,28 @@ export const RecipePost: React.FC<RecipePostProps> = ({
         {/* <Text style={Ustyles.caption}>{caption}</Text> */}
         <Text style={Ustyles.hashtags}>{hashtagNames.join(", ")}</Text>
       </View>
+      {imageModalVisible && (
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={true}
+          onRequestClose={handleCloseModalTwo}
+        >
+          <View style={styles.modalContainer2}>
+            <TouchableOpacity
+              style={styles.closeButton2}
+              onPress={handleCloseModalTwo}
+            >
+              <Ionicons name="close" size={30} color="#FFF" />
+            </TouchableOpacity>
+            <Image
+              source={{ uri: mediaUrl }}
+              style={styles.fullScreenImage}
+              resizeMode="contain"
+            />
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -691,47 +731,66 @@ const Home: React.FC = () => {
   >([]);
   const router = useRouter();
   const [friendsList, setFriendsList] = useState<string[]>([]);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const setResetScroll = useContext(ScrollResetContext);
+
+  const fetchPostsWithCommentsFlag = async () => {
+    const postsRef = collection(db, "Posts");
+    const postsQuery = query(postsRef, where("userId", "in", friendsList));
+
+    const querySnapshot = await getDocs(postsQuery);
+    const currentUserId = auth.currentUser?.uid;
+
+    const postsWithCommentsFlag = await Promise.all(
+      querySnapshot.docs.map(async (doc) => {
+        const postData = doc.data();
+        const postId = doc.id;
+
+        // Check if the current user has commented on this post
+        const commentsRef = collection(db, "Comments");
+        const commentsQuery = query(
+          commentsRef,
+          where("postId", "==", postId),
+          where("userId", "==", currentUserId)
+        );
+
+        const userHasCommentedSnapshot = await getDocs(commentsQuery);
+        const userHasCommented = !userHasCommentedSnapshot.empty;
+
+        return {
+          ...postData,
+          postID: postId,
+          userHasCommented,
+        };
+      })
+    );
+    console.log("Refreshing from hometsx..");
+    setPosts(postsWithCommentsFlag);
+  };
+
+  useEffect(() => {
+    const resetScroll = () => {
+      scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+    };
+
+    if (setResetScroll) {
+      setResetScroll(() => resetScroll);
+    }
+  }, [setResetScroll]);
 
   // Fetch all posts from Firestore
   useEffect(() => {
     if (friendsList.length === 0) return;
 
-    const fetchPostsWithCommentsFlag = async () => {
-      const postsRef = collection(db, "Posts");
-      const postsQuery = query(postsRef, where("userId", "in", friendsList));
-
-      const querySnapshot = await getDocs(postsQuery);
-      const currentUserId = auth.currentUser?.uid;
-
-      const postsWithCommentsFlag = await Promise.all(
-        querySnapshot.docs.map(async (doc) => {
-          const postData = doc.data();
-          const postId = doc.id;
-
-          // Check if the current user has commented on this post
-          const commentsRef = collection(db, "Comments");
-          const commentsQuery = query(
-            commentsRef,
-            where("postId", "==", postId),
-            where("userId", "==", currentUserId)
-          );
-
-          const userHasCommentedSnapshot = await getDocs(commentsQuery);
-          const userHasCommented = !userHasCommentedSnapshot.empty;
-
-          return {
-            ...postData,
-            postID: postId,
-            userHasCommented,
-          };
-        })
-      );
-
-      setPosts(postsWithCommentsFlag);
-    };
-
     fetchPostsWithCommentsFlag();
   }, [friendsList]);
+
+  // Use `useEffect` to fetch posts when the component mounts and every minute
+  useEffect(() => {
+    fetchPostsWithCommentsFlag();
+    const interval = setInterval(fetchPostsWithCommentsFlag, 60000); // 60000 ms = 1 minute
+    return () => clearInterval(interval); // Cleanup interval on component unmount
+  }, []);
 
   useEffect(() => {
     // Set up real-time listener for pending friend requests
@@ -786,7 +845,11 @@ const Home: React.FC = () => {
   return (
     <SafeAreaView style={Ustyles.background}>
       <View style={Ustyles.background}>
-        <ScrollView stickyHeaderIndices={[0]} style={Ustyles.feed}>
+        <ScrollView
+          ref={scrollViewRef}
+          stickyHeaderIndices={[0]}
+          style={Ustyles.feed}
+        >
           <View
             style={[
               styles.header,
@@ -854,6 +917,22 @@ const Home: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  modalContainer2: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fullScreenImage: {
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height,
+  },
+  closeButton2: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    zIndex: 1,
+  },
   headerContent: {
     flexDirection: "row",
     justifyContent: "space-between",
