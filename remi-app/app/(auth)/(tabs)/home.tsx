@@ -13,6 +13,7 @@ import {
   Platform,
   StatusBar,
   TextInput,
+  ActivityIndicator,
   Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -151,6 +152,10 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   postID,
   userHasCommented,
 }) => {
+  interface LoadingStates {
+    [key: string]: boolean;
+  }
+
   const [username, setUsername] = useState<string>("");
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -165,6 +170,9 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   const [commentText, setCommentText] = useState<string>("");
   // const [postComments, setPostComments] = useState<any[]>([]);
   const [postComments, setPostComments] = useState<Comment[]>([]);
+  // const [loading, setLoading] = useState(true);
+  const [loadingStates, setLoadingStates] = useState<LoadingStates>({}); // State to track loading for each post
+
   if (!postID) {
     console.error("postID is undefined");
     return null; // Or handle the error appropriately
@@ -218,6 +226,38 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     }
   };
 
+  // const handleImageLoad = (post_id: string) => {
+  //   setLoadingStates((prev) => ({ ...prev, [post_id]: false })); // Mark this post's image as loaded
+  //   // console.log("updated state for ", post_id);
+  // };
+
+  // Handle image load finish (set loading state to false and remove from states)
+  const handleImageLoad = (post_id: string) => {
+    setLoadingStates((prev) => {
+      const newState = { ...prev };
+      delete newState[post_id]; // Remove the post_id from the loading states once the image is loaded
+      // console.log(
+      //   "image loaded, state set to false and removed from loadingStates for ",
+      //   post_id
+      // );
+      return newState;
+    });
+  };
+
+  const handleImageError = (post_id: string) => {
+    setLoadingStates((prev) => ({ ...prev, [post_id]: false })); // Handle error and stop showing loading symbol
+    // console.log("error: updated state for ", post_id);
+  };
+
+  const handleImageStartLoad = (post_id: string) => {
+    setLoadingStates((prev) => ({ ...prev, [post_id]: true }));
+    // console.log("initialized state to true for ", post_id);
+  };
+
+  useEffect(() => {
+    handleImageStartLoad(postID); // Trigger loading state as true when the component mounts
+  }, [postID]);
+
   const handleUnsavePost = async () => {
     try {
       const user = auth.currentUser;
@@ -258,7 +298,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   };
 
   const handleSavePress = async () => {
-    console.log("user tryna save");
+    // console.log("user tryna save");
     if (!auth.currentUser) {
       Alert.alert("Error", "You must be logged in to like posts.");
       return;
@@ -335,6 +375,8 @@ export const RecipePost: React.FC<RecipePostProps> = ({
 
   const handleCommentsPress = () => {
     console.log("press comments");
+    // console.log("loading: ", loading);
+    // console.log("postID: ", postID);
     setCommentVisible(true);
 
     const commentsRef = collection(db, "Comments");
@@ -411,6 +453,8 @@ export const RecipePost: React.FC<RecipePostProps> = ({
         setLikedBy(postData.likedBy || []); // Real-time update of likedBy array
         setSavedBy(postData.savedBy || []);
       }
+      // console.log("loading: ", loading);
+      // console.log("postID: ", postID);
     });
 
     return () => unsubscribe(); // Cleanup listener
@@ -428,6 +472,10 @@ export const RecipePost: React.FC<RecipePostProps> = ({
 
     fetchUsername();
   }, [userID]);
+
+  // useEffect(() => {
+  //   setLoading(true);
+  // }, [mediaUrl]);
 
   const hashtagNames = (hashtags ?? "")
     .split(",")
@@ -502,7 +550,8 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               visible={commentVisible}
               animationType="slide"
               transparent={true}
-              onRequestClose={() => setCommentVisible(false)}>
+              onRequestClose={() => setCommentVisible(false)}
+            >
               <View style={styles.overlay}>
                 <View style={styles.modalContainer}>
                   <Text style={styles.title}>Comments</Text>
@@ -547,6 +596,22 @@ export const RecipePost: React.FC<RecipePostProps> = ({
       <View style={Ustyles.recipeContent}>
         <View style={Ustyles.leftColumn}>
           <View style={Ustyles.imageContainer}>
+            handleImageStartLoad(postID)
+            {loadingStates[postID] && (
+              <View style={styles.spinnerContainer}>
+                <ActivityIndicator size="large" color="#0D5F13" />
+              </View>
+            )}
+            <Image
+              source={
+                mediaUrl
+                  ? { uri: mediaUrl }
+                  : require("../../../assets/placeholders/recipe-image.png")
+              }
+              style={Ustyles.recipeImage}
+              onLoad={() => handleImageLoad(postID)}
+              onError={() => handleImageError(postID)}
+            />
             <TouchableOpacity onPress={handleImagePress}>
               <Image
                 source={
@@ -561,7 +626,8 @@ export const RecipePost: React.FC<RecipePostProps> = ({
           <Text style={Ustyles.recipeName}>{recipeName}</Text>
           <TouchableOpacity
             style={Ustyles.seeNotesButton}
-            onPress={handleSeeNotesPress}>
+            onPress={handleSeeNotesPress}
+          >
             <Text style={Ustyles.seeNotesText}>See Notes</Text>
           </TouchableOpacity>
           <Modal
@@ -576,7 +642,8 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                 {/* Add more content as needed */}
                 <TouchableOpacity
                   style={styles.closeButton}
-                  onPress={handleCloseModal}>
+                  onPress={handleCloseModal}
+                >
                   <Text style={styles.closeButtonText}>Close</Text>
                 </TouchableOpacity>
               </View>
@@ -789,11 +856,13 @@ const Home: React.FC = () => {
               {
                 backgroundColor: "#FFF9E6",
               },
-            ]}>
+            ]}
+          >
             <View style={styles.headerContent}>
               <Text style={styles.logoText}>Remi</Text>
               <TouchableOpacity
-                onPress={() => router.push("../../notifications")}>
+                onPress={() => router.push("../../notifications")}
+              >
                 <Ionicons
                   name="notifications-outline"
                   size={27}
@@ -1001,6 +1070,15 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     fontSize: 16,
     color: "#555",
+  },
+  spinnerContainer: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: [{ translateX: "-50%" }, { translateY: "-50%" }],
+    alignItems: "center",
+    alignSelf: "center",
+    zIndex: 1,
   },
 });
 
