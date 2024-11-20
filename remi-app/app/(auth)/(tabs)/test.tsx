@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import RecipePost from "./home";
-import { db, auth } from "../../../firebaseConfig"; // Ensure correct imports
+import { db, auth } from "../../../firebaseConfig";
 import {
   collection,
   addDoc,
@@ -143,7 +143,7 @@ export default function Explore() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View style={styles.header}>
         <Text style={styles.title}>Explore</Text>
 
         <View style={styles.searchContainer}>
@@ -206,21 +206,16 @@ export default function Explore() {
             </TouchableOpacity>
           ))}
         </ScrollView>
-        {
-          //Put if statements here to check which kind of tab this is
-          //Show different stuff
-        }
-        <View style={styles.resultsContainer}>
-          {activeTab === "posts" && <PostsTab searchQuery={searchQuery} />}
-          {activeTab === "users" && <UsersTab searchQuery={searchQuery} />}
-          {activeTab === "hashtags" && (
-            <HashtagsTab selectedTags={selectedTags} />
-          )}
-          {activeTab === "bookmarks" && (
-            <BookmarksTab searchQuery={searchQuery} />
-          )}
-        </View>
-      </ScrollView>
+      </View>
+
+      <View style={styles.content}>
+        {activeTab === "posts" && <PostsTab searchQuery={searchQuery} />}
+        {activeTab === "users" && <UsersTab searchQuery={searchQuery} />}
+        {activeTab === "hashtags" && <HashtagsTab searchQuery={searchQuery} />}
+        {activeTab === "bookmarks" && (
+          <BookmarksTab searchQuery={searchQuery} />
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -230,8 +225,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFBF0",
   },
-  scrollContent: {
+  header: {
     padding: 16,
+  },
+  content: {
+    flex: 1,
   },
   title: {
     fontSize: 32,
