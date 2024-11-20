@@ -44,6 +44,15 @@ import { RecipePost } from "./(tabs)/home";
 interface PostsTabProps {
   searchQuery: string;
 }
+interface Post {
+  id: string;
+  title?: string;
+  caption?: string;
+  likesCount?: number;
+  userId?: string;
+  createdAt?: string;
+  [key: string]: any; // For additional properties
+}
 
 const PostsTab: React.FC<PostsTabProps> = ({ searchQuery }) => {
   const [posts, setPosts] = useState<DocumentData[]>([]);
@@ -57,39 +66,68 @@ const PostsTab: React.FC<PostsTabProps> = ({ searchQuery }) => {
 
         const publicUserIds = userSnapshot.docs.map((doc) => doc.id);
 
-        // console.log("Public User IDs:", publicUserIds);
-
         if (publicUserIds.length === 0) {
           setPosts([]);
           return;
         }
 
         const postsRef = collection(db, "Posts");
-        const postsQuery = query(
-          postsRef,
-          where("userId", "in", publicUserIds),
-          orderBy("likesCount", "desc"),
-          limit(10)
-        );
+        let postsQuery;
 
-        const postsSnapshot = await getDocs(postsQuery);
-        const filteredPosts = postsSnapshot.docs.map((doc) => ({
-          ...doc.data(),
-          id: doc.id,
-        }));
+        if (searchQuery) {
+          const keywords = searchQuery.toLowerCase().split(" ");
 
-        // console.log("Filtered Posts:", filteredPosts);
+          const allPostsSnapshot = await getDocs(
+            query(postsRef, where("userId", "in", publicUserIds))
+          );
 
-        setPosts(filteredPosts);
+          const allPosts: Post[] = allPostsSnapshot.docs.map((doc) => ({
+            ...(doc.data() as Post), 
+            id: doc.id,
+          }));
+
+          const filteredPosts = allPosts
+            .filter((post) => {
+              const title = post.title?.toLowerCase() || "";
+              const caption = post.caption?.toLowerCase() || "";
+              return keywords.some(
+                (keyword) =>
+                  title.includes(keyword) || caption.includes(keyword)
+              );
+            })
+            .sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0)); 
+
+          setPosts(filteredPosts);
+        } else {
+          postsQuery = query(
+            postsRef,
+            where("userId", "in", publicUserIds),
+            orderBy("likesCount", "desc"),
+            limit(10)
+          );
+
+          const postsSnapshot = await getDocs(postsQuery);
+          const defaultPosts: Post[] = postsSnapshot.docs.map((doc) => ({
+            ...(doc.data() as Post), 
+            id: doc.id,
+          }));
+
+          setPosts(defaultPosts);
+        }
       } catch (error) {
-        Alert.alert("Error", `Failed to fetch posts: ${error}`);
+        Alert.alert(
+          "Error",
+          `Failed to fetch posts: ${error instanceof Error ? error.message : error}`
+        );
       }
     };
 
     fetchAllPosts();
-    const interval = setInterval(fetchAllPosts, 60000); // Fetch every 1 minute
-    return () => clearInterval(interval);
-  }, []);
+
+    const interval = setInterval(fetchAllPosts, 60000); // 60000 ms = 1 minute
+    return () => clearInterval(interval); // Cleanup interval on component unmount
+  }, [searchQuery]);
+
 
   return (
     <SafeAreaView style={Ustyles.background}>

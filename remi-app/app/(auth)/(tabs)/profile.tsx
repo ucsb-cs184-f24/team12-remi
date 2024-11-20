@@ -286,7 +286,7 @@ export default function Component() {
 
   const handleSignOut = async () => {
     setIsMenuVisible(false);
-    router.push("../../poo");
+    router.replace("../../poo");
     await signOut(auth);
   };
 
@@ -368,15 +368,15 @@ export default function Component() {
                     </TouchableOpacity>
                     <View style={styles.statsContainer}>
                       <View style={styles.statItem}>
-                        <Text style={styles.statNumber}>9</Text>
+                        <Text style={styles.statNumber}>{friendCount}</Text>
                         <Text style={styles.statLabel}>friends</Text>
                       </View>
                       <View style={styles.statItem}>
-                        <Text style={styles.statNumber}>10</Text>
+                        <Text style={styles.statNumber}>{postCount}</Text>
                         <Text style={styles.statLabel}>posts</Text>
                       </View>
                       <View style={styles.statItem}>
-                        <Text style={styles.statNumber}>5</Text>
+                        <Text style={styles.statNumber}>{likesCount}</Text>
                         <Text style={styles.statLabel}>likes</Text>
                       </View>
                     </View>
