@@ -44,6 +44,15 @@ import { RecipePost } from "./(tabs)/home";
 interface PostsTabProps {
   searchQuery: string;
 }
+interface Post {
+  id: string;
+  title?: string;
+  caption?: string;
+  likesCount?: number;
+  userId?: string;
+  createdAt?: string;
+  [key: string]: any; // For additional properties
+}
 
 const PostsTab: React.FC<PostsTabProps> = ({ searchQuery }) => {
   const [posts, setPosts] = useState<DocumentData[]>([]);
@@ -53,19 +62,37 @@ const PostsTab: React.FC<PostsTabProps> = ({ searchQuery }) => {
   const fetchAllPosts = async () => {
     try {
       const postsRef = collection(db, "Posts");
-      const postsQuery = query(
-        postsRef,
-        orderBy("likesCount", "desc"),
-        limit(10)
-      );
-      const querySnapshot = await getDocs(postsQuery);
-      console.log(querySnapshot);
-      // const filteredPosts = querySnapshot.docs.map((doc) => doc.data());
-      const filteredPosts = querySnapshot.docs.map((doc) => ({
+      let querySnapshot = await getDocs(postsRef);
+
+      const allPosts: Post[] = querySnapshot.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
-      }));
-      setPosts(filteredPosts);
+      })) as Post[];
+
+      if (searchQuery) {
+        // Split the search query into individual keywords
+        const keywords = searchQuery.toLowerCase().split(" ");
+
+        // Filter posts where title or caption contains any of the keywords
+        const filteredPosts = allPosts.filter((post) => {
+          const title = post.title?.toLowerCase() || "";
+          const caption = post.caption?.toLowerCase() || "";
+          return keywords.some(
+            (keyword) => title.includes(keyword) || caption.includes(keyword)
+          );
+        });
+
+        setPosts(filteredPosts);
+      } else {
+        querySnapshot = await getDocs(
+          query(postsRef, orderBy("likesCount", "desc"), limit(10))
+        );
+        const defaultPosts = querySnapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+        setPosts(defaultPosts);
+      }
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert("Error", `Failed to fetch posts: ${error.message}`);
@@ -80,7 +107,7 @@ const PostsTab: React.FC<PostsTabProps> = ({ searchQuery }) => {
     fetchAllPosts();
     const interval = setInterval(fetchAllPosts, 60000); // 60000 ms = 1 minute
     return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, []);
+  }, [searchQuery]);
 
   return (
     <SafeAreaView style={Ustyles.background}>
