@@ -17,7 +17,14 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { FirebaseError } from "firebase/app";
 import { auth, db, storage } from "../../firebaseConfig";
 import { doc, setDoc } from "firebase/firestore";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  uploadBytesResumable,
+} from "firebase/storage";
+import * as FileSystem from "expo-file-system";
+import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { LinearGradient } from "expo-linear-gradient";
 
 const { width } = Dimensions.get("window");
@@ -79,7 +86,13 @@ const getTagNamesFromIds = (tagIds: string) => {
 const uploadImageToStorage = async (uri: string): Promise<string> => {
   try {
     if (!uri) throw new Error("Image URI is null or undefined.");
-    const response = await fetch(uri);
+
+    const manipulateResult = await manipulateAsync(uri, [], {
+      compress: 0.5,
+      format: SaveFormat.JPEG,
+    });
+
+    const response = await fetch(manipulateResult.uri);
     if (!response.ok) throw new Error("Failed to fetch the image.");
     const blob = await response.blob();
     const storageRef = ref(storage, `images/${Date.now()}.jpg`);
