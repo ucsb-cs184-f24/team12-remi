@@ -207,7 +207,7 @@ export default function Component() {
 
   const handleSignOut = async () => {
     setIsMenuVisible(false);
-    router.push("../../poo");
+    router.replace("../../poo");
     await signOut(auth);
   };
 
