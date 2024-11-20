@@ -1,349 +1,341 @@
 import React, { useState } from "react";
-import * as ImagePicker from "expo-image-picker";
-import { FirebaseError } from "firebase/app";
-import { auth, db, storage } from "../../../firebaseConfig";
-import { doc, setDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
-  Text,
   View,
+  Text,
   StyleSheet,
   TextInput,
   Image,
-  ActivityIndicator,
   TouchableOpacity,
   ScrollView,
   Keyboard,
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
+  Platform,
+  ImageBackground,
 } from "react-native";
-import SectionedMultiSelect from "react-native-sectioned-multi-select";
-import { Ionicons, MaterialIcons as Icon } from "@expo/vector-icons";
-import Ustyles from "@/components/UniversalStyles";
-import Spacer from "@/components/Spacer";
-
-const items = [
-  { name: "Breakfast", id: 1 },
-  { name: "Lunch", id: 2 },
-  { name: "Dinner", id: 3 },
-  { name: "Vegetarian", id: 4 },
-  { name: "Vegan", id: 5 },
-  { name: "Gluten-Free", id: 6 },
-  { name: "Dairy-Free", id: 7 },
-  { name: "Keto", id: 8 },
-  { name: "Paleo", id: 9 },
-  { name: "Low Carb", id: 10 },
-  { name: "Mediterranean", id: 11 },
-  { name: "Asian", id: 12 },
-  { name: "Italian", id: 13 },
-  { name: "Mexican", id: 14 },
-  { name: "Indian", id: 15 },
-  { name: "Middle Eastern", id: 16 },
-  { name: "French", id: 17 },
-  { name: "American", id: 18 },
-  { name: "African", id: 19 },
-  { name: "Caribbean", id: 20 },
-  { name: "Comfort Food", id: 21 },
-  { name: "Dessert", id: 22 },
-  { name: "Snacks", id: 23 },
-  { name: "Appetizers", id: 24 },
-  { name: "BBQ", id: 25 },
-  { name: "Seafood", id: 26 },
-  { name: "Soups & Stews", id: 27 },
-  { name: "Salads", id: 28 },
-  { name: "Beverages", id: 29 },
-  { name: "Japanese", id: 30 },
-];
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import SectionedMultiSelect from "react-native-sectioned-multi-select";
+import { LinearGradient } from "expo-linear-gradient";
 
-const App = () => {
+const recipeTagItems = [
+  { name: "Meal Type", id: 0, children: [
+    { name: "Breakfast", id: 1 },
+    { name: "Lunch", id: 2 },
+    { name: "Dinner", id: 3 },
+    { name: "Snacks", id: 4 },
+    { name: "Dessert", id: 5 },
+    { name: "Beverages", id: 6 },
+  ]},
+  { name: "Diet", id: 100, children: [
+    { name: "Vegetarian", id: 101 },
+    { name: "Pescatarian", id: 102 },
+    { name: "Halal", id: 103 },
+    { name: "Vegan", id: 104 },
+    { name: "Jain", id: 105 },
+    { name: "Gluten-Free", id: 106 },
+    { name: "Dairy-Free", id: 107 },
+    { name: "Keto", id: 108 },
+    { name: "Paleo", id: 109 },
+    { name: "Low Carb", id: 110 },
+  ]},
+  { name: "Cuisine", id: 200, children: [
+    { name: "Italian", id: 201 },
+    { name: "French", id: 202 },
+    { name: "Mexican", id: 203 },
+    { name: "Japanese", id: 204 },
+    { name: "Chinese", id: 205 },
+    { name: "Korean", id: 206 },
+    { name: "Thai", id: 207 },
+    { name: "Malaysian", id: 208 },
+    { name: "Vietnamese", id: 209 },
+    { name: "Indian", id: 210 },
+    { name: "Pakistani", id: 211 },
+    { name: "Mediterranean", id: 212 },
+    { name: "American", id: 213 },
+    { name: "Southern", id: 214 },
+    { name: "Middle Eastern", id: 215 },
+    { name: "African", id: 216 },
+    { name: "Caribbean", id: 217 },
+    { name: "Creole", id: 218 },
+    { name: "Cajun", id: 219 },
+  ]},
+  { name: "Course", id: 300, children: [
+    { name: "Appetizers", id: 301 },
+    { name: "Main Course", id: 302 },
+    { name: "Side Dish", id: 303 },
+  ]},
+];
+
+export default function RecipeCreationScreen() {
   const [image, setImage] = useState<string | null>(null);
-  const [caption, setCaption] = useState("");
   const [title, setTitle] = useState("");
+  const [caption, setCaption] = useState("");
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const router = useRouter();
 
   const pickImage = async () => {
-    try {
-      const permissionResult =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permissionResult.granted) {
-        alert("Permission to access camera roll is required!");
-        return;
-      }
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.All,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
-      if (!result.canceled) {
-        setImage(result.assets[0].uri);
-        //console.log("Testing", image);
-      }
-    } catch (error) {
-      alert("An error occurred while selecting an image. Please try again.");
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets[0].uri) {
+      setImage(result.assets[0].uri);
     }
   };
 
-  const handleTagsChange = (selectedItems: number[]) => {
-    setSelectedTags(selectedItems);
-
-    // Convert selected tag IDs to tag names
-    const tagsArray = selectedItems
-      .map((tagId) => items.find((item) => item.id === tagId)?.name)
-      .filter(Boolean); // Filter out any null or undefined values
-
-    // Set hashtags to a comma-separated string for display
-    // setHashtags(tagsArray.join(", "));
-  };
-
   const handleNext = () => {
-    // Encode the image URI to prevent issues with special characters
+    if (!title.trim()) {
+      alert("Please enter a title for your recipe.");
+      return;
+    }
+    if (!image) {
+      alert("Please select an image for your recipe.");
+      return;
+    }
     const encodedImage = encodeURIComponent(image);
-    console.log("What am i here", image);
     router.push({
       pathname: "/Next",
       params: {
         image: encodedImage,
         title,
         caption,
-        selectedTags,
+        selectedTags: selectedTags.join(","),
       },
     });
   };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={Ustyles.background}>
-        <Spacer size={60} />
-        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={styles.scrollViewContent}>
-            <View style={styles.justifytop_container}>
-              <Text style={Ustyles.header_text}>Add Recipe</Text>
-              <Spacer size={15} />
-              <Text style={Ustyles.header_2}>What did you make today?</Text>
+      <LinearGradient colors={["#FFF9E6", "#BCD5AC"]} style={styles.container}>
+        <ImageBackground
+          source={require("../../../assets/images/background-lineart.png")}
+          style={styles.backgroundImage}
+          imageStyle={styles.backgroundImageStyle}
+        >
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.keyboardAvoidingView}
+          >
+            <ScrollView contentContainerStyle={styles.scrollViewContent}>
+              <View style={styles.headerContainer}>
+                <Text style={styles.headerText}>Add Recipe</Text>
+                <Text style={styles.subHeaderText}>
+                  What did you make today?
+                </Text>
+              </View>
+
               <TextInput
-                multiline={true}
-                style={styles.title_input}
-                placeholder={`dish name`}
+                style={styles.titleInput}
+                placeholder="Dish name"
                 value={title}
                 onChangeText={setTitle}
                 placeholderTextColor="#BCD5AC"
               />
-              <Spacer size={10} />
-              {image ? (
-                <TouchableOpacity
-                  onPress={pickImage}
-                  style={styles.changeImageButton}
-                >
-                  <Text style={styles.changeImageText}>Change Image</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  onPress={pickImage}
-                  style={styles.iconContainer}
-                >
-                  <Ionicons name="camera-outline" size={100} color="#0D5F13" />
-                </TouchableOpacity>
-              )}
-              {image && (
-                <Image source={{ uri: image }} style={styles.imagestyle} />
-              )}
-              <Spacer size={20} />
+
+              <TouchableOpacity
+                onPress={pickImage}
+                style={styles.imagePickerButton}
+              >
+                {image ? (
+                  <Image source={{ uri: image }} style={styles.selectedImage} />
+                ) : (
+                  <View style={styles.iconContainer}>
+                    <Ionicons name="camera-outline" size={80} color="#0D5F13" />
+                    <Text style={styles.imagePickerText}>Add Photo</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
               <TextInput
-                multiline={true}
-                style={styles.notes_input}
-                placeholder={`ingredients?\nrecipe?\nanything you want your friends to know?`}
+                multiline
+                style={styles.captionInput}
+                placeholder="Ingredients, recipe, or anything you want your friends to know?"
                 value={caption}
                 onChangeText={setCaption}
                 placeholderTextColor="#BCD5AC"
               />
-              <Spacer size={20} />
+
               <SectionedMultiSelect
-                items={items}
-                IconRenderer={Icon as any}
+                items={recipeTagItems}
+                IconRenderer={MaterialIcons as any}
                 uniqueKey="id"
-                onSelectedItemsChange={handleTagsChange}
-                selectedItems={selectedTags}
+                subKey="children"
                 selectText="Select Tags"
+                showDropDowns={true}
+                readOnlyHeadings={true}
+                onSelectedItemsChange={(items) => setSelectedTags(items)}
+                selectedItems={selectedTags}
                 searchPlaceholderText="Search Tags"
                 confirmText="Apply Tags"
                 colors={{ primary: "#0D5F13" }}
-                styles={{
-                  selectToggle: {
-                    backgroundColor: "#BCD5AC", // Dark green background
-                    borderColor: "#0D5F13",
-                    borderWidth: 2,
-                    padding: 12,
-                    borderRadius: 8,
-                  },
-                  selectToggleText: {
-                    fontSize: 16,
-                    color: "#0D5F13", // White text for visibility on dark green
-                    fontFamily: "Nunito_600SemiBold",
-                  },
-                  chipContainer: {
-                    backgroundColor: "#BCD5AC",
-                    borderRadius: 15,
-                  },
-                  backdrop: {
-                    backgroundColor: "#BCD5AC",
-                  },
-                  chipText: {
-                    fontSize: 14,
-                    color: "#0D5F13",
-                    fontFamily: "Nunito_600SemiBold",
-                  },
-                  itemText: {
-                    fontSize: 16,
-                    color: "#777",
-                    fontFamily: "Nunito_600SemiBold",
-                  },
-                  confirmText: {
-                    color: "#FFFFFF", // Light green color for the "Apply" button text
-                    fontSize: 16,
-                    fontWeight: "bold",
-                    fontFamily: "Nunito_600SemiBold",
-                  },
-                  selectedItemText: {
-                    color: "#0D5F13", // Highlight selected items
-                    fontFamily: "Nunito_600SemiBold",
-                  },
-                  selectedItem: {
-                    backgroundColor: "#FFF9E6",
-                  },
-                  scrollView: {
-                    backgroundColor: "#f7f7f9",
-                  },
-                  subItemText: {
-                    color: "#777",
-                    fontFamily: "Nunito_600SemiBold",
-                  },
-                  searchTextInput: {
-                    borderBottomWidth: 1,
-                    borderBottomColor: "#0D5F13",
-                    fontFamily: "Nunito_600SemiBold",
-                  },
-                }}
+                styles={multiSelectStyles}
+                alwaysShowSelectText={true}
+                selectToggleIconComponent={
+                  <MaterialIcons
+                    name="arrow-drop-down"
+                    size={24}
+                    color="#0D5F13"
+                  />
+                }
               />
-              <Spacer size={10} />
-              <TouchableOpacity
-                style={styles.buttonContainer}
-                onPress={handleNext}
-              >
-                <View style={styles.button}>
-                  <Text style={Ustyles.header_2}>Next</Text>
-                </View>
+
+              <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+                <Text style={styles.nextButtonText}>Next</Text>
               </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </ImageBackground>
+      </LinearGradient>
     </TouchableWithoutFeedback>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  imagestyle: {
-    width: 200,
-    height: 200,
-    alignSelf: "center",
-    borderWidth: 4,
-    borderRadius: 4,
-    borderColor: "#0D5F13",
-    marginVertical: 20,
+  container: {
+    flex: 1,
+  },
+  backgroundImage: {
+    flex: 1,
+  },
+  backgroundImageStyle: {
+    opacity: 0.5,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   scrollViewContent: {
     flexGrow: 1,
-    justifyContent: "flex-start",
-    paddingBottom: 20,
+    padding: 20,
+    paddingTop: 80,
   },
-  notes_input: {
-    marginVertical: 4,
-    height: 150,
-    borderWidth: 2,
-    borderRadius: 4,
-    padding: 6,
-    backgroundColor: "#fff",
-    borderColor: "#0D5F13",
-    textAlignVertical: "top",
-    //textAlign: 'justify',
-    fontSize: 18,
+  headerContainer: {
+    alignItems: "center",
+    marginBottom: 30,
+  },
+  headerText: {
+    fontSize: 32,
+    fontWeight: "800",
+    color: "#0D5F13",
     fontFamily: "Nunito_600SemiBold",
-    width: "100%",
+    textAlign: "center",
+    marginBottom: 15,
   },
-  title_input: {
-    marginVertical: 4,
+  subHeaderText: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#0D5F13",
+    fontFamily: "Nunito_600SemiBold",
+    textAlign: "center",
+  },
+  titleInput: {
     height: 50,
     borderWidth: 2,
-    borderRadius: 4,
-    paddingVertical: 8, // Adjust padding to balance vertical centering
-    paddingHorizontal: 10, // Horizontal padding to keep text away from edges
-    backgroundColor: "#fff",
+    borderRadius: 15,
+    paddingHorizontal: 10,
+    backgroundColor: "#FFF9E6",
     borderColor: "#0D5F13",
-    textAlignVertical: "center", // Centers text vertically
     fontSize: 18,
     fontFamily: "Nunito_600SemiBold",
-    width: "100%",
+    marginBottom: 20,
   },
-  tags_input: {
-    marginVertical: 4,
-    height: 80,
-    borderWidth: 2,
-    borderRadius: 4,
-    padding: 6,
-    backgroundColor: "#fff",
-    borderColor: "#0D5F13",
-    textAlignVertical: "top",
-    //textAlign: 'justify',
-    fontSize: 18,
-    fontFamily: "Nunito_600SemiBold",
-    width: "100%",
-  },
-  button: {
+  imagePickerButton: {
     alignSelf: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: "#0D5F13",
-    backgroundColor: "#FFF9E6",
-  },
-  buttonContainer: {
-    alignItems: "center",
-    marginVertical: 20,
-  },
-  justifytop_container: {
-    flex: 1,
-    backgroundColor: "#FFF9E6",
-    padding: 20,
-    justifyContent: "flex-start",
-  },
-  iconContainer: {
-    justifyContent: "center",
-    alignSelf: "center",
-    alignItems: "center",
-    overflow: "hidden",
-    backgroundColor: "#BCD5AC",
-    padding: 35,
     width: 200,
     height: 200,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFF9E6",
     borderRadius: 100,
+    borderWidth: 3,
+    borderColor: "#0D5F13",
+    overflow: "hidden",
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  changeImageButton: {
-    alignSelf: "center",
-    backgroundColor: "#0D5F13",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
+  selectedImage: {
+    width: "100%",
+    height: "100%",
   },
-  changeImageText: {
-    color: "#FFF",
+  iconContainer: {
+    alignItems: "center",
+  },
+  imagePickerText: {
+    marginTop: 10,
+    color: "#0D5F13",
     fontSize: 16,
+    fontWeight: "600",
+    fontFamily: "Nunito_600SemiBold",
+  },
+  captionInput: {
+    height: 150,
+    borderWidth: 2,
+    borderRadius: 15,
+    padding: 10,
+    backgroundColor: "#FFF9E6",
+    borderColor: "#0D5F13",
+    textAlignVertical: "top",
+    fontSize: 17,
+    fontFamily: "Nunito_600SemiBold",
+    marginBottom: 20,
+  },
+  nextButton: {
+    backgroundColor: "#0D5F13",
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    alignSelf: "center",
+    marginTop: 20,
+  },
+  nextButtonText: {
+    color: "#FFF",
+    fontSize: 18,
+    fontWeight: "bold",
     fontFamily: "Nunito_600SemiBold",
   },
 });
 
-export default App;
+const multiSelectStyles = {
+  selectToggle: {
+    backgroundColor: "#BCD5AC",
+    borderColor: "#0D5F13",
+    borderWidth: 2,
+    padding: 12,
+    borderRadius: 15,
+  },
+  selectToggleText: {
+    fontSize: 16,
+    color: "#0D5F13",
+    fontFamily: "Nunito_600SemiBold",
+  },
+  chipContainer: {
+    backgroundColor: "#BCD5AC",
+  },
+  chipText: {
+    color: "#0D5F13",
+  },
+  itemText: {
+    color: "#333",
+  },
+  selectedItemText: {
+    color: "#0D5F13",
+  },
+};
