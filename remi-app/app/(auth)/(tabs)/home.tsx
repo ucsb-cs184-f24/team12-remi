@@ -14,6 +14,7 @@ import {
   StatusBar,
   TextInput,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons"; // For icons
@@ -531,17 +532,42 @@ const Home: React.FC = () => {
   const setResetScroll = useContext(ScrollResetContext);
   const [refreshing, setRefreshing] = useState(false);
 
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    console.log("Trying to refresh");
-    fetchPostsWithCommentsFlag().then(() => setRefreshing(false));
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    console.log("Done w refresh");
-  }, []);
+  const fetchFriendsList = async () => {
+    if (!auth.currentUser) return;
 
-  const fetchPostsWithCommentsFlag = async () => {
+    try {
+      const userDoc = await getDoc(doc(db, "RemiUsers", auth.currentUser.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const friendsEmails = userData.friends_list || [];
+
+        if (friendsEmails.length > 0) {
+          const q = query(
+            collection(db, "RemiUsers"),
+            where("email", "in", friendsEmails)
+          );
+          const querySnapshot = await getDocs(q);
+          const friendsIds = querySnapshot.docs.map((doc) => doc.id);
+          setFriendsList(friendsIds);
+          console.log("Friends list fetched:", friendsIds);
+        } else {
+          console.log("No friends found");
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching friend list:", error);
+      throw error;
+    }
+  };
+
+  const fetchPostsWithCommentsFlag = async (friendsList: string[]) => {
+    console.log("Entered", friendsList);
     const postsRef = collection(db, "Posts");
     const postsQuery = query(postsRef, where("userId", "in", friendsList));
+    console.log("this doesnt print...");
 
     const querySnapshot = await getDocs(postsQuery);
     const currentUserId = auth.currentUser?.uid;
@@ -583,19 +609,33 @@ const Home: React.FC = () => {
     }
   }, [setResetScroll]);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        await fetchFriendsList();
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Failed to load data. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   // Fetch all posts from Firestore
   useEffect(() => {
     if (friendsList.length === 0) return;
 
-    fetchPostsWithCommentsFlag();
-  }, [friendsList]);
+    const fetchPosts = async () => {
+      await fetchPostsWithCommentsFlag(friendsList);
+    };
 
-  // Use `useEffect` to fetch posts when the component mounts and every minute
-  useEffect(() => {
-    fetchPostsWithCommentsFlag();
-    const interval = setInterval(fetchPostsWithCommentsFlag, 60000); // 60000 ms = 1 minute
-    return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, []);
+    fetchPosts();
+  }, [friendsList]);
 
   useEffect(() => {
     // Set up real-time listener for pending friend requests
@@ -618,34 +658,28 @@ const Home: React.FC = () => {
     }
   }, [user]);
 
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      doc(db, "RemiUsers", user?.uid || ""),
-      (doc) => {
-        if (doc.exists()) {
-          const userData = doc.data();
-          const friendsEmails = userData.friends_list || [];
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    console.log("Trying to refresh");
+    fetchPostsWithCommentsFlag(friendsList).finally(() => setRefreshing(false));
+    console.log("Done w refresh");
+  }, []);
 
-          if (friendsEmails.length > 0) {
-            const q = query(
-              collection(db, "RemiUsers"),
-              where("email", "in", friendsEmails)
-            );
-            getDocs(q)
-              .then((querySnapshot) => {
-                const friendsIds = querySnapshot.docs.map((doc) => doc.id);
-                setFriendsList(friendsIds);
-              })
-              .catch((error) => {
-                console.error("Error fetching friend list:", error);
-              });
-          }
-        }
-      }
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#0D5F13" />
+      </View>
     );
+  }
 
-    return () => unsubscribe();
-  }, [user]);
+  if (error) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>{error}</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={Ustyles.background}>
