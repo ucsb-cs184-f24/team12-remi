@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Text,
   View,
@@ -13,9 +13,13 @@ import {
   Platform,
   StatusBar,
   TextInput,
+  TouchableWithoutFeedback,
+  Keyboard,
+  KeyboardAvoidingView,
+  Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons"; // For icons
+import { Ionicons } from "@expo/vector-icons";
 import {
   collection,
   addDoc,
@@ -29,16 +33,17 @@ import {
   onSnapshot,
   updateDoc,
   arrayUnion,
-  deleteDoc,
   arrayRemove,
+  orderBy,
 } from "firebase/firestore";
-import { db, auth } from "../../../firebaseConfig"; // Ensure correct imports
+import { db, auth } from "../../../firebaseConfig";
 import { signOut } from "firebase/auth";
 import Ustyles from "../../../components/UniversalStyles";
 import Spacer from "../../../components/Spacer";
 import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 
 const formatTimeAgo = (date: Date) => {
   const now = new Date();
@@ -108,7 +113,6 @@ interface RecipePostProps {
   caption: string;
   hashtags: string;
   userHasCommented: boolean;
-  handleUnsavePost?: (postID: string) => void; // Add this callback
 }
 
 interface Comment {
@@ -117,7 +121,7 @@ interface Comment {
   userId: string;
   text: string;
   createdAt: Date;
-  username?: string; // Make username optional
+  username?: string;
 }
 
 const getUsername = async (userID: string): Promise<string> => {
@@ -147,28 +151,79 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   hashtags,
   mediaUrl,
   postID,
-  userHasCommented,
+  userHasCommented: initialUserHasCommented,
 }) => {
   const [username, setUsername] = useState<string>("");
-
   const [modalVisible, setModalVisible] = useState(false);
-  const [savedBy, setSavedBy] = useState<string[]>([]);
   const [commentVisible, setCommentVisible] = useState(false);
-  // const [userHasCommented, setUserHasCommented] = useState(false);
-
   const [likesCount, setLikesCount] = useState(likes);
   const [likedBy, setLikedBy] = useState<string[]>([]);
   const [commentsCount, setCommentsCount] = useState(comments);
   const [newComment, setNewComment] = useState("");
-  const [commentText, setCommentText] = useState<string>("");
-  // const [postComments, setPostComments] = useState<any[]>([]);
   const [postComments, setPostComments] = useState<Comment[]>([]);
-  if (!postID) {
-    console.error("postID is undefined");
-    return null; // Or handle the error appropriately
-  }
+  const [userHasCommented, setUserHasCommented] = useState(
+    initialUserHasCommented
+  );
+  const modalPosition = useRef(new Animated.Value(0)).current;
 
   const postRef = doc(db, "Posts", postID);
+
+  useEffect(() => {
+    const keyboardWillShowListener = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      (e) => {
+        Animated.timing(modalPosition, {
+          toValue: -e.endCoordinates.height,
+          duration: 250,
+          useNativeDriver: true,
+        }).start();
+      }
+    );
+
+    const keyboardWillHideListener = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => {
+        Animated.timing(modalPosition, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }).start();
+      }
+    );
+
+    return () => {
+      keyboardWillShowListener.remove();
+      keyboardWillHideListener.remove();
+    };
+  }, [modalPosition]);
+
+  useEffect(() => {
+    if (commentVisible) {
+      const commentsRef = collection(db, "Comments");
+      const commentsQuery = query(
+        commentsRef,
+        where("postId", "==", postID),
+        orderBy("createdAt", "desc")
+      );
+
+      const unsubscribe = onSnapshot(commentsQuery, async (snapshot) => {
+        const updatedComments = await Promise.all(
+          snapshot.docs.map(async (doc) => {
+            const commentData = doc.data() as Omit<Comment, "username" | "id">;
+            const username = await getUsername(commentData.userId);
+            return {
+              ...commentData,
+              id: doc.id,
+              username,
+            } as Comment;
+          })
+        );
+        setPostComments(updatedComments);
+      });
+
+      return () => unsubscribe();
+    }
+  }, [commentVisible, postID]);
 
   const fetchComments = async () => {
     try {
@@ -179,19 +234,16 @@ export const RecipePost: React.FC<RecipePostProps> = ({
       const mappedComments: Comment[] = await Promise.all(
         querySnapshot.docs.map(async (doc) => {
           const commentData = doc.data() as Omit<Comment, "username" | "id">;
-
-          // Use the getUsername function to fetch the username
           const username = await getUsername(commentData.userId);
-
           return {
             ...commentData,
             id: doc.id,
-            username, // Attach username here
+            username,
           } as Comment;
         })
       );
 
-      setPostComments(mappedComments); // Set the combined data in state
+      setPostComments(mappedComments);
     } catch (error) {
       console.error("Error fetching comments with usernames:", error);
     }
@@ -204,101 +256,18 @@ export const RecipePost: React.FC<RecipePostProps> = ({
       await addDoc(collection(db, "Comments"), {
         postId: postID,
         text: commentText,
-        userId: auth.currentUser?.uid, // Current user's ID
+        userId: auth.currentUser?.uid,
         createdAt: new Date(),
       });
 
       await updateDoc(postRef, {
-        comments: commentsCount + 1, // Update the count in the Firestore post document
+        comments: commentsCount + 1,
       });
+
+      setCommentsCount((prev) => prev + 1);
+      setUserHasCommented(true);
     } catch (error) {
       console.error("Error adding comment:", error);
-    }
-  };
-
-  const handleUnsavePost = async () => {
-    try {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      // Remove bookmark from Firestore
-      const bookmarksRef = collection(db, "Bookmarks");
-      const q = query(
-        bookmarksRef,
-        where("userId", "==", user.uid),
-        where("postId", "==", postID)
-      );
-      const querySnapshot = await getDocs(q);
-
-      querySnapshot.forEach(async (doc) => {
-        await deleteDoc(doc.ref);
-      });
-      console.log("unbookmarked post with ID ", postID);
-
-      // // Call the callback to update the state in BookmarksPage
-      // if (handleUnsavePost) handleUnsavePost(postID);
-    } catch (error) {
-      console.error("Error unbookmarking post:", error);
-    }
-  };
-
-  const handleSavePost = async () => {
-    // console.log("in handle save post");
-    try {
-      await addDoc(collection(db, "Bookmarks"), {
-        postId: postID,
-        userId: auth.currentUser?.uid, // Current user's ID
-      });
-      console.log("added to Bookmarks");
-    } catch (error) {
-      console.error("Error saving post:", error);
-    }
-  };
-
-  const handleSavePress = async () => {
-    console.log("user tryna save");
-    if (!auth.currentUser) {
-      Alert.alert("Error", "You must be logged in to like posts.");
-      return;
-    }
-
-    const userId = auth.currentUser.uid;
-
-    try {
-      const postSnapshot = await getDoc(postRef);
-
-      if (postSnapshot.exists()) {
-        const postData = postSnapshot.data();
-        const savedByArray: string[] = postData.savedBy || [];
-        // console.log(postID);
-        if (savedByArray.includes(userId)) {
-          // console.log(postID);
-          // console.log("includes userId");
-          // console.log("savedBy array looks like this: ", postData.savedBy);
-          // User already liked the post, so remove their like
-          await updateDoc(postRef, {
-            // savesCount: postData.savesCount - 1, // Directly update Firestore
-            savedBy: arrayRemove(userId), // Remove user ID
-          });
-          handleUnsavePost();
-        } else {
-          // console.log("need to add it");
-          // User has not saved the post, so add their save
-          await updateDoc(postRef, {
-            savedBy: arrayUnion(userId), // Add user ID
-          });
-          handleSavePost();
-        }
-        // console.log("local savedBy: ", savedByArray);
-        // console.log("updated saved by: ", postData.savedBy);
-        // console.log(
-        //   "is user in this? ",
-        //   savedBy.includes(auth.currentUser?.uid ?? "")
-        // );
-      }
-    } catch (error) {
-      console.error("Error updating like:", error);
-      Alert.alert("Error", "Failed to update like. Please try again.");
     }
   };
 
@@ -308,60 +277,35 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     const unsubscribe = onSnapshot(postRef, (doc) => {
       if (doc.exists()) {
         const postData = doc.data();
-        setCommentsCount(postData.comments || 0); // Ensure comments count is updated
+        setCommentsCount(postData.comments || 0);
       }
     });
 
-    return () => unsubscribe(); // Cleanup listener
+    return () => unsubscribe();
   }, [postID]);
 
-  // Handle submit logic
   const onSubmitComment = () => {
-    if (newComment.trim() === "") return; // Prevent empty comments
-    handleAddComment(newComment); // Call parent function to handle comment submission
-    setNewComment(""); // Clear the text input
-    setCommentVisible(false); // Close modal after submitting
+    if (newComment.trim() === "") return;
+    handleAddComment(newComment);
+    setNewComment("");
+    Keyboard.dismiss();
   };
 
   const handleSeeNotesPress = () => {
-    setModalVisible(true); // Show the modal
+    setModalVisible(true);
   };
 
   const handleCloseModal = () => {
-    setModalVisible(false); // Hide the modal
+    setModalVisible(false);
   };
 
   const handleCommentsPress = () => {
-    console.log("press comments");
     setCommentVisible(true);
-
-    const commentsRef = collection(db, "Comments");
-    const commentsQuery = query(commentsRef, where("postId", "==", postID));
-
-    const unsubscribe = onSnapshot(commentsQuery, async (snapshot) => {
-      const liveComments = await Promise.all(
-        snapshot.docs.map(async (doc) => {
-          const commentData = doc.data() as Omit<Comment, "id" | "username">;
-
-          const username = await getUsername(commentData.userId);
-
-          return {
-            ...commentData,
-            id: doc.id,
-            username,
-          } as Comment;
-        })
-      );
-
-      setPostComments(liveComments);
-    });
-
-    return unsubscribe;
   };
 
-  const hanldeCloseComments = () => {
-    setCommentVisible(false); // Hide the modal
-    setCommentText(""); // Reset comment input
+  const handleCloseComments = () => {
+    setCommentVisible(false);
+    setNewComment("");
   };
 
   const handleLikePress = async () => {
@@ -380,16 +324,14 @@ export const RecipePost: React.FC<RecipePostProps> = ({
         const likedByArray: string[] = postData.likedBy || [];
 
         if (likedByArray.includes(userId)) {
-          // User already liked the post, so remove their like
           await updateDoc(postRef, {
-            likesCount: postData.likesCount - 1, // Directly update Firestore
-            likedBy: arrayRemove(userId), // Remove user ID
+            likesCount: postData.likesCount - 1,
+            likedBy: arrayRemove(userId),
           });
         } else {
-          // User has not liked the post, so add their like
           await updateDoc(postRef, {
-            likesCount: postData.likesCount + 1, // Directly update Firestore
-            likedBy: arrayUnion(userId), // Add user ID
+            likesCount: postData.likesCount + 1,
+            likedBy: arrayUnion(userId),
           });
         }
       }
@@ -405,13 +347,12 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     const unsubscribe = onSnapshot(postRef, (doc) => {
       if (doc.exists()) {
         const postData = doc.data();
-        setLikesCount(postData.likesCount || 0); // Real-time update
-        setLikedBy(postData.likedBy || []); // Real-time update of likedBy array
-        setSavedBy(postData.savedBy || []);
+        setLikesCount(postData.likesCount || 0);
+        setLikedBy(postData.likedBy || []);
       }
     });
 
-    return () => unsubscribe(); // Cleanup listener
+    return () => unsubscribe();
   }, [postID]);
 
   useEffect(() => {
@@ -427,13 +368,13 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     fetchUsername();
   }, [userID]);
 
-  const hashtagNames = (hashtags ?? "")
+  const hashtagNames = hashtags
     .split(",")
     .map((id) => {
       const name = hashtagMap[id.trim()];
-      return name ? `#${name}` : undefined; // Add "#" to the name if it exists
+      return name ? `#${name}` : undefined;
     })
-    .filter(Boolean); // Filter out any undefined values
+    .filter(Boolean);
 
   return (
     <View style={Ustyles.post}>
@@ -465,73 +406,83 @@ export const RecipePost: React.FC<RecipePostProps> = ({
             <Text style={Ustyles.engagementText}>{likesCount}</Text>
           </View>
           <View style={Ustyles.engagementItem}>
-            {/* Comment Icon */}
             <Ionicons
-              name={userHasCommented ? "chatbox" : "chatbox-outline"} // Filled icon when user has commented
+              name={userHasCommented ? "chatbox" : "chatbox-outline"}
               size={27}
-              color={userHasCommented ? "green" : "gray"} // Filled green when user has commented
-              onPress={handleCommentsPress} // Opens the comment modal
+              color={userHasCommented ? "green" : "gray"}
+              onPress={handleCommentsPress}
             />
             <Text style={Ustyles.engagementText}>{commentsCount}</Text>
-            <View style={Ustyles.engagementItem}>
-              <Ionicons
-                name={
-                  savedBy.includes(auth.currentUser?.uid ?? "")
-                    ? "bookmark"
-                    : "bookmark-outline"
-                }
-                size={27}
-                color={
-                  savedBy.includes(auth.currentUser?.uid ?? "")
-                    ? "#FBC02D"
-                    : "gray"
-                }
-                onPress={handleSavePress}
-              />
-            </View>
-            {/* Modal for adding a comment */}
+
             <Modal
               visible={commentVisible}
               animationType="slide"
               transparent={true}
-              onRequestClose={() => setCommentVisible(false)}>
-              <View style={styles.overlay}>
-                <View style={styles.modalContainer}>
-                  <Text style={styles.title}>Comments</Text>
+              onRequestClose={handleCloseComments}
+            >
+              <TouchableWithoutFeedback onPress={handleCloseComments}>
+                <View style={styles.overlay}>
+                  <TouchableWithoutFeedback>
+                    <Animated.View
+                      style={[
+                        styles.commentContainer,
+                        { transform: [{ translateY: modalPosition }] },
+                      ]}
+                    >
+                      <KeyboardAvoidingView
+                        behavior={Platform.OS === "ios" ? "padding" : "height"}
+                        style={{ flex: 1 }}
+                        keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
+                      >
+                        <View style={styles.header}>
+                          <Text style={styles.title}>Comments</Text>
+                        </View>
 
-                  {/* Display existing comments */}
-                  <FlatList
-                    data={postComments}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                      <View style={styles.commentItem}>
-                        <Text style={styles.commentUser}>
-                          {item.username || "Unknown User"}
-                        </Text>
-                        <Text style={styles.commentText}>{item.text}</Text>
-                      </View>
-                    )}
-                    ListEmptyComponent={
-                      <Text style={styles.emptyComments}>
-                        No comments yet. Be the first!
-                      </Text>
-                    }
-                  />
+                        <FlatList
+                          data={postComments}
+                          keyExtractor={(item) => item.id}
+                          renderItem={({ item }) => (
+                            <TouchableWithoutFeedback onPress={() => {}}>
+                              <View style={styles.commentItem}>
+                                <Text style={styles.commentText}>
+                                  {item.username?.trim() || "Unknown User"}
+                                </Text>
+                                <Text style={Ustyles.detailText}>
+                                  {item.text?.trim() ||
+                                    "No comment text available"}
+                                </Text>
+                              </View>
+                            </TouchableWithoutFeedback>
+                          )}
+                          ListEmptyComponent={
+                            <Text style={styles.emptyComments}>
+                              No comments yet. Be the first!
+                            </Text>
+                          }
+                          contentContainerStyle={styles.commentsList}
+                        />
 
-                  <TextInput
-                    style={styles.textInput}
-                    value={newComment}
-                    onChangeText={setNewComment}
-                    placeholder="Add a comment..."
-                    multiline
-                  />
-                  <Button title="Submit" onPress={onSubmitComment} />
-                  <Button
-                    title="Close"
-                    onPress={() => setCommentVisible(false)}
-                  />
+                        <View style={styles.inputContainer}>
+                          <TextInput
+                            style={styles.textInput}
+                            value={newComment}
+                            onChangeText={setNewComment}
+                            placeholder="Add a comment..."
+                            placeholderTextColor="#BCD5AC"
+                            multiline
+                          />
+                          <TouchableOpacity
+                            style={styles.button}
+                            onPress={onSubmitComment}
+                          >
+                            <Text style={styles.buttonText}>Submit</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </KeyboardAvoidingView>
+                    </Animated.View>
+                  </TouchableWithoutFeedback>
                 </View>
-              </View>
+              </TouchableWithoutFeedback>
             </Modal>
           </View>
         </View>
@@ -551,22 +502,23 @@ export const RecipePost: React.FC<RecipePostProps> = ({
           <Text style={Ustyles.recipeName}>{recipeName}</Text>
           <TouchableOpacity
             style={Ustyles.seeNotesButton}
-            onPress={handleSeeNotesPress}>
+            onPress={handleSeeNotesPress}
+          >
             <Text style={Ustyles.seeNotesText}>See Notes</Text>
           </TouchableOpacity>
           <Modal
             animationType="fade"
             transparent={true}
             visible={modalVisible}
-            onRequestClose={handleCloseModal} // Close on back button press
+            onRequestClose={handleCloseModal}
           >
             <View style={styles.modalContainer}>
               <View style={styles.modalContent}>
                 <Text style={styles.modalText}>{caption}</Text>
-                {/* Add more content as needed */}
                 <TouchableOpacity
                   style={styles.closeButton}
-                  onPress={handleCloseModal}>
+                  onPress={handleCloseModal}
+                >
                   <Text style={styles.closeButtonText}>Close</Text>
                 </TouchableOpacity>
               </View>
@@ -606,14 +558,10 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                 ]}
               />
             </View>
-            {/* <Text style={Ustyles.subDetailText}>
-              20 active minutes + 10 passive minutes
-            </Text> */}
           </View>
         </View>
       </View>
       <View style={Ustyles.captionContainer}>
-        {/* <Text style={Ustyles.caption}>{caption}</Text> */}
         <Text style={Ustyles.hashtags}>{hashtagNames.join(", ")}</Text>
       </View>
     </View>
@@ -725,69 +673,69 @@ const Home: React.FC = () => {
   }, [user]);
 
   return (
-    <SafeAreaView style={Ustyles.background}>
-      <View style={Ustyles.background}>
-        <ScrollView stickyHeaderIndices={[0]} style={Ustyles.feed}>
-          <View
-            style={[
-              styles.header,
-              {
-                backgroundColor: "#FFF9E6",
-              },
-            ]}>
-            <View style={styles.headerContent}>
-              <Text style={styles.logoText}>Remi</Text>
-              <TouchableOpacity
-                onPress={() => router.push("../../notifications")}>
-                <Ionicons
-                  name="notifications-outline"
-                  size={27}
-                  color="#0D5F13"
-                />
-                {friendRequests.length > 0 && (
-                  <View style={Ustyles.notificationBadge}>
-                    <Text style={Ustyles.notificationText}>
-                      {friendRequests.length}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            </View>
+    <SafeAreaView style={Ustyles.background} edges={["top"]}>
+      <ScrollView stickyHeaderIndices={[0]}>
+        <View
+          style={[
+            styles.header,
+            {
+              backgroundColor: "#FFF9E6",
+            },
+          ]}
+        >
+          <View style={styles.headerContent}>
+            <Text style={styles.logoText}>Remi</Text>
+            <TouchableOpacity
+              onPress={() => router.push("../../notifications")}
+            >
+              <Ionicons
+                name="notifications-outline"
+                size={27}
+                color="#0D5F13"
+              />
+              {friendRequests.length > 0 && (
+                <View style={Ustyles.notificationBadge}>
+                  <Text style={Ustyles.notificationText}>
+                    {friendRequests.length}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
-          {posts
-            .sort((a, b) => {
-              const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
-              const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
-              return dateB.getTime() - dateA.getTime();
-            })
-            .map((post, index) => (
-              <View key={post.postID}>
-                <RecipePost
-                  key={index}
-                  userID={post.userId || "Anonymous"}
-                  timeAgo={
-                    post.createdAt
-                      ? new Date(post.createdAt)
-                      : new Date(2002, 2, 8)
-                  }
-                  likes={post.likesCount || 0}
-                  comments={post.comments || 0}
-                  recipeName={post.title || "Untitled Recipe"}
-                  price={post.Price || 0.0}
-                  difficulty={post.Difficulty || 0}
-                  time={post.Time || 0}
-                  caption={post.caption || "No caption"}
-                  hashtags={post.hashtags || ["None"]}
-                  mediaUrl={post.mediaUrl || ""}
-                  postID={post.postID}
-                  userHasCommented={post.userHasCommented}
-                />
-                <View style={Ustyles.separator} />
-              </View>
-            ))}
-        </ScrollView>
-        {/* <Button title="Sign out" onPress={() => signOut(auth)} color="#0D5F13" /> */}
-      </View>
+        </View>
+        {posts
+          .sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+            const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+            return dateB.getTime() - dateA.getTime();
+          })
+          .map((post, index) => (
+            <View>
+              <RecipePost
+                key={index}
+                userID={post.userId || "Anonymous"}
+                timeAgo={
+                  post.createdAt
+                    ? new Date(post.createdAt)
+                    : new Date(2002, 2, 8)
+                }
+                likes={post.likesCount || 0}
+                comments={post.comments || 0}
+                recipeName={post.title || "Untitled Recipe"}
+                price={post.Price || 0.0}
+                difficulty={post.Difficulty || 0}
+                time={post.Time || 0}
+                caption={post.caption || "No caption"}
+                hashtags={post.hashtags || ["None"]}
+                mediaUrl={post.mediaUrl || ""}
+                postID={post.postID}
+                userHasCommented={post.userHasCommented}
+              />
+              <View style={Ustyles.separator} />
+            </View>
+          ))}
+      </ScrollView>
+      {/* <Button title="Sign out" onPress={() => signOut(auth)} color="#0D5F13" /> */}
     </SafeAreaView>
   );
 };
@@ -805,8 +753,6 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    backgroundColor: "#ffffff",
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
   scrollViewContent: {
     flexGrow: 1,
@@ -824,7 +770,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontFamily: "OrelegaOne_400Regular",
     fontSize: 24,
-    color: "0D5F13",
+    color: "#0D5F13",
   },
   iconContainer: {
     position: "absolute",
@@ -836,16 +782,26 @@ const styles = StyleSheet.create({
   contentItem: {
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
+    borderBottomColor: "#BCD5AC",
   },
   contentText: {
     fontSize: 16,
   },
   commentContainer: {
+    height: "50%",
+    backgroundColor: "#FFF9E6",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    borderColor: "rgba(13,95,19,0.7)",
+    borderWidth: 4,
+    borderBottomWidth: 0,
+  },
+  modalContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0)", // Semi-transparent background
+    backgroundColor: "rgba(0,0,0,0)",
   },
   modalContent: {
     width: "80%",
@@ -881,40 +837,52 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0)",
   },
-  modalContainer: {
-    width: "100%",
-    padding: 20,
-    backgroundColor: "white",
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  commentsList: {
+    flexGrow: 1,
   },
   title: {
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
     textAlign: "center",
+    fontFamily: "Nunito_700Bold",
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+    paddingTop: 10,
+    marginTop: 10,
   },
   textInput: {
-    height: 60,
+    flex: 1,
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10,
+    borderColor: "#0D5F13",
+    borderRadius: 4,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    marginRight: 10,
+    color: "#0D5F13",
   },
   commentItem: {
-    paddingVertical: 8,
+    padding: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    borderBottomColor: "#BCD5AC",
   },
   commentUser: {
     fontWeight: "bold",
-    marginBottom: 4,
   },
   commentText: {
-    fontSize: 14,
+    marginTop: 5,
+    color: "#0D5F13",
+    fontFamily: "Nunito_400Regular",
   },
   emptyComments: {
     textAlign: "center",
@@ -926,10 +894,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 10,
   },
+  buttonContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-evenly",
+  },
   engagementText: {
     marginLeft: 5,
     fontSize: 16,
     color: "#555",
+  },
+  button: {
+    backgroundColor: "#0D5F13",
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+  },
+  buttonText: {
+    color: "#FFF9E6",
+    fontWeight: "bold",
   },
 });
 
