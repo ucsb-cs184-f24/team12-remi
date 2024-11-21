@@ -151,7 +151,7 @@ export default function UserProfileComponent() {
             setUsername(userData.username || "");
             setProfilePic(userData.profilePic || profilePic);
             setBio(userData.bio || "");
-            
+
             // Set up real-time listener for friends count
             const unsubscribeFriends = onSnapshot(userDocRef, (doc) => {
               if (doc.exists()) {
@@ -419,7 +419,10 @@ export default function UserProfileComponent() {
                     )}
                   </View>
                 </View>
-                <Text style={styles.recentActivityTitle}>Recent Activity</Text>
+                <View style={styles.recentActivityTitleContainer}>
+                  <Ionicons name="file-tray-full-outline" size={24} color="#0D5F13" style={styles.recentActivityIcon} />
+                  <Text style={styles.recentActivityTitle}>Recent Activity</Text>
+                </View>
               </View>
             }
             contentContainerStyle={styles.flatListContent}
@@ -495,16 +498,17 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   username: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "bold",
     color: "#0D5F13",
+    fontFamily: "Nunito_700Bold",
   },
   profileSection: {
-    backgroundColor: "rgba(255, 249, 230, 0.8)",
+    backgroundColor: "rgba(255, 249, 230, 0.9)",
     borderRadius: 20,
-    marginVertical: 20,
+    marginVertical: 5,
     padding: 20,
-    width: CONTENT_WIDTH,
+    width: CONTENT_WIDTH * 0.96,
     alignSelf: 'center',
     borderWidth: 2,
     borderColor: "#FFF9E6",
@@ -556,10 +560,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#0D5F13",
+    fontFamily: "Nunito_700Bold",
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 17,
     color: "#0D5F13",
+    // fontFamily: "Nunito_700Bold",
   },
   bioContainer: {
     backgroundColor: "rgba(188, 213, 172, 0.8)",
@@ -606,16 +612,28 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     flex: 1,
     color: "#333",
+    // fontFamily: "Nunito_500Bold",
   },
   editIcon: {
     marginLeft: 8,
   },
+  recentActivityTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 10,
+  },
   recentActivityTitle: {
-    fontSize: 20,
+    marginTop: 15,
+    fontSize: 22,
     fontWeight: "bold",
     color: "#0D5F13",
     textAlign: "center",
-    marginVertical: 15,
+    fontFamily: "Nunito_700Bold",
+  },
+  recentActivityIcon: {
+    marginTop: 15,
+    marginRight: 8,
   },
   loadingContainer: {
     flex: 1,
@@ -649,13 +667,15 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 18,
-    color: "#333",
+    color: "#0D5F13",
+    fontFamily: "Nunito_700Bold",
   },
   emptyText: {
     textAlign: "center",
     marginTop: 20,
     fontSize: 16,
     color: "#666",
+    fontFamily: "Nunito_700Bold",
   },
   flatListContent: {
     alignItems: 'center',
@@ -664,4 +684,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     width: CONTENT_WIDTH,
   },
+  text: {
+    fontFamily: "Nunito_700Bold",
+  },
 });
+
