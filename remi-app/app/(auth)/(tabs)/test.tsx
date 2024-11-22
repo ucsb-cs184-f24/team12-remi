@@ -7,117 +7,105 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
-  FlatList,
+  ImageBackground,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import RecipePost from "./home";
-import { db, auth } from "../../../firebaseConfig";
-import {
-  collection,
-  addDoc,
-  getDoc,
-  getDocs,
-  doc,
-  query,
-  QuerySnapshot,
-  DocumentData,
-  where,
-  onSnapshot,
-  updateDoc,
-  arrayUnion,
-} from "firebase/firestore";
 import PostsTab from "../PostsTab";
 import UsersTab from "../UsersTab";
 import HashtagsTab from "../HashtagsTab";
-import BookmarksTab from "../BookmarksTab";
 
-type SearchTab = "posts" | "users" | "hashtags" | "bookmarks";
+type SearchTab = "posts" | "users" | "hashtags";
 
-const items = [
-  { name: "Breakfast", id: 1 },
-  { name: "Lunch", id: 2 },
-  { name: "Dinner", id: 3 },
-  { name: "Vegetarian", id: 4 },
-  { name: "Vegan", id: 5 },
-  { name: "Gluten-Free", id: 6 },
-  { name: "Dairy-Free", id: 7 },
-  { name: "Keto", id: 8 },
-  { name: "Paleo", id: 9 },
-  { name: "Low Carb", id: 10 },
-  { name: "Mediterranean", id: 11 },
-  { name: "Asian", id: 12 },
-  { name: "Italian", id: 13 },
-  { name: "Mexican", id: 14 },
-  { name: "Indian", id: 15 },
-  { name: "Middle Eastern", id: 16 },
-  { name: "French", id: 17 },
-  { name: "American", id: 18 },
-  { name: "African", id: 19 },
-  { name: "Caribbean", id: 20 },
-  { name: "Comfort Food", id: 21 },
-  { name: "Dessert", id: 22 },
-  { name: "Snacks", id: 23 },
-  { name: "Appetizers", id: 24 },
-  { name: "BBQ", id: 25 },
-  { name: "Seafood", id: 26 },
-  { name: "Soups & Stews", id: 27 },
-  { name: "Salads", id: 28 },
-  { name: "Beverages", id: 29 },
-  { name: "Japanese", id: 30 },
+type TagItem = {
+  name: string;
+  id: number;
+};
+
+type RecipeTagItem = TagItem & {
+  children?: TagItem[];
+};
+
+const recipeTagItems: RecipeTagItem[] = [
+  { name: "Meal Type", id: 0, children: [
+    { name: "Breakfast", id: 1 },
+    { name: "Lunch", id: 2 },
+    { name: "Dinner", id: 3 },
+    { name: "Snacks", id: 4 },
+    { name: "Dessert", id: 5 },
+    { name: "Beverages", id: 6 },
+  ]},
+  { name: "Diet", id: 100, children: [
+    { name: "Vegetarian", id: 101 },
+    { name: "Pescatarian", id: 102 },
+    { name: "Halal", id: 103 },
+    { name: "Vegan", id: 104 },
+    { name: "Jain", id: 105 },
+    { name: "Gluten-Free", id: 106 },
+    { name: "Dairy-Free", id: 107 },
+    { name: "Keto", id: 108 },
+    { name: "Paleo", id: 109 },
+    { name: "Low Carb", id: 110 },
+  ]},
+  { name: "Cuisine", id: 200, children: [
+    { name: "Italian", id: 201 },
+    { name: "French", id: 202 },
+    { name: "Mexican", id: 203 },
+    { name: "Japanese", id: 204 },
+    { name: "Chinese", id: 205 },
+    { name: "Korean", id: 206 },
+    { name: "Thai", id: 207 },
+    { name: "Malaysian", id: 208 },
+    { name: "Vietnamese", id: 209 },
+    { name: "Indian", id: 210 },
+    { name: "Pakistani", id: 211 },
+    { name: "Mediterranean", id: 212 },
+    { name: "American", id: 213 },
+    { name: "Southern", id: 214 },
+    { name: "Middle Eastern", id: 215 },
+    { name: "African", id: 216 },
+    { name: "Caribbean", id: 217 },
+    { name: "Creole", id: 218 },
+    { name: "Cajun", id: 219 },
+  ]},
+  { name: "Course", id: 300, children: [
+    { name: "Appetizers", id: 301 },
+    { name: "Main Course", id: 302 },
+    { name: "Side Dish", id: 303 },
+  ]},
 ];
 
 export default function Explore() {
   const [activeTab, setActiveTab] = useState<SearchTab>("posts");
   const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [selectedTags, setSelectedTags] = useState<
-    { id: number; name: string }[]
-  >([]);
+  const [suggestions, setSuggestions] = useState<TagItem[]>([]);
+  const [selectedTags, setSelectedTags] = useState<TagItem[]>([]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     if (activeTab === "hashtags") {
-      const filteredItems = items
-        .filter((item) => item.name.toLowerCase().includes(query.toLowerCase()))
-        .map((item) => item.name);
+      const filteredItems = recipeTagItems.flatMap(category => 
+        category.children?.filter(item => 
+          item.name.toLowerCase().includes(query.toLowerCase())
+        ) || []
+      );
 
       setSuggestions(filteredItems);
     } else {
       setSuggestions([]);
     }
-
-    switch (activeTab) {
-      case "posts":
-        console.log("Searching top results for:", query);
-        break;
-      case "users":
-        console.log("Searching users for:", query);
-        break;
-      case "hashtags":
-        console.log("Searching hashtags for:", query);
-        break;
-      case "posts":
-        console.log("Searching posts for:", query);
-        break;
-    }
   };
-  const handleSelectSuggestion = (tagName: string) => {
-    const selectedItem = items.find((item) => item.name === tagName);
 
-    if (selectedItem) {
-      const alreadySelected = selectedTags.some(
-        (tag) => tag.id === selectedItem.id
+  const handleSelectSuggestion = (tag: TagItem) => {
+    const alreadySelected = selectedTags.some(
+      (selectedTag) => selectedTag.id === tag.id
+    );
+
+    if (alreadySelected) {
+      setSelectedTags(
+        selectedTags.filter((selectedTag) => selectedTag.id !== tag.id)
       );
-
-      if (alreadySelected) {
-        // Remove tag if already selected
-        setSelectedTags(
-          selectedTags.filter((tag) => tag.id !== selectedItem.id)
-        );
-      } else {
-        // Add tag to selectedTags
-        setSelectedTags([...selectedTags, selectedItem]);
-      }
+    } else {
+      setSelectedTags([...selectedTags, tag]);
     }
 
     setSearchQuery("");
@@ -132,90 +120,104 @@ export default function Explore() {
         return "Search for users...";
       case "hashtags":
         return "Search for hashtags...";
-      case "posts":
-        return "Search for recipes and posts...";
       default:
         return "Search here";
     }
   };
 
-  const tabs: SearchTab[] = ["posts", "users", "hashtags", "bookmarks"];
+  const tabs: SearchTab[] = ["posts", "users", "hashtags"];
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Explore</Text>
-
-        <View style={styles.searchContainer}>
-          <Ionicons
-            name="search"
-            size={20}
-            color="#666"
-            style={styles.searchIcon}
-          />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={getPlaceholder()}
-            placeholderTextColor="#999"
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
+      <ImageBackground
+        source={{ uri: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pattern-5c8e0c.png" }}
+        style={styles.backgroundImage}
+      >
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <Ionicons name="compass-outline" size={36} color="#006400" />
+            <Text style={styles.title}>Explore</Text>
+          </View>
+          <View style={styles.searchContainer}>
+            <Ionicons
+              name="search"
+              size={20}
+              color="#666"
+              style={styles.searchIcon}
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={getPlaceholder()}
+              placeholderTextColor="#999"
+              value={searchQuery}
+              onChangeText={handleSearch}
+            />
+          </View>
         </View>
-        {activeTab === "hashtags" && suggestions.length > 0 && (
-          <ScrollView style={styles.suggestionsContainer}>
-            {suggestions.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.suggestionItem}
-                onPress={() => handleSelectSuggestion(item)}>
-                <Text style={styles.suggestionText}>{item}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
-        {/* Display Selected Tags */}
+
         {activeTab === "hashtags" && selectedTags.length > 0 && (
-          <View style={styles.selectedTagsContainer}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.selectedTagsContainer}
+            contentContainerStyle={styles.selectedTagsContent}
+          >
             {selectedTags.map((tag) => (
               <TouchableOpacity
                 key={tag.id}
                 style={styles.selectedTag}
-                onPress={() => handleSelectSuggestion(tag.name)}>
+                onPress={() => handleSelectSuggestion(tag)}
+              >
                 <Text style={styles.selectedTagText}>{tag.name}</Text>
+                <Ionicons name="close-circle" size={16} color="#FFF" style={styles.removeTagIcon} />
               </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
         )}
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.tabsContainer}>
+        <View style={styles.tabContainer}>
           {tabs.map((tab) => (
             <TouchableOpacity
               key={tab}
               style={[styles.tab, activeTab === tab && styles.activeTab]}
-              onPress={() => setActiveTab(tab)}>
+              onPress={() => setActiveTab(tab)}
+            >
+              <Ionicons
+                name={tab === "posts" ? "grid-outline" : tab === "users" ? "people-outline" : "pricetag-outline"}
+                size={24}
+                color={activeTab === tab ? "#006400" : "#666"}
+              />
               <Text
                 style={[
                   styles.tabText,
                   activeTab === tab && styles.activeTabText,
-                ]}>
+                ]}
+              >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </Text>
             </TouchableOpacity>
           ))}
-        </ScrollView>
-      </View>
+        </View>
 
-      <View style={styles.content}>
-        {activeTab === "posts" && <PostsTab searchQuery={searchQuery} />}
-        {activeTab === "users" && <UsersTab searchQuery={searchQuery} />}
-        {activeTab === "hashtags" && <HashtagsTab searchQuery={searchQuery} />}
-        {activeTab === "bookmarks" && (
-          <BookmarksTab searchQuery={searchQuery} />
-        )}
-      </View>
+        <View style={styles.content}>
+          {activeTab === "hashtags" && suggestions.length > 0 && (
+            <ScrollView style={styles.suggestionsContainer}>
+              {suggestions.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.suggestionItem}
+                  onPress={() => handleSelectSuggestion(item)}
+                >
+                  <Text style={styles.suggestionText}>{item.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+          {activeTab === "posts" && <PostsTab searchQuery={searchQuery} />}
+          {activeTab === "users" && <UsersTab searchQuery={searchQuery} />}
+          {activeTab === "hashtags" && <HashtagsTab searchQuery={searchQuery} />}
+        </View>
+      </ImageBackground>
     </SafeAreaView>
   );
 }
@@ -223,20 +225,32 @@ export default function Explore() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFBF0",
+  },
+  backgroundImage: {
+    flex: 1,
+    resizeMode: "cover",
   },
   header: {
     padding: 16,
+    backgroundColor: "rgba(255, 249, 230, 0.9)",
+  },
+  headerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
   },
   content: {
     flex: 1,
+    backgroundColor: "rgba(255, 251, 240, 0.9)",
   },
   title: {
     fontSize: 32,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 20,
+    marginLeft: 12,
     color: "#006400",
+    fontFamily: "Nunito-Bold",
   },
   suggestionsContainer: {
     maxHeight: 200,
@@ -244,15 +258,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#DDD",
     borderRadius: 5,
-    marginBottom: 10,
+    margin: 16,
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#E6F3E6",
+    backgroundColor: "#FFF",
     borderRadius: 25,
     paddingHorizontal: 15,
-    marginBottom: 20,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   searchIcon: {
     marginRight: 10,
@@ -262,38 +280,31 @@ const styles = StyleSheet.create({
     height: 50,
     fontSize: 16,
     color: "#333",
+    fontFamily: "Nunito-Regular",
   },
-  tabsContainer: {
+  tabContainer: {
     flexDirection: "row",
-    marginBottom: 20,
+    justifyContent: "space-around",
+    backgroundColor: "rgba(255, 249, 230, 0.9)",
+    paddingVertical: 12,
   },
   tab: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    marginRight: 10,
-    borderBottomWidth: 2,
-    borderBottomColor: "transparent",
+    alignItems: "center",
   },
   activeTab: {
+    borderBottomWidth: 2,
     borderBottomColor: "#006400",
   },
   tabText: {
-    fontSize: 16,
+    fontSize: 12,
     color: "#666",
+    fontFamily: "Nunito-Regular",
+    marginTop: 4,
   },
   activeTabText: {
     color: "#006400",
     fontWeight: "bold",
-  },
-  resultsContainer: {
-    minHeight: 200,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  resultsText: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
+    fontFamily: "Nunito-Bold",
   },
   suggestionItem: {
     padding: 10,
@@ -304,20 +315,33 @@ const styles = StyleSheet.create({
   suggestionText: {
     fontSize: 16,
     color: "#333",
+    fontFamily: "Nunito-Regular",
+  },
+  selectedTagsContainer: {
+    maxHeight: 50,
+    backgroundColor: "rgba(255, 249, 230, 0.9)",
+  },
+  selectedTagsContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   selectedTag: {
     backgroundColor: "#006400",
-    borderRadius: 15,
-    padding: 8,
-    margin: 5,
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginRight: 8,
+    flexDirection: "row",
+    alignItems: "center",
   },
   selectedTagText: {
     color: "#FFF",
     fontSize: 14,
+    fontFamily: "Nunito-Regular",
+    marginRight: 4,
   },
-  selectedTagsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginBottom: 10,
+  removeTagIcon: {
+    marginLeft: 4,
   },
 });
+
