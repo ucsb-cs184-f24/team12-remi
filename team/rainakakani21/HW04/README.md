@@ -1,8 +1,9 @@
-### Files affected by my changes 
+### Files affected by my changes:
 profile.tsx is the only file I changed as part of this testing effort. 
 
 
-### Description of my work for HW 4B
+
+### Description of my work for HW 4B:
 For HW4b, I did A/B design choice testing for our app's profile page. 
 
 I started with the design shown in initial design image and used this as my 'A'— my control. 
