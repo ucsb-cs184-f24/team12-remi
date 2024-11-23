@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   FlatList,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
@@ -24,6 +23,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db, auth } from "../../../firebaseConfig";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface User {
   friends_list: Array<string>;
@@ -174,7 +174,7 @@ const SearchFriendsScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <Searchbar
         placeholder="Search by username or email"
         onChangeText={onChangeSearch}

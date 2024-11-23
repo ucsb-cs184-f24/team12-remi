@@ -834,7 +834,7 @@ const Home: React.FC = () => {
   }, [user]);
 
   return (
-    <SafeAreaView style={Ustyles.background}>
+    <SafeAreaView style={Ustyles.background} edges={["top"]}>
       <View style={Ustyles.background}>
         <ScrollView
           ref={scrollViewRef}
