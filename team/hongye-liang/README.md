@@ -6,6 +6,7 @@ Go to the profile page.
 View their own posts on the profile.tsx page through the profile tab in the app.
 
 - Flow:
+
 Once logged in, users go to add recipe tab and add their recipe.
 Clicking the submit recipe button to add a post to the database.
 In the profile (profile.tsx), users can see their profile informations and their recent activity.
