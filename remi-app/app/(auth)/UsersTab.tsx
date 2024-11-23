@@ -19,11 +19,13 @@ import {
   addDoc,
 } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
+import { Avatar } from "react-native-elements";
 
 interface User {
   friends_list: Array<string>;
   username: string;
   email: string;
+  profilePic?: string;
 }
 
 interface UsersTabProps {
@@ -33,13 +35,14 @@ interface UsersTabProps {
 const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [filteredFriends, setFilteredFriends] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [currentUserFriends, setCurrentUserFriends] = useState<string[]>([]);
   const currentUser = auth.currentUser;
 
   useEffect(() => {
     if (!currentUser) {
       console.warn("User not authenticated");
+      setLoading(false);
       return;
     }
 
@@ -50,32 +53,30 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
         if (docSnapshot.exists()) {
           setCurrentUserFriends(docSnapshot.data().friends_list || []);
         }
+        setLoading(false);
       },
       (error) => {
         console.error("Error fetching friends list:", error);
+        setLoading(false);
       }
     );
 
-    const fetchAllUsers = () => {
-      const usersCollection = collection(db, "RemiUsers");
-      const unsubscribeUsers = onSnapshot(
-        usersCollection,
-        (snapshot) => {
-          const usersList = snapshot.docs.map((doc) => ({
-            username: doc.data().username,
-            email: doc.data().email,
-          })) as User[];
-          setAllUsers(usersList);
-        },
-        (error) => {
-          console.error("Error fetching users:", error);
-        }
-      );
-
-      return unsubscribeUsers;
-    };
-
-    const unsubscribeUsers = fetchAllUsers();
+    const usersCollection = collection(db, "RemiUsers");
+    const unsubscribeUsers = onSnapshot(
+      usersCollection,
+      (snapshot) => {
+        const usersList = snapshot.docs.map((doc) => ({
+          username: doc.data().username,
+          email: doc.data().email,
+          profilePic: doc.data().profilePic,
+          friends_list: doc.data().friends_list || [],
+        })) as User[];
+        setAllUsers(usersList);
+      },
+      (error) => {
+        console.error("Error fetching users:", error);
+      }
+    );
 
     return () => {
       unsubscribeFriendsList();
@@ -135,19 +136,38 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
 
   const renderItem = ({ item }: { item: User }) => {
     const isAlreadyFriend = currentUserFriends.includes(item.email);
-
+    // console.log(item.profilePic.uri)
     return (
       <View style={styles.item}>
-        <View style={styles.avatarContainer}>
-          <Text style={styles.avatarText}>{item.username[0].toUpperCase()}</Text>
-        </View>
+        <Avatar
+          size={50}
+          rounded
+          source={
+            (() => {
+              if (typeof item.profilePic === "object" && item.profilePic) {
+                // If profilePic is an object with a `uri` key
+                if (item.profilePic) {
+                  return require("../../assets/placeholders/profile-pic.png"); // Local asset fallback
+                } else {
+                  return { uri: item.profilePic}; // External URL
+                }
+              } else if (typeof item.profilePic === "string") {
+                // If profilePic is a string (likely a direct URL)
+                return { uri: item.profilePic };
+              } else {
+                // Default fallback to placeholder
+                return require("../../assets/placeholders/user-avatar.png");
+              }
+            })()
+          }
+          containerStyle={styles.avatarContainer}
+        />
         <View style={styles.userInfo}>
           <Text style={styles.username}>{item.username}</Text>
-          <Text style={styles.email}>{item.email}</Text>
         </View>
         {isAlreadyFriend ? (
           <View style={styles.friendStatusContainer}>
-            <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+            <Ionicons name="checkmark-circle" size={24} color="#BCD5AC" />
             <Text style={styles.alreadyFriendText}>Friends</Text>
           </View>
         ) : (
@@ -210,19 +230,9 @@ const styles = StyleSheet.create({
     borderBottomColor: "#E0E0E0",
   },
   avatarContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#006400",
-    justifyContent: "center",
-    alignItems: "center",
     marginRight: 16,
-  },
-  avatarText: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "bold",
-    fontFamily: "Nunito-Bold",
+    borderWidth: 2,
+    borderColor: "#006400",
   },
   userInfo: {
     flex: 1,
@@ -233,11 +243,6 @@ const styles = StyleSheet.create({
     color: "#333333",
     fontFamily: "Nunito-Bold",
   },
-  email: {
-    fontSize: 14,
-    color: "#666666",
-    fontFamily: "Nunito-Regular",
-  },
   friendStatusContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -245,7 +250,7 @@ const styles = StyleSheet.create({
   alreadyFriendText: {
     marginLeft: 4,
     fontSize: 14,
-    color: "#0D5F13",
+    color: "#BCD5AC",
     fontWeight: "bold",
     fontFamily: "Nunito-Bold",
   },

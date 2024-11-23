@@ -127,7 +127,7 @@ const Notifs = () => {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View>
-              <View style={styles.container}>
+              <View style={styles.container}> 
                 <Avatar
                   size={50}
                   rounded

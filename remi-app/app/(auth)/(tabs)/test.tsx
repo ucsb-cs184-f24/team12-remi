@@ -238,7 +238,7 @@ export default function Explore() {
         )}
         {activeTab === "posts" && <PostsTab searchQuery={searchQuery} />}
         {activeTab === "users" && <UsersTab searchQuery={searchQuery} />}
-        {activeTab === "hashtags" && <HashtagsTab searchQuery={searchQuery} />}
+        {activeTab === "hashtags" && <HashtagsTab selectedTags={selectedTags} />}
       </View>
     </SafeAreaView>
   );
