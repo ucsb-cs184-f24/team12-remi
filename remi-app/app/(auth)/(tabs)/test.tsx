@@ -7,7 +7,6 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
-  ImageBackground,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import PostsTab from "../PostsTab";
@@ -26,52 +25,68 @@ type RecipeTagItem = TagItem & {
 };
 
 const recipeTagItems: RecipeTagItem[] = [
-  { name: "Meal Type", id: 0, children: [
-    { name: "Breakfast", id: 1 },
-    { name: "Lunch", id: 2 },
-    { name: "Dinner", id: 3 },
-    { name: "Snacks", id: 4 },
-    { name: "Dessert", id: 5 },
-    { name: "Beverages", id: 6 },
-  ]},
-  { name: "Diet", id: 100, children: [
-    { name: "Vegetarian", id: 101 },
-    { name: "Pescatarian", id: 102 },
-    { name: "Halal", id: 103 },
-    { name: "Vegan", id: 104 },
-    { name: "Jain", id: 105 },
-    { name: "Gluten-Free", id: 106 },
-    { name: "Dairy-Free", id: 107 },
-    { name: "Keto", id: 108 },
-    { name: "Paleo", id: 109 },
-    { name: "Low Carb", id: 110 },
-  ]},
-  { name: "Cuisine", id: 200, children: [
-    { name: "Italian", id: 201 },
-    { name: "French", id: 202 },
-    { name: "Mexican", id: 203 },
-    { name: "Japanese", id: 204 },
-    { name: "Chinese", id: 205 },
-    { name: "Korean", id: 206 },
-    { name: "Thai", id: 207 },
-    { name: "Malaysian", id: 208 },
-    { name: "Vietnamese", id: 209 },
-    { name: "Indian", id: 210 },
-    { name: "Pakistani", id: 211 },
-    { name: "Mediterranean", id: 212 },
-    { name: "American", id: 213 },
-    { name: "Southern", id: 214 },
-    { name: "Middle Eastern", id: 215 },
-    { name: "African", id: 216 },
-    { name: "Caribbean", id: 217 },
-    { name: "Creole", id: 218 },
-    { name: "Cajun", id: 219 },
-  ]},
-  { name: "Course", id: 300, children: [
-    { name: "Appetizers", id: 301 },
-    { name: "Main Course", id: 302 },
-    { name: "Side Dish", id: 303 },
-  ]},
+  {
+    name: "Meal Type",
+    id: 0,
+    children: [
+      { name: "Breakfast", id: 1 },
+      { name: "Lunch", id: 2 },
+      { name: "Dinner", id: 3 },
+      { name: "Snacks", id: 4 },
+      { name: "Dessert", id: 5 },
+      { name: "Beverages", id: 6 },
+    ],
+  },
+  {
+    name: "Diet",
+    id: 100,
+    children: [
+      { name: "Vegetarian", id: 101 },
+      { name: "Pescatarian", id: 102 },
+      { name: "Halal", id: 103 },
+      { name: "Vegan", id: 104 },
+      { name: "Jain", id: 105 },
+      { name: "Gluten-Free", id: 106 },
+      { name: "Dairy-Free", id: 107 },
+      { name: "Keto", id: 108 },
+      { name: "Paleo", id: 109 },
+      { name: "Low Carb", id: 110 },
+    ],
+  },
+  {
+    name: "Cuisine",
+    id: 200,
+    children: [
+      { name: "Italian", id: 201 },
+      { name: "French", id: 202 },
+      { name: "Mexican", id: 203 },
+      { name: "Japanese", id: 204 },
+      { name: "Chinese", id: 205 },
+      { name: "Korean", id: 206 },
+      { name: "Thai", id: 207 },
+      { name: "Malaysian", id: 208 },
+      { name: "Vietnamese", id: 209 },
+      { name: "Indian", id: 210 },
+      { name: "Pakistani", id: 211 },
+      { name: "Mediterranean", id: 212 },
+      { name: "American", id: 213 },
+      { name: "Southern", id: 214 },
+      { name: "Middle Eastern", id: 215 },
+      { name: "African", id: 216 },
+      { name: "Caribbean", id: 217 },
+      { name: "Creole", id: 218 },
+      { name: "Cajun", id: 219 },
+    ],
+  },
+  {
+    name: "Course",
+    id: 300,
+    children: [
+      { name: "Appetizers", id: 301 },
+      { name: "Main Course", id: 302 },
+      { name: "Side Dish", id: 303 },
+    ],
+  },
 ];
 
 export default function Explore() {
@@ -83,10 +98,11 @@ export default function Explore() {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     if (activeTab === "hashtags") {
-      const filteredItems = recipeTagItems.flatMap(category => 
-        category.children?.filter(item => 
-          item.name.toLowerCase().includes(query.toLowerCase())
-        ) || []
+      const filteredItems = recipeTagItems.flatMap(
+        (category) =>
+          category.children?.filter((item) =>
+            item.name.toLowerCase().includes(query.toLowerCase())
+          ) || []
       );
 
       setSuggestions(filteredItems);
@@ -129,95 +145,101 @@ export default function Explore() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ImageBackground
-        source={{ uri: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pattern-5c8e0c.png" }}
-        style={styles.backgroundImage}
-      >
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <Ionicons name="compass-outline" size={36} color="#006400" />
-            <Text style={styles.title}>Explore</Text>
-          </View>
-          <View style={styles.searchContainer}>
-            <Ionicons
-              name="search"
-              size={20}
-              color="#666"
-              style={styles.searchIcon}
-            />
-            <TextInput
-              style={styles.searchInput}
-              placeholder={getPlaceholder()}
-              placeholderTextColor="#999"
-              value={searchQuery}
-              onChangeText={handleSearch}
-            />
-          </View>
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <Ionicons name="compass-outline" size={28} color="#006400" />
+          <Text style={styles.title}>Explore</Text>
         </View>
+        <View style={styles.searchContainer}>
+          <Ionicons
+            name="search"
+            size={20}
+            color="#006400"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={getPlaceholder()}
+            placeholderTextColor="#636363"
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+        </View>
+      </View>
 
-        {activeTab === "hashtags" && selectedTags.length > 0 && (
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.selectedTagsContainer}
-            contentContainerStyle={styles.selectedTagsContent}
+      {activeTab === "hashtags" && selectedTags.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.selectedTagsContainer}
+          contentContainerStyle={styles.selectedTagsContent}
+        >
+          {selectedTags.map((tag) => (
+            <TouchableOpacity
+              key={tag.id}
+              style={styles.selectedTag}
+              onPress={() => handleSelectSuggestion(tag)}
+            >
+              <Text style={styles.selectedTagText}>{tag.name}</Text>
+              <Ionicons
+                name="close-circle"
+                size={16}
+                color="#FFF"
+                style={styles.removeTagIcon}
+              />
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
+
+      <View style={styles.tabContainer}>
+        {tabs.map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            style={[styles.tab, activeTab === tab && styles.activeTab]}
+            onPress={() => setActiveTab(tab)}
           >
-            {selectedTags.map((tag) => (
+            <Ionicons
+              name={
+                tab === "posts"
+                  ? "grid-outline"
+                  : tab === "users"
+                    ? "people-outline"
+                    : "pricetag-outline"
+              }
+              size={24}
+              color={activeTab === tab ? "#006400" : "#666"}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === tab && styles.activeTabText,
+              ]}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.content}>
+        {activeTab === "hashtags" && suggestions.length > 0 && (
+          <ScrollView style={styles.suggestionsContainer}>
+            {suggestions.map((item) => (
               <TouchableOpacity
-                key={tag.id}
-                style={styles.selectedTag}
-                onPress={() => handleSelectSuggestion(tag)}
+                key={item.id}
+                style={styles.suggestionItem}
+                onPress={() => handleSelectSuggestion(item)}
               >
-                <Text style={styles.selectedTagText}>{tag.name}</Text>
-                <Ionicons name="close-circle" size={16} color="#FFF" style={styles.removeTagIcon} />
+                <Text style={styles.suggestionText}>{item.name}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         )}
-
-        <View style={styles.tabContainer}>
-          {tabs.map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.tab, activeTab === tab && styles.activeTab]}
-              onPress={() => setActiveTab(tab)}
-            >
-              <Ionicons
-                name={tab === "posts" ? "grid-outline" : tab === "users" ? "people-outline" : "pricetag-outline"}
-                size={24}
-                color={activeTab === tab ? "#006400" : "#666"}
-              />
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === tab && styles.activeTabText,
-                ]}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.content}>
-          {activeTab === "hashtags" && suggestions.length > 0 && (
-            <ScrollView style={styles.suggestionsContainer}>
-              {suggestions.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.suggestionItem}
-                  onPress={() => handleSelectSuggestion(item)}
-                >
-                  <Text style={styles.suggestionText}>{item.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
-          {activeTab === "posts" && <PostsTab searchQuery={searchQuery} />}
-          {activeTab === "users" && <UsersTab searchQuery={searchQuery} />}
-          {activeTab === "hashtags" && <HashtagsTab searchQuery={searchQuery} />}
-        </View>
-      </ImageBackground>
+        {activeTab === "posts" && <PostsTab searchQuery={searchQuery} />}
+        {activeTab === "users" && <UsersTab searchQuery={searchQuery} />}
+        {activeTab === "hashtags" && <HashtagsTab searchQuery={searchQuery} />}
+      </View>
     </SafeAreaView>
   );
 }
@@ -225,30 +247,28 @@ export default function Explore() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#FFF9E6",
   },
-  backgroundImage: {
-    flex: 1,
-    resizeMode: "cover",
+  topSection: {
+    backgroundColor: "#FFF9E6",
   },
   header: {
-    padding: 16,
-    backgroundColor: "rgba(255, 249, 230, 0.9)",
+    padding: 12,
   },
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   content: {
     flex: 1,
-    backgroundColor: "rgba(255, 251, 240, 0.9)",
   },
   title: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-    marginLeft: 12,
+    marginLeft: 8,
     color: "#006400",
     fontFamily: "Nunito-Bold",
   },
@@ -263,7 +283,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFF",
+    backgroundColor: "#BCD5AC",
     borderRadius: 25,
     paddingHorizontal: 15,
     elevation: 3,
@@ -274,32 +294,34 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     marginRight: 10,
+    color: "#006400",
   },
   searchInput: {
     flex: 1,
-    height: 50,
+    height: 48,
     fontSize: 16,
-    color: "#333",
+    color: "black",
     fontFamily: "Nunito-Regular",
   },
   tabContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    backgroundColor: "rgba(255, 249, 230, 0.9)",
-    paddingVertical: 12,
+    paddingTop: 12,
   },
   tab: {
     alignItems: "center",
+    width: "33%",
   },
   activeTab: {
     borderBottomWidth: 2,
     borderBottomColor: "#006400",
   },
   tabText: {
-    fontSize: 12,
+    fontSize: 16,
     color: "#666",
     fontFamily: "Nunito-Regular",
     marginTop: 4,
+    paddingBottom: 8,
   },
   activeTabText: {
     color: "#006400",
@@ -319,7 +341,6 @@ const styles = StyleSheet.create({
   },
   selectedTagsContainer: {
     maxHeight: 50,
-    backgroundColor: "rgba(255, 249, 230, 0.9)",
   },
   selectedTagsContent: {
     paddingHorizontal: 16,
@@ -344,4 +365,3 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
 });
-
