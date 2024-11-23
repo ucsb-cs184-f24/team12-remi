@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  ScrollView,
-  Button,
+  FlatList,
+  TouchableOpacity,
   Alert,
   ActivityIndicator,
   StyleSheet,
@@ -18,6 +18,7 @@ import {
   where,
   addDoc,
 } from "firebase/firestore";
+import { Ionicons } from "@expo/vector-icons";
 
 interface User {
   friends_list: Array<string>;
@@ -42,7 +43,6 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
       return;
     }
 
-    // Fetch current user's friends list
     const userDocRef = doc(db, "RemiUsers", currentUser.uid);
     const unsubscribeFriendsList = onSnapshot(
       userDocRef,
@@ -56,7 +56,6 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
       }
     );
 
-    // Fetch all users from Firestore
     const fetchAllUsers = () => {
       const usersCollection = collection(db, "RemiUsers");
       const unsubscribeUsers = onSnapshot(
@@ -84,7 +83,6 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
     };
   }, [currentUser]);
 
-  // Filter users based on the search query
   useEffect(() => {
     if (!currentUser) return;
 
@@ -140,16 +138,26 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
 
     return (
       <View style={styles.item}>
-        <Text style={styles.username}>{item.username}</Text>
-        <Text style={styles.email}>{item.email}</Text>
+        <View style={styles.avatarContainer}>
+          <Text style={styles.avatarText}>{item.username[0].toUpperCase()}</Text>
+        </View>
+        <View style={styles.userInfo}>
+          <Text style={styles.username}>{item.username}</Text>
+          <Text style={styles.email}>{item.email}</Text>
+        </View>
         {isAlreadyFriend ? (
-          <View style={styles.centeredTextContainer}>
-            <Text style={styles.alreadyFriendText}>
-              Already friends with this user!
-            </Text>
+          <View style={styles.friendStatusContainer}>
+            <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+            <Text style={styles.alreadyFriendText}>Friends</Text>
           </View>
         ) : (
-          <Button title="Invite" onPress={() => handleInvite(item)} />
+          <TouchableOpacity
+            style={styles.inviteButton}
+            onPress={() => handleInvite(item)}
+          >
+            <Ionicons name="person-add" size={20} color="#FFFFFF" />
+            <Text style={styles.inviteButtonText}>Invite</Text>
+          </TouchableOpacity>
         )}
       </View>
     );
@@ -175,13 +183,16 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
 
   return (
     <View style={styles.container}>
-      <ScrollView>
-        {filteredFriends.length > 0
-          ? filteredFriends.map((item) => (
-              <View key={item.username}>{renderItem({ item })}</View>
-            ))
-          : searchQuery && <Text style={styles.emptyText}>No users found</Text>}
-      </ScrollView>
+      <FlatList
+        data={filteredFriends}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.email}
+        ListEmptyComponent={
+          searchQuery ? (
+            <Text style={styles.emptyText}>No users found</Text>
+          ) : null
+        }
+      />
     </View>
   );
 };
@@ -189,36 +200,76 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: "100%",
     backgroundColor: "#FFF9E6",
   },
   item: {
-    padding: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
+    borderBottomColor: "#E0E0E0",
+  },
+  avatarContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#006400",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  avatarText: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "bold",
+    fontFamily: "Nunito-Bold",
+  },
+  userInfo: {
+    flex: 1,
   },
   username: {
     fontSize: 18,
     fontWeight: "bold",
+    color: "#333333",
+    fontFamily: "Nunito-Bold",
   },
   email: {
     fontSize: 14,
-    color: "#666",
+    color: "#666666",
+    fontFamily: "Nunito-Regular",
   },
-  centeredTextContainer: {
+  friendStatusContainer: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: 5,
   },
   alreadyFriendText: {
+    marginLeft: 4,
     fontSize: 14,
-    color: "#888",
-    fontStyle: "italic",
+    color: "#0D5F13",
+    fontWeight: "bold",
+    fontFamily: "Nunito-Bold",
+  },
+  inviteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#006400",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  inviteButtonText: {
+    color: "#FFFFFF",
+    marginLeft: 4,
+    fontSize: 14,
+    fontWeight: "bold",
+    fontFamily: "Nunito-Bold",
   },
   emptyText: {
     textAlign: "center",
     marginTop: 20,
     fontSize: 16,
-    color: "#888",
+    color: "#888888",
+    fontFamily: "Nunito-Regular",
   },
   loadingContainer: {
     flex: 1,
@@ -228,3 +279,4 @@ const styles = StyleSheet.create({
 });
 
 export default UsersTab;
+
