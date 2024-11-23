@@ -211,7 +211,9 @@ export default function Explore() {
       <View style={styles.content}>
         {activeTab === "posts" && <PostsTab searchQuery={searchQuery} />}
         {activeTab === "users" && <UsersTab searchQuery={searchQuery} />}
-        {activeTab === "hashtags" && <HashtagsTab searchQuery={searchQuery} />}
+        {activeTab === "hashtags" && (
+          <HashtagsTab selectedTags={selectedTags} />
+        )}
         {activeTab === "bookmarks" && (
           <BookmarksTab searchQuery={searchQuery} />
         )}

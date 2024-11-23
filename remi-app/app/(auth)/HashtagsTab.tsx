@@ -17,6 +17,7 @@ interface HashtagsTabProps {
 }
 
 const HashtagsTab: React.FC<HashtagsTabProps> = ({ selectedTags }) => {
+  console.log(selectedTags);
   const [posts, setPosts] = useState<DocumentData[]>([]);
   const [error, setError] = useState<string | null>(null);
 
