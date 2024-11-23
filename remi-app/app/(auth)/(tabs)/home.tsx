@@ -15,6 +15,7 @@ import {
   TextInput,
   ActivityIndicator,
   Dimensions,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons"; // For icons
@@ -724,8 +725,18 @@ const Home: React.FC = () => {
   const [friendsList, setFriendsList] = useState<string[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const setResetScroll = useContext(ScrollResetContext);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    console.log("Trying to refresh");
+    fetchPostsWithCommentsFlag().then(() => setRefreshing(false));
+
+    console.log("Done w refresh");
+  }, [friendsList]);
 
   const fetchPostsWithCommentsFlag = async () => {
+    console.log("This is the friends list at fetch post: ", friendsList);
     const postsRef = collection(db, "Posts");
     const postsQuery = query(postsRef, where("userId", "in", friendsList));
 
@@ -769,6 +780,10 @@ const Home: React.FC = () => {
     }
   }, [setResetScroll]);
 
+  useEffect(() => {
+    console.log("Updated friendsList:", friendsList);
+  }, [friendsList]);
+
   // Fetch all posts from Firestore
   useEffect(() => {
     if (friendsList.length === 0) return;
@@ -781,7 +796,7 @@ const Home: React.FC = () => {
     fetchPostsWithCommentsFlag();
     const interval = setInterval(fetchPostsWithCommentsFlag, 60000); // 60000 ms = 1 minute
     return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, []);
+  }, [friendsList]);
 
   useEffect(() => {
     // Set up real-time listener for pending friend requests
@@ -805,11 +820,13 @@ const Home: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      doc(db, "RemiUsers", user?.uid || ""),
-      (doc) => {
-        if (doc.exists()) {
-          const userData = doc.data();
+    const fetchFriendsList = async () => {
+      if (!user) return;
+
+      try {
+        const userDoc = await getDoc(doc(db, "RemiUsers", user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
           const friendsEmails = userData.friends_list || [];
 
           if (friendsEmails.length > 0) {
@@ -817,21 +834,19 @@ const Home: React.FC = () => {
               collection(db, "RemiUsers"),
               where("email", "in", friendsEmails)
             );
-            getDocs(q)
-              .then((querySnapshot) => {
-                const friendsIds = querySnapshot.docs.map((doc) => doc.id);
-                setFriendsList(friendsIds);
-              })
-              .catch((error) => {
-                console.error("Error fetching friend list:", error);
-              });
+            const friendsSnapshot = await getDocs(q);
+            const friendsIds = friendsSnapshot.docs.map((doc) => doc.id);
+            setFriendsList(friendsIds);
+            console.log("Updated friendsList:", friendsIds);
           }
         }
+      } catch (error) {
+        console.error("Error fetching friend list:", error);
       }
-    );
+    };
 
-    return () => unsubscribe();
-  }, [user]);
+    fetchFriendsList();
+  }, [user]); // Only run when `user` changes
 
   return (
     <SafeAreaView style={Ustyles.background}>
@@ -840,6 +855,9 @@ const Home: React.FC = () => {
           ref={scrollViewRef}
           stickyHeaderIndices={[0]}
           style={Ustyles.feed}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
           <View
             style={[
