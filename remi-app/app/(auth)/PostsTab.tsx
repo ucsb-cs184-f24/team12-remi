@@ -110,7 +110,7 @@ const PostsTab: React.FC<PostsTabProps> = ({ searchQuery }) => {
   }, [searchQuery]);
 
   return (
-    <SafeAreaView style={Ustyles.background}>
+    <SafeAreaView style={Ustyles.background} edges={["top"]}>
       <View style={Ustyles.background}>
         <ScrollView style={Ustyles.feed}>
           {posts
