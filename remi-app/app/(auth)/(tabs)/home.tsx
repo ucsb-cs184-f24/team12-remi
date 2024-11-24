@@ -15,6 +15,7 @@ import {
   TextInput,
   ActivityIndicator,
   Dimensions,
+  GestureResponderEvent,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons"; // For icons
@@ -172,6 +173,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   const [postComments, setPostComments] = useState<Comment[]>([]);
   // const [loading, setLoading] = useState(true);
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({}); // State to track loading for each post
+  const router = useRouter();
 
   if (!postID) {
     console.error("postID is undefined");
@@ -373,6 +375,14 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     setModalVisible(false); // Hide the modal
   };
 
+  // const handleAvatarPress =
+  //   (user_name: string) => (event: GestureResponderEvent) => {
+  //     console.log("pressed user avatar");
+  //     console.log("user_name: ", user_name);
+  //     // router.push(`../UserProfileInfo?username=${user_name}`);
+  //     router.push(`../UserProfileInfo?${user_name}`);
+  //   };
+
   const handleCommentsPress = () => {
     console.log("press comments");
     // console.log("loading: ", loading);
@@ -495,12 +505,30 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     <View style={Ustyles.post}>
       <View style={Ustyles.postHeader}>
         <View style={Ustyles.userInfo}>
-          <Image
-            source={require("../../../assets/placeholders/user-avatar.png")}
-            style={Ustyles.avatar}
-          />
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: "/(auth)/UserProfileInfo",
+                params: { username: username },
+              })
+            }
+          >
+            <Image
+              source={require("../../../assets/placeholders/user-avatar.png")}
+              style={Ustyles.avatar}
+            />
+          </TouchableOpacity>
           <View>
-            <Text style={Ustyles.username}>{username}</Text>
+            <TouchableOpacity
+              onPress={() =>
+                router.push({
+                  pathname: "/(auth)/UserProfileInfo",
+                  params: { username: username },
+                })
+              }
+            >
+              <Text style={Ustyles.username}>{username}</Text>
+            </TouchableOpacity>
             <Text style={Ustyles.timeAgo}>{formatTimeAgo(timeAgo)}</Text>
           </View>
         </View>

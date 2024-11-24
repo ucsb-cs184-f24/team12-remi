@@ -39,12 +39,13 @@ const AuthLayout = () => {
   }, [user, initializing]);
   return (
     <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
-        name="register"
-        options={{ headerShown: false }}
+        name="(tabs)"
+        options={{ title: "Home", headerShown: false }}
       />
+      <Stack.Screen name="register" options={{ headerShown: false }} />
       <Stack.Screen name="Next" options={{ headerShown: false }} />
+      <Stack.Screen name="UserProfileInfo" options={{ title: "Profile" }} />
     </Stack>
   );
 };

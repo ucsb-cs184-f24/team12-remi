@@ -160,7 +160,10 @@ export default function UserProfileComponent() {
               }
             });
 
-            const postsQuery = query(collection(db, "Posts"), where("userId", "==", user.uid));
+            const postsQuery = query(
+              collection(db, "Posts"),
+              where("userId", "==", user.uid)
+            );
             const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
               let newLikesCount = 0;
               snapshot.forEach((doc) => {
@@ -420,8 +423,15 @@ export default function UserProfileComponent() {
                   </View>
                 </View>
                 <View style={styles.recentActivityTitleContainer}>
-                  <Ionicons name="file-tray-full-outline" size={24} color="#0D5F13" style={styles.recentActivityIcon} />
-                  <Text style={styles.recentActivityTitle}>Recent Activity</Text>
+                  <Ionicons
+                    name="file-tray-full-outline"
+                    size={24}
+                    color="#0D5F13"
+                    style={styles.recentActivityIcon}
+                  />
+                  <Text style={styles.recentActivityTitle}>
+                    Recent Activity
+                  </Text>
                 </View>
               </View>
             }
@@ -509,7 +519,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     padding: 20,
     width: CONTENT_WIDTH * 0.96,
-    alignSelf: 'center',
+    alignSelf: "center",
     borderWidth: 2,
     borderColor: "#FFF9E6",
     ...Platform.select({
@@ -618,9 +628,9 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   recentActivityTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginVertical: 10,
   },
   recentActivityTitle: {
@@ -678,7 +688,7 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
   },
   flatListContent: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   postContainer: {
     marginBottom: 20,
@@ -688,4 +698,3 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
   },
 });
-
