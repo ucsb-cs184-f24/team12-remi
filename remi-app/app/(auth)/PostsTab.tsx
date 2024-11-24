@@ -63,12 +63,22 @@ interface Post {
 }
 
 const PostsTab: React.FC<PostsTabProps> = ({ searchQuery, filters }) => {
-  console.log(searchQuery, filters);
   const [posts, setPosts] = useState<DocumentData[]>([]);
   const user = auth.currentUser;
 
   const fetchAllPosts = async () => {
     try {
+      const usersRef = collection(db, "RemiUsers");
+      const usersQuery = query(usersRef, where("visibility", "==", "public"));
+      const userSnapshot = await getDocs(usersQuery);
+
+      const publicUserIds = userSnapshot.docs.map((doc) => doc.id);
+
+      if (publicUserIds.length === 0) {
+        setPosts([]);
+        return;
+      }
+
       const postsRef = collection(db, "Posts");
       const isDefaultFilters =
         filters.price[0] === 1 &&
@@ -78,13 +88,14 @@ const PostsTab: React.FC<PostsTabProps> = ({ searchQuery, filters }) => {
         filters.time[0] === 1 &&
         filters.time[1] === 120;
 
-      // Fetch all posts if filters are set to default
       let querySnapshot;
       if (!searchQuery && isDefaultFilters) {
-        querySnapshot = await getDocs(postsRef);
+        querySnapshot = await getDocs(
+          query(postsRef, where("userId", "in", publicUserIds))
+        );
       } else {
         querySnapshot = await getDocs(
-          query(postsRef, orderBy("likesCount", "desc"), limit(10))
+          query(postsRef, where("userId", "in", publicUserIds), orderBy("likesCount", "desc"), limit(10))
         );
       }
 
@@ -127,56 +138,54 @@ const PostsTab: React.FC<PostsTabProps> = ({ searchQuery, filters }) => {
 
       setPosts(filteredPosts);
     } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert("Error", `Failed to fetch posts: ${error.message}`);
-      } else {
-        Alert.alert("Error", "An unknown error occurred.");
-      }
+      Alert.alert(
+        "Error",
+        `Failed to fetch posts: ${error instanceof Error ? error.message : "An unknown error occurred."}`
+      );
     }
   };
-  // Use `useEffect` to fetch posts when the component mounts and every minute
+
   useEffect(() => {
     fetchAllPosts();
-    const interval = setInterval(fetchAllPosts, 60000); // 60000 ms = 1 minute
+    const interval = setInterval(fetchAllPosts, 60000); // 1 minute
     return () => clearInterval(interval); // Cleanup interval on component unmount
   }, [searchQuery, filters]);
 
   return (
-    <SafeAreaView style={Ustyles.background}>
+    <SafeAreaView style={Ustyles.background} edges={["top"]}>
       <View style={Ustyles.background}>
         <ScrollView style={Ustyles.feed}>
-          {posts
-            .sort((a, b) => b.likesCount - a.likesCount)
-            .map((post, index) => (
-              <View key={post.id}>
-                <RecipePost
-                  key={index}
-                  userID={post.userId || "Anonymous"}
-                  timeAgo={
-                    post.createdAt
-                      ? new Date(post.createdAt)
-                      : new Date(2002, 2, 8)
-                  }
-                  likes={post.likesCount || 0}
-                  comments={post.comments || 0}
-                  recipeName={post.title || "Untitled Recipe"}
-                  price={post.Price || 0.0}
-                  difficulty={post.Difficulty || 0}
-                  time={post.Time || 0}
-                  caption={post.caption || "No caption"}
-                  hashtags={post.hashtags || ["None"]}
-                  mediaUrl={post.mediaUrl || ""}
-                  postID={post.id}
-                  userHasCommented={post.userHasCommented}
-                />
-                <View style={Ustyles.separator} />
-              </View>
-            ))}
+          {posts.map((post, index) => (
+            <View key={post.id}>
+              <RecipePost
+                key={index}
+                userID={post.userId || "Anonymous"}
+                timeAgo={
+                  post.createdAt
+                    ? new Date(post.createdAt)
+                    : new Date(2002, 2, 8)
+                }
+                likes={post.likesCount || 0}
+                comments={post.comments || 0}
+                recipeName={post.title || "Untitled Recipe"}
+                price={post.Price || 0.0}
+                difficulty={post.Difficulty || 0}
+                time={post.Time || 0}
+                caption={post.caption || "No caption"}
+                hashtags={post.hashtags || ["None"]}
+                mediaUrl={post.mediaUrl || ""}
+                postID={post.id}
+                userHasCommented={post.userHasCommented}
+              />
+              <View style={Ustyles.separator} />
+            </View>
+          ))}
         </ScrollView>
-        {/* <Button title="Sign out" onPress={() => signOut(auth)} color="#0D5F13" /> */}
       </View>
     </SafeAreaView>
   );
 };
+
+export default PostsTab;
 
 export default PostsTab;

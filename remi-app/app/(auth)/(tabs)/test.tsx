@@ -7,12 +7,15 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+
   SafeAreaView,
   Keyboard,
   TouchableWithoutFeedback,
   FlatList,
 } from "react-native";
 import Slider from "@react-native-community/slider";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import { Ionicons } from "@expo/vector-icons";
 import RecipePost from "./home";
 import { db, auth } from "../../../firebaseConfig";
@@ -156,7 +159,7 @@ export default function Explore() {
   const tabs: SearchTab[] = ["posts", "users", "hashtags", "bookmarks"];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <Text style={styles.title}>Explore</Text>
 
@@ -335,7 +338,8 @@ export default function Explore() {
               <TouchableOpacity
                 key={index}
                 style={styles.suggestionItem}
-                onPress={() => handleSelectSuggestion(item)}>
+                onPress={() => handleSelectSuggestion(item)}
+              >
                 <Text style={styles.suggestionText}>{item}</Text>
               </TouchableOpacity>
             ))}
@@ -362,7 +366,8 @@ export default function Explore() {
               <TouchableOpacity
                 key={tag.id}
                 style={styles.selectedTag}
-                onPress={() => handleSelectSuggestion(tag.name)}>
+                onPress={() => handleSelectSuggestion(tag.name)}
+              >
                 <Text style={styles.selectedTagText}>{tag.name}</Text>
               </TouchableOpacity>
             ))}
@@ -372,17 +377,20 @@ export default function Explore() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={styles.tabsContainer}>
+          style={styles.tabsContainer}
+        >
           {tabs.map((tab) => (
             <TouchableOpacity
               key={tab}
               style={[styles.tab, activeTab === tab && styles.activeTab]}
-              onPress={() => setActiveTab(tab)}>
+              onPress={() => setActiveTab(tab)}
+            >
               <Text
                 style={[
                   styles.tabText,
                   activeTab === tab && styles.activeTabText,
-                ]}>
+                ]}
+              >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </Text>
             </TouchableOpacity>
