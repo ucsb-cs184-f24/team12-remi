@@ -12,8 +12,8 @@ import {
   TextInput,
   Animated,
   ImageBackground,
-  Button,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { signOut } from "firebase/auth";
@@ -34,7 +34,6 @@ import {
   deleteDoc,
   arrayRemove,
 } from "firebase/firestore";
-
 import {
   ref,
   uploadBytes,
@@ -49,6 +48,9 @@ import { RecipePost } from "./home";
 
 const { width, height } = Dimensions.get("window");
 const MAX_BIO_LENGTH = 150;
+
+// Easy to change content width
+const CONTENT_WIDTH = width * 0.94;
 
 const uploadImageToStorage = async (uri: string): Promise<string> => {
   try {
@@ -115,7 +117,7 @@ const useImagePicker = () => {
   return { image, pickImage };
 };
 
-export default function Component() {
+export default function UserProfileComponent() {
   const user = auth.currentUser;
   const [profilePic, setProfilePic] = useState(
     "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png"
@@ -131,7 +133,7 @@ export default function Component() {
   const bioInputRef = useRef<TextInput>(null);
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [userPosts, setUserPosts] = useState<any[]>([]); // To store user posts
+  const [userPosts, setUserPosts] = useState<any[]>([]);
 
   const [friendCount, setFriendCount] = useState(0);
   const [postCount, setPostCount] = useState(0);
@@ -149,31 +151,29 @@ export default function Component() {
             setUsername(userData.username || "");
             setProfilePic(userData.profilePic || profilePic);
             setBio(userData.bio || "");
-            
-            setFriendCount(userData.friends_list?.length || 0);
+
+            // Set up real-time listener for friends count
+            const unsubscribeFriends = onSnapshot(userDocRef, (doc) => {
+              if (doc.exists()) {
+                const updatedUserData = doc.data();
+                setFriendCount(updatedUserData.friends_list?.length || 0);
+              }
+            });
 
             const postsQuery = query(collection(db, "Posts"), where("userId", "==", user.uid));
-            const postsSnapshot = await getDocs(postsQuery);
-            setPostCount(postsSnapshot.size);
-
-            // Initial likes count calculation
-            let initialLikesCount = 0;
-            postsSnapshot.forEach((doc) => {
-              initialLikesCount += doc.data().likesCount || 0;
-            });
-            setLikesCount(initialLikesCount);
-
-            // Set up real-time listener for posts
-            const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
+            const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
               let newLikesCount = 0;
               snapshot.forEach((doc) => {
                 newLikesCount += doc.data().likesCount || 0;
               });
               setLikesCount(newLikesCount);
+              setPostCount(snapshot.size);
             });
 
-            // Clean up the listener when the component unmounts
-            return () => unsubscribe();
+            return () => {
+              unsubscribeFriends();
+              unsubscribePosts();
+            };
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
@@ -191,19 +191,18 @@ export default function Component() {
   }, [user, fadeAnim]);
 
   useEffect(() => {
-    fetchUserPosts(); // Fetch posts when the component mounts
+    fetchUserPosts();
   }, []);
 
   const fetchUserPosts = async () => {
     try {
-      console.log("fetching users' posts");
       const postsRef = collection(db, "Posts");
       const q = query(postsRef, where("userId", "==", user?.uid));
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
         console.log("No posts found for this user.");
-        setUserPosts([]); // Set empty state if no posts found
+        setUserPosts([]);
         return;
       }
 
@@ -213,12 +212,10 @@ export default function Component() {
       }));
       setUserPosts(posts);
       setLoading(false);
-      console.log("Fetched posts:", posts); // Verify data
     } catch (error) {
       console.error("Error fetching user posts:", error);
     }
   };
-  // fetchUserPosts();
 
   useEffect(() => {
     if (image) {
@@ -291,16 +288,14 @@ export default function Component() {
   };
 
   const handleBookmarksPress = () => {
-    setBookmarkVisible(false); // Close menu if applicable
-    router.push("../../bookmarks"); // Adjust path as needed for your project structure
+    setBookmarkVisible(false);
+    router.push("../../bookmarks");
   };
-
-  console.log("loading: ", loading);
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>Loading...</Text>
+        <ActivityIndicator size="large" color="#0D5F13" />
       </View>
     );
   }
@@ -330,28 +325,29 @@ export default function Component() {
             data={userPosts}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <RecipePost
-                postID={item.id}
-                userID={item.userId}
-                timeAgo={new Date(item.createdAt)}
-                mediaUrl={item.mediaUrl}
-                likes={item.likesCount}
-                comments={item.comments}
-                recipeName={item.title || "Untitled"}
-                price={item.Price || 0.0}
-                difficulty={item.Difficulty || 0}
-                time={item.Time || 0}
-                caption={item.caption || ""}
-                hashtags={item.hashtags || ""}
-                userHasCommented={item.userHasCommented || false} // Placeholder, adjust if you track this
-              />
+              <View style={styles.postContainer}>
+                <RecipePost
+                  postID={item.id}
+                  userID={item.userId}
+                  timeAgo={new Date(item.createdAt)}
+                  mediaUrl={item.mediaUrl}
+                  likes={item.likesCount}
+                  comments={item.comments}
+                  recipeName={item.title || "Untitled"}
+                  price={item.Price || 0.0}
+                  difficulty={item.Difficulty || 0}
+                  time={item.Time || 0}
+                  caption={item.caption || ""}
+                  hashtags={item.hashtags || ""}
+                  userHasCommented={item.userHasCommented || false}
+                />
+              </View>
             )}
             ListEmptyComponent={
               <Text style={styles.emptyText}>No Recent Activity found.</Text>
             }
             ListHeaderComponent={
               <View>
-                {/* Profile Section */}
                 <View style={styles.profileSection}>
                   <View style={styles.profileTopSection}>
                     <TouchableOpacity
@@ -423,10 +419,17 @@ export default function Component() {
                     )}
                   </View>
                 </View>
-                <Text style={styles.recentActivityTitle}>Recent Activity</Text>
+                <View style={styles.recentActivityTitleContainer}>
+                  <Ionicons name="file-tray-full-outline" size={24} color="#0D5F13" style={styles.recentActivityIcon} />
+                  <Text style={styles.recentActivityTitle}>Recent Activity</Text>
+                </View>
               </View>
             }
-            contentContainerStyle={{ paddingBottom: 20 }}
+            contentContainerStyle={styles.flatListContent}
+            showsVerticalScrollIndicator={false}
+            snapToInterval={CONTENT_WIDTH}
+            decelerationRate="fast"
+            snapToAlignment="center"
           />
 
           <Modal
@@ -495,22 +498,20 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   username: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "bold",
     color: "#0D5F13",
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollViewContent: {
-    flexGrow: 1,
-    paddingBottom: 20,
+    fontFamily: "Nunito_700Bold",
   },
   profileSection: {
-    backgroundColor: "rgba(255, 249, 230, 0.8)",
+    backgroundColor: "rgba(255, 249, 230, 0.9)",
     borderRadius: 20,
-    margin: 20,
+    marginVertical: 5,
     padding: 20,
+    width: CONTENT_WIDTH * 0.96,
+    alignSelf: 'center',
+    borderWidth: 2,
+    borderColor: "#FFF9E6",
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -559,10 +560,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#0D5F13",
+    fontFamily: "Nunito_700Bold",
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 17,
     color: "#0D5F13",
+    // fontFamily: "Nunito_700Bold",
   },
   bioContainer: {
     backgroundColor: "rgba(188, 213, 172, 0.8)",
@@ -609,40 +612,28 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     flex: 1,
     color: "#333",
+    // fontFamily: "Nunito_500Bold",
   },
   editIcon: {
     marginLeft: 8,
   },
-  contentSection: {
-    flex: 1,
-    backgroundColor: "rgba(255, 249, 230, 0.8)",
-    borderRadius: 20,
-    margin: 20,
-    padding: 20,
-    minHeight: 200,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
+  recentActivityTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 10,
   },
   recentActivityTitle: {
-    fontSize: 20,
+    marginTop: 15,
+    fontSize: 22,
     fontWeight: "bold",
     color: "#0D5F13",
     textAlign: "center",
-    marginBottom: 15,
+    fontFamily: "Nunito_700Bold",
   },
-  placeholderText: {
-    textAlign: "center",
-    color: "#666",
-    fontStyle: "italic",
+  recentActivityIcon: {
+    marginTop: 15,
+    marginRight: 8,
   },
   loadingContainer: {
     flex: 1,
@@ -676,30 +667,25 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 18,
-    color: "#333",
-  },
-  overlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContainer: {
-    width: "100%",
-    padding: 20,
-    backgroundColor: "white",
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center",
+    color: "#0D5F13",
+    fontFamily: "Nunito_700Bold",
   },
   emptyText: {
     textAlign: "center",
     marginTop: 20,
     fontSize: 16,
     color: "#666",
+    fontFamily: "Nunito_700Bold",
+  },
+  flatListContent: {
+    alignItems: 'center',
+  },
+  postContainer: {
+    marginBottom: 20,
+    width: CONTENT_WIDTH,
+  },
+  text: {
+    fontFamily: "Nunito_700Bold",
   },
 });
+

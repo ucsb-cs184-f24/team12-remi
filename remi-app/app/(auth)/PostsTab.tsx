@@ -130,32 +130,37 @@ const PostsTab: React.FC<PostsTabProps> = ({ searchQuery }) => {
 
 
   return (
-    <SafeAreaView style={Ustyles.background}>
-      <ScrollView style={Ustyles.feed}>
-        {posts.map((post, index) => (
-          <View key={post.id}>
-            <RecipePost
-              key={index}
-              userID={post.userId || "Anonymous"}
-              timeAgo={
-                post.createdAt ? new Date(post.createdAt) : new Date(2002, 2, 8)
-              }
-              likes={post.likesCount || 0}
-              comments={post.comments || 0}
-              recipeName={post.title || "Untitled Recipe"}
-              price={post.Price || 0.0}
-              difficulty={post.Difficulty || 0}
-              time={post.Time || 0}
-              caption={post.caption || "No caption"}
-              hashtags={post.hashtags || ["None"]}
-              mediaUrl={post.mediaUrl || ""}
-              postID={post.id}
-              userHasCommented={post.userHasCommented}
-            />
-            <View style={Ustyles.separator} />
-          </View>
-        ))}
-      </ScrollView>
+    <SafeAreaView style={Ustyles.background} edges={["top"]}>
+      <View style={Ustyles.background}>
+        <ScrollView style={Ustyles.feed}>
+          {posts.map((post, index) => (
+              <View key={post.id}>
+                <RecipePost
+                  key={index}
+                  userID={post.userId || "Anonymous"}
+                  timeAgo={
+                    post.createdAt
+                      ? new Date(post.createdAt)
+                      : new Date(2002, 2, 8)
+                  }
+                  likes={post.likesCount || 0}
+                  comments={post.comments || 0}
+                  recipeName={post.title || "Untitled Recipe"}
+                  price={post.Price || 0.0}
+                  difficulty={post.Difficulty || 0}
+                  time={post.Time || 0}
+                  caption={post.caption || "No caption"}
+                  hashtags={post.hashtags || ["None"]}
+                  mediaUrl={post.mediaUrl || ""}
+                  postID={post.id}
+                  userHasCommented={post.userHasCommented}
+                />
+                <View style={Ustyles.separator} />
+              </View>
+            ))}
+        </ScrollView>
+        {/* <Button title="Sign out" onPress={() => signOut(auth)} color="#0D5F13" /> */}
+      </View>
     </SafeAreaView>
   );
 };

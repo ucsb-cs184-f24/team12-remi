@@ -35,6 +35,7 @@ import {
   where,
 } from "firebase/firestore";
 import Ustyles from "../../components/UniversalStyles";
+import { ConditionalKeyboardAvoidingView } from './ConditionalKeyboardAvoidingView';
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -148,7 +149,7 @@ export default function Register() {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <KeyboardAvoidingView behavior="padding" style={styles.container}>
+      <ConditionalKeyboardAvoidingView>
         <LinearGradient
           colors={["#FFF9E6", "#BCD5AC"]}
           style={styles.backgroundGradient}
@@ -226,7 +227,7 @@ export default function Register() {
             </ScrollView>
           </ImageBackground>
         </LinearGradient>
-      </KeyboardAvoidingView>
+      </ConditionalKeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
 }
