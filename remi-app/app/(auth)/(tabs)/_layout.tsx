@@ -13,12 +13,26 @@ const TabsLayout = () => {
 
   return (
     <ScrollResetContext.Provider value={setResetScroll}>
-      <Tabs>
+      <Tabs
+        screenOptions={{
+          tabBarStyle: {
+            backgroundColor: "#FFF9E6", // Tan background
+            borderTopWidth: 2,
+            borderColor: "#0D5F13",
+            paddingTop: 10,
+          },
+          tabBarLabelStyle: {
+            fontFamily: "Nunito_600SemiBold",
+          },
+          tabBarActiveTintColor: "#BCD5AC", // Light green for selected tabs
+          tabBarInactiveTintColor: "#0D5F13", // Dark green for unselected tabs
+        }}
+      >
         <Tabs.Screen
           name="home"
           options={{
             tabBarLabel: "Home",
-            headerShown: false, // This hides the header
+            headerShown: false,
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="home-outline" color={color} size={size} />
             ),
@@ -31,16 +45,6 @@ const TabsLayout = () => {
             },
           }}
         />
-        {/* <Tabs.Screen 
-        name="home" options={{
-            //headerTitle: "Home",
-            headerShown: false,
-            title: "Home",
-            tabBarIcon: ({ color, size }) => (
-                <Ionicons name="home-outline" color={color} size={size} />
-            ),
-        }}></Tabs.Screen> */}
-        {/* Tab for settings.tsx */}
         <Tabs.Screen
           name="add-recipe"
           options={{
@@ -52,13 +56,12 @@ const TabsLayout = () => {
             ),
           }}
         />
-        {/* Tab for profile.tsx */}
         <Tabs.Screen
-          name="search"
+          name="test"
           options={{
-            headerTitle: "Search",
+            headerTitle: "Explore",
             headerShown: false,
-            title: "Search",
+            title: "Explore",
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="search-outline" color={color} size={size} />
             ),
@@ -66,17 +69,6 @@ const TabsLayout = () => {
         />
         <Tabs.Screen
           name="profile"
-          options={{
-            headerTitle: "Profile",
-            headerShown: false,
-            title: "Profile",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person-outline" color={color} size={size} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="test"
           options={{
             headerTitle: "Profile",
             headerShown: false,

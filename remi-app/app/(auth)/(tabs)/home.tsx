@@ -656,133 +656,129 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               onPress={handleCommentsPress} // Opens the comment modal
             />
             <Text style={Ustyles.engagementText}>{commentsCount}</Text>
-            <View style={Ustyles.engagementItem}>
-              <Ionicons
-                name={
-                  savedBy.includes(auth.currentUser?.uid ?? "")
-                    ? "bookmark"
-                    : "bookmark-outline"
-                }
-                size={27}
-                color={
-                  savedBy.includes(auth.currentUser?.uid ?? "")
-                    ? "#FBC02D"
-                    : "gray"
-                }
-                onPress={handleSavePress}
-              />
-            </View>
-            {/* Modal for adding a comment */}
-            <Modal
-              visible={commentVisible}
-              animationType="slide"
-              transparent={true}
-              onRequestClose={handleCloseComments}
-            >
-              <TouchableWithoutFeedback onPress={handleCloseComments}>
-                <View style={styles.overlay}>
-                  <TouchableWithoutFeedback>
-                    <Animated.View
-                      style={[
-                        styles.commentContainer,
-                        { transform: [{ translateY: modalPosition }] },
-                      ]} // TODO: figure out why lineargradient not applying to borders
+          </View>
+          <View style={Ustyles.engagementItem}>
+            <Ionicons
+              name={
+                savedBy.includes(auth.currentUser?.uid ?? "")
+                  ? "bookmark"
+                  : "bookmark-outline"
+              }
+              size={27}
+              color={
+                savedBy.includes(auth.currentUser?.uid ?? "")
+                  ? "#FBC02D"
+                  : "gray"
+              }
+              onPress={handleSavePress}
+            />
+          </View>
+          {/* Modal for adding a comment */}
+          <Modal
+            visible={commentVisible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={handleCloseComments}
+          >
+            <TouchableWithoutFeedback onPress={handleCloseComments}>
+              <View style={styles.overlay}>
+                <TouchableWithoutFeedback>
+                  <Animated.View
+                    style={[
+                      styles.commentContainer,
+                      { transform: [{ translateY: modalPosition }] },
+                    ]} // TODO: figure out why lineargradient not applying to borders
+                  >
+                    <LinearGradient
+                      colors={["#BCD5AC", "#FFF9E6"]}
+                      style={styles.gradient_container}
                     >
-                      <LinearGradient
-                        colors={["#BCD5AC", "#FFF9E6"]}
-                        style={styles.gradient_container}
+                      <KeyboardAvoidingView
+                        behavior={Platform.OS === "ios" ? "padding" : "height"}
+                        style={{ flex: 1 }}
+                        keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
                       >
-                        <KeyboardAvoidingView
-                          behavior={
-                            Platform.OS === "ios" ? "padding" : "height"
-                          }
-                          style={{ flex: 1 }}
-                          keyboardVerticalOffset={
-                            Platform.OS === "ios" ? 40 : 0
-                          }
-                        >
-                          <View style={styles.commentContent}>
-                            <View style={styles.header}>
-                              <Text style={styles.header_2}>Comments</Text>
-                            </View>
+                        <View style={styles.commentContent}>
+                          <View style={styles.header}>
+                            <Text style={styles.header_2}>Comments</Text>
+                          </View>
 
-                            {isLoadingComments ? (
-                              <Text style={Ustyles.text}>
-                                Loading comments...
-                              </Text>
-                            ) : commentError ? (
-                              <Text style={Ustyles.text}>{commentError}</Text>
-                            ) : (
-                              <FlatList
-                                data={postComments}
-                                keyExtractor={(item) => item.id}
-                                renderItem={({ item }) => (
-                                  <TouchableWithoutFeedback onPress={() => {}}>
-                                    <View style={styles.commentItem}>
-                                      <Image
-                                        source={{ uri: item.profilePic }}
-                                        style={Ustyles.avatar}
-                                      />
-                                      <View style={styles.commentTextContent}>
-                                        <View>
-                                          <Text style={styles.username}>
-                                            {item.username?.trim() ||
-                                              "Unknown User"}
-                                          </Text>
+                          {isLoadingComments ? (
+                            <Text style={Ustyles.text}>
+                              Loading comments...
+                            </Text>
+                          ) : commentError ? (
+                            <Text style={Ustyles.text}>{commentError}</Text>
+                          ) : (
+                            <FlatList
+                              data={postComments}
+                              keyExtractor={(item) => item.id}
+                              renderItem={({ item }) => (
+                                <TouchableWithoutFeedback onPress={() => {}}>
+                                  <View style={styles.commentItem}>
+                                    <Image
+                                      source={{ uri: item.profilePic }}
+                                      style={Ustyles.avatar}
+                                    />
+                                    <View style={styles.commentTextContent}>
+                                      <View>
+                                        <Text style={styles.username}>
+                                          {item.username?.trim() ||
+                                            "Unknown User"}
+                                        </Text>
 
-                                          <Text style={Ustyles.timeAgo}>
-                                            {formatTimeAgo(
-                                              item.createdAt instanceof Date
-                                                ? item.createdAt
-                                                : item.createdAt.toDate()
-                                            )}
-                                          </Text>
-                                        </View>
+                                        <Text style={Ustyles.timeAgo}>
+                                          {formatTimeAgo(
+                                            item.createdAt instanceof Date
+                                              ? item.createdAt
+                                              : item.createdAt.toDate()
+                                          )}
+                                        </Text>
+                                      </View>
 
-                                        <View>
-                                          <Text style={styles.commentText}>
-                                            {item.text?.trim() ||
-                                              "No comment text available"}
-                                          </Text>
-                                        </View>
+                                      <View>
+                                        <Text style={styles.commentText}>
+                                          {item.text?.trim() ||
+                                            "No comment text available"}
+                                        </Text>
                                       </View>
                                     </View>
-                                  </TouchableWithoutFeedback>
-                                )}
-                                ListEmptyComponent={
-                                  <Text style={styles.emptyComments}>
-                                    No comments yet. Be the first!
-                                  </Text>
-                                }
-                                contentContainerStyle={styles.commentsList}
-                              />
-                            )}
+                                  </View>
+                                </TouchableWithoutFeedback>
+                              )}
+                              ListEmptyComponent={
+                                <Text style={styles.emptyComments}>
+                                  No comments yet. Be the first!
+                                </Text>
+                              }
+                              contentContainerStyle={styles.commentsList}
+                            />
+                          )}
 
-                            <View style={styles.inputContainer}>
-                              <TextInput
-                                style={styles.textInput}
-                                value={newComment}
-                                onChangeText={setNewComment}
-                                placeholder="Add a comment..."
-                                placeholderTextColor="#0D5F13"
-                                multiline
-                              />
-                              <TouchableOpacity
-                                style={styles.button}
-                                onPress={onSubmitComment}
-                              >
-                                <Text style={styles.buttonText}>Submit</Text>
-                              </TouchableOpacity>
-                            </View>
+                          <View style={styles.inputContainer}>
+                            <TextInput
+                              style={styles.textInput}
+                              value={newComment}
+                              onChangeText={setNewComment}
+                              placeholder="Add a comment..."
+                              placeholderTextColor="#0D5F13"
+                              multiline
+                            />
+                            <TouchableOpacity
+                              style={styles.button}
+                              onPress={onSubmitComment}
+                            >
+                              <Text style={styles.buttonText}>Submit</Text>
+                            </TouchableOpacity>
                           </View>
-                        </KeyboardAvoidingView>
-                      </LinearGradient>
-                    </Animated.View>
-                  </TouchableWithoutFeedback>
-                </View>
-              </TouchableWithoutFeedback>
-            </Modal>
-          </View>
+                        </View>
+                      </KeyboardAvoidingView>
+                    </LinearGradient>
+                  </Animated.View>
+                </TouchableWithoutFeedback>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
         </View>
       </View>
       <View style={Ustyles.recipeContent}>
