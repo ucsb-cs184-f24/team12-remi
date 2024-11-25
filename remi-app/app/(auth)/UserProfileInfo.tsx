@@ -14,6 +14,7 @@ import {
   ImageBackground,
   FlatList,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { signOut } from "firebase/auth";
@@ -68,7 +69,9 @@ const UserProfileInfo = () => {
   const [visibility, setVisibility] = useState("private");
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [hasBio, setHasBio] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
   const [isPrivate, setIsPrivate] = useState(true);
+  const [curr_username, setCurrUsername] = useState("Unknown User");
   const user_email = user.email;
   const [postsText, setPostsText] = useState("No recent activity found.");
 
@@ -96,6 +99,8 @@ const UserProfileInfo = () => {
           setProfilePic(userData.profilePic || profilePic);
           setFriendCount(userData.friends_list.length || 0);
           setVisibility(userData.visibility || "private");
+          setUserEmail(userData.email || "");
+          fetchUsername(user.uid);
 
           const postsQuery = query(
             collection(db, "Posts"),
@@ -145,6 +150,53 @@ const UserProfileInfo = () => {
     fetchUserProfile();
   }, [username, fadeAnim]);
 
+  const fetchUsername = async (user_id: string) => {
+    console.log("fetching username...");
+    const usersRef = doc(db, "RemiUsers", user_id);
+    const userSnapshot = await getDoc(usersRef);
+    if (userSnapshot.exists()) {
+      const userData = userSnapshot.data();
+      console.log("the username we fetched is: ", userData.username);
+      setCurrUsername(userData.username);
+    }
+    console.log("usersRef: ", usersRef);
+  };
+
+  const addFriend = async () => {
+    if (!user) return;
+
+    try {
+      const notificationsRef = collection(db, "Notifications");
+      const existingInviteQuery = query(
+        notificationsRef,
+        where("from", "==", user.email),
+        where("to", "==", user_email),
+        where("read_flag", "==", true)
+      );
+      console.log("user: ", user);
+
+      const querySnapshot = await getDocs(existingInviteQuery);
+      console.log("username: ", curr_username);
+
+      if (!querySnapshot.empty) {
+        Alert.alert(
+          "Info",
+          `You have already sent a friend request to ${username}`
+        );
+        return;
+      }
+
+      await addDoc(notificationsRef, {
+        from: user_email,
+        to: user.email,
+        read_flag: true,
+      });
+      Alert.alert("Success", `Friend request sent to ${username}`);
+    } catch (error) {
+      console.error("Error sending invite:", error);
+    }
+  };
+
   const fetchUserPosts = async (postsQuery: Query<DocumentData>) => {
     try {
       const querySnapshot = await getDocs(postsQuery);
@@ -188,6 +240,12 @@ const UserProfileInfo = () => {
         >
           <View style={styles.header}>
             <Text style={styles.username}>{username}</Text>
+            <TouchableOpacity
+              style={styles.addFriendButton}
+              onPress={() => addFriend()}
+            >
+              <Text style={styles.addFriendButtonText}>Invite Friend</Text>
+            </TouchableOpacity>
           </View>
 
           <FlatList
@@ -402,6 +460,15 @@ const styles = StyleSheet.create({
   },
   flatListContent: {
     alignItems: "center",
+  },
+  addFriendButton: {
+    backgroundColor: "rgba(188, 213, 172, 0.8)",
+    padding: 8,
+    borderRadius: 5,
+  },
+  addFriendButtonText: {
+    color: "#333",
+    fontWeight: "bold",
   },
 });
 
