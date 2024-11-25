@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  ScrollView,
-  Button,
+  FlatList,
+  TouchableOpacity,
   Alert,
   ActivityIndicator,
   StyleSheet,
@@ -18,11 +18,14 @@ import {
   where,
   addDoc,
 } from "firebase/firestore";
+import { Ionicons } from "@expo/vector-icons";
+import { Avatar } from "react-native-elements";
 
 interface User {
   friends_list: Array<string>;
   username: string;
   email: string;
+  profilePic?: string;
 }
 
 interface UsersTabProps {
@@ -32,17 +35,17 @@ interface UsersTabProps {
 const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [filteredFriends, setFilteredFriends] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [currentUserFriends, setCurrentUserFriends] = useState<string[]>([]);
   const currentUser = auth.currentUser;
 
   useEffect(() => {
     if (!currentUser) {
       console.warn("User not authenticated");
+      setLoading(false);
       return;
     }
 
-    // Fetch current user's friends list
     const userDocRef = doc(db, "RemiUsers", currentUser.uid);
     const unsubscribeFriendsList = onSnapshot(
       userDocRef,
@@ -50,33 +53,30 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
         if (docSnapshot.exists()) {
           setCurrentUserFriends(docSnapshot.data().friends_list || []);
         }
+        setLoading(false);
       },
       (error) => {
         console.error("Error fetching friends list:", error);
+        setLoading(false);
       }
     );
 
-    // Fetch all users from Firestore
-    const fetchAllUsers = () => {
-      const usersCollection = collection(db, "RemiUsers");
-      const unsubscribeUsers = onSnapshot(
-        usersCollection,
-        (snapshot) => {
-          const usersList = snapshot.docs.map((doc) => ({
-            username: doc.data().username,
-            email: doc.data().email,
-          })) as User[];
-          setAllUsers(usersList);
-        },
-        (error) => {
-          console.error("Error fetching users:", error);
-        }
-      );
-
-      return unsubscribeUsers;
-    };
-
-    const unsubscribeUsers = fetchAllUsers();
+    const usersCollection = collection(db, "RemiUsers");
+    const unsubscribeUsers = onSnapshot(
+      usersCollection,
+      (snapshot) => {
+        const usersList = snapshot.docs.map((doc) => ({
+          username: doc.data().username,
+          email: doc.data().email,
+          profilePic: doc.data().profilePic,
+          friends_list: doc.data().friends_list || [],
+        })) as User[];
+        setAllUsers(usersList);
+      },
+      (error) => {
+        console.error("Error fetching users:", error);
+      }
+    );
 
     return () => {
       unsubscribeFriendsList();
@@ -84,7 +84,6 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
     };
   }, [currentUser]);
 
-  // Filter users based on the search query
   useEffect(() => {
     if (!currentUser) return;
 
@@ -137,19 +136,48 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
 
   const renderItem = ({ item }: { item: User }) => {
     const isAlreadyFriend = currentUserFriends.includes(item.email);
-
+    // console.log(item.profilePic.uri)
     return (
       <View style={styles.item}>
-        <Text style={styles.username}>{item.username}</Text>
-        <Text style={styles.email}>{item.email}</Text>
+        <Avatar
+          size={50}
+          rounded
+          source={
+            (() => {
+              if (typeof item.profilePic === "object" && item.profilePic) {
+                // If profilePic is an object with a `uri` key
+                if (item.profilePic) {
+                  return require("../../assets/placeholders/profile-pic.png"); // Local asset fallback
+                } else {
+                  return { uri: item.profilePic}; // External URL
+                }
+              } else if (typeof item.profilePic === "string") {
+                // If profilePic is a string (likely a direct URL)
+                return { uri: item.profilePic };
+              } else {
+                // Default fallback to placeholder
+                return require("../../assets/placeholders/user-avatar.png");
+              }
+            })()
+          }
+          containerStyle={styles.avatarContainer}
+        />
+        <View style={styles.userInfo}>
+          <Text style={styles.username}>{item.username}</Text>
+        </View>
         {isAlreadyFriend ? (
-          <View style={styles.centeredTextContainer}>
-            <Text style={styles.alreadyFriendText}>
-              Already friends with this user!
-            </Text>
+          <View style={styles.friendStatusContainer}>
+            <Ionicons name="checkmark-circle" size={24} color="#6CAB44" />
+            <Text style={styles.alreadyFriendText}>Friends</Text>
           </View>
         ) : (
-          <Button title="Invite" onPress={() => handleInvite(item)} />
+          <TouchableOpacity
+            style={styles.inviteButton}
+            onPress={() => handleInvite(item)}
+          >
+            <Ionicons name="person-add" size={20} color="#FFFFFF" />
+            <Text style={styles.inviteButtonText}>Invite</Text>
+          </TouchableOpacity>
         )}
       </View>
     );
@@ -175,13 +203,16 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
 
   return (
     <View style={styles.container}>
-      <ScrollView>
-        {filteredFriends.length > 0
-          ? filteredFriends.map((item) => (
-              <View key={item.username}>{renderItem({ item })}</View>
-            ))
-          : searchQuery && <Text style={styles.emptyText}>No users found</Text>}
-      </ScrollView>
+      <FlatList
+        data={filteredFriends}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.email}
+        ListEmptyComponent={
+          searchQuery ? (
+            <Text style={styles.emptyText}>No users found</Text>
+          ) : null
+        }
+      />
     </View>
   );
 };
@@ -189,36 +220,61 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: "100%",
     backgroundColor: "#FFF9E6",
   },
   item: {
-    padding: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
+    borderBottomColor: "#E0E0E0",
+  },
+  avatarContainer: {
+    marginRight: 16,
+    borderWidth: 2,
+    borderColor: "#006400",
+  },
+  userInfo: {
+    flex: 1,
   },
   username: {
     fontSize: 18,
     fontWeight: "bold",
+    color: "#333333",
+    fontFamily: "Nunito-Bold",
   },
-  email: {
-    fontSize: 14,
-    color: "#666",
-  },
-  centeredTextContainer: {
+  friendStatusContainer: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: 5,
   },
   alreadyFriendText: {
+    marginLeft: 4,
     fontSize: 14,
-    color: "#888",
-    fontStyle: "italic",
+    color: "#6CAB44", 
+    fontWeight: "bold",
+    fontFamily: "Nunito-Bold",
+  },
+  inviteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#006400",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  inviteButtonText: {
+    color: "#FFFFFF",
+    marginLeft: 4,
+    fontSize: 14,
+    fontWeight: "bold",
+    fontFamily: "Nunito-Bold",
   },
   emptyText: {
     textAlign: "center",
     marginTop: 20,
     fontSize: 16,
-    color: "#888",
+    color: "#888888",
+    fontFamily: "Nunito-Regular",
   },
   loadingContainer: {
     flex: 1,
