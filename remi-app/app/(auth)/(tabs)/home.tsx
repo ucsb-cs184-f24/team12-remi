@@ -735,37 +735,38 @@ const Home: React.FC = () => {
     { id: string; [key: string]: any }[]
   >([]);
   const router = useRouter();
-  const [friendsList, setFriendsList] = useState<string[]>([]);
+  const friendsList = useRef<string[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const setResetScroll = useContext(ScrollResetContext);
   const [refreshing, setRefreshing] = useState(false);
-  const lastVisibleRef = useRef<QueryDocumentSnapshot | null>(null);
+  const lastCreatedAtRef = useRef(null);
   const [loading, setLoading] = useState(false);
+  const [friendsListChange, setFriendsListChange] = useState(false);
   const POSTS_PER_PAGE = 20;
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
     console.log("Trying to refresh");
-    await fetchFriendsList();
     await fetchPostsWithCommentsFlag();
     setRefreshing(false);
     console.log("Done w refresh");
   }, []);
 
   const fetchPostsWithCommentsFlag = async () => {
-    if (friendsList.length === 0 || loading) return;
+    console.log(friendsList.current);
+    if (friendsList.current.length === 0 || loading) return;
 
     setLoading(true);
     const postsRef = collection(db, "Posts");
     let postsQuery = query(
       postsRef,
-      where("userId", "in", friendsList),
+      where("userId", "in", friendsList.current),
       orderBy("createdAt", "asc"),
       limit(POSTS_PER_PAGE)
     );
 
-    if (lastVisibleRef.current) {
-      postsQuery = query(postsQuery, startAfter(lastVisibleRef.current));
+    if (lastCreatedAtRef.current) {
+      postsQuery = query(postsQuery, startAfter(lastCreatedAtRef.current));
     }
 
     try {
@@ -800,7 +801,7 @@ const Home: React.FC = () => {
       if (!querySnapshot.empty) {
         // Set lastVisible to the last document in the current query snapshot
         const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-        lastVisibleRef.current = lastDoc;
+        lastCreatedAtRef.current = lastDoc.data().createdAt;
       } else {
         console.log("NO NEW POSTS");
       }
@@ -823,10 +824,65 @@ const Home: React.FC = () => {
 
   // Use `useEffect` to fetch posts when the component mounts and every minute
   useEffect(() => {
-    fetchPostsWithCommentsFlag();
-    const interval = setInterval(fetchPostsWithCommentsFlag, 60000); // 60000 ms = 1 minute
-    return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, [friendsList]);
+    console.log("HERE");
+    let isMounted = true;
+    const fetchData = async () => {
+      if (isMounted) {
+        await fetchPostsWithCommentsFlag();
+      }
+    };
+
+    fetchData();
+
+    const interval = setInterval(() => {
+      if (isMounted) {
+        fetchPostsWithCommentsFlag();
+      }
+    }, 60000); // 60000 ms = 1 minute
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval); // Cleanup interval on component unmount
+    };
+  }, [friendsListChange]);
+
+  useEffect(() => {
+    const subscribeToFriendsList = async () => {
+      if (!user) return;
+
+      const userDocRef = doc(db, "RemiUsers", user.uid);
+
+      const unsubscribe = onSnapshot(
+        userDocRef,
+        async (docSnapshot) => {
+          if (docSnapshot.exists()) {
+            const userData = docSnapshot.data();
+            const friendsEmails = userData.friends_list || [];
+            if (friendsEmails.length > 0) {
+              const q = query(
+                collection(db, "RemiUsers"),
+                where("email", "in", friendsEmails)
+              );
+              const friendsSnapshot = await getDocs(q);
+              const friendsIds = friendsSnapshot.docs.map((doc) => doc.id);
+              friendsList.current = friendsIds;
+              setFriendsListChange(!friendsListChange);
+              console.log("Updated friendsList:", friendsIds);
+            }
+          } else {
+            console.log("No such document!");
+          }
+        },
+        (error) => {
+          console.error("Error listening to document:", error);
+        }
+      );
+
+      return () => unsubscribe();
+    };
+
+    subscribeToFriendsList();
+  }, [user]);
 
   useEffect(() => {
     // Set up real-time listener for pending friend requests
@@ -848,35 +904,6 @@ const Home: React.FC = () => {
       return () => unsubscribe();
     }
   }, [user]);
-
-  const fetchFriendsList = async () => {
-    if (!user) return;
-
-    try {
-      const userDoc = await getDoc(doc(db, "RemiUsers", user.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        const friendsEmails = userData.friends_list || [];
-
-        if (friendsEmails.length > 0) {
-          const q = query(
-            collection(db, "RemiUsers"),
-            where("email", "in", friendsEmails)
-          );
-          const friendsSnapshot = await getDocs(q);
-          const friendsIds = friendsSnapshot.docs.map((doc) => doc.id);
-          setFriendsList(friendsIds);
-          console.log("Updated friendsList:", friendsIds);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching friend list:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchFriendsList();
-  }, [user]); // Only run when `user` changes
 
   return (
     <SafeAreaView style={Ustyles.background}>
