@@ -117,7 +117,8 @@ const UserProfileInfo = () => {
 
           if (
             visibility == "public" ||
-            userData.friends_list.includes(user_email)
+            userData.friends_list.includes(user_email) ||
+            user_email == userData.email // you are the user checking your own profile
           ) {
             fetchUserPosts(postsQuery);
           } else {
