@@ -17,7 +17,8 @@ import {
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
-import { auth } from "../firebaseConfig";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db, auth } from "../firebaseConfig";
 import * as Font from "expo-font";
 import {
   useFonts,
@@ -34,8 +35,33 @@ import { Ionicons } from "@expo/vector-icons";
 
 SplashScreen.preventAutoHideAsync();
 
+async function signInWithUsername(username: string, password: string) {
+  try {
+    // Query Firestore to find the user document with the given username
+    const usersRef = collection(db, "RemiUsers");
+    const q = query(usersRef, where("username", "==", username));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      throw new Error("User not found");
+    }
+
+    // Assume username is unique, so we can safely get the first document
+    const userDoc = querySnapshot.docs[0];
+    const userData = userDoc.data();
+
+    // Use the email associated with the username to sign in
+    const userCredential = await signInWithEmailAndPassword(auth, userData.email, password);
+    return userCredential.user;
+  } catch (error) {
+    console.error("Error signing in with username:", error);
+    throw error;
+  }
+}
+
 export default function Index() {
   const router = useRouter();
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -45,7 +71,7 @@ export default function Index() {
   const signIn = async () => {
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithUsername(username, password);
     } catch (e: any) {
       const err = e as FirebaseError;
       alert("Sign in failed: " + err.message);
@@ -97,15 +123,14 @@ export default function Index() {
               <Text style={Ustyles.logotext}>remi</Text>
             </ImageBackground>
             <KeyboardAvoidingView behavior="padding">
-              <TextInput
+            <TextInput
                 style={styles.input}
-                value={email}
-                onChangeText={setEmail}
+                value={username}
+                onChangeText={setUsername}
                 autoCorrect={false}
                 autoCapitalize="none"
-                keyboardType="email-address"
                 placeholderTextColor="#BCD5AC"
-                placeholder="Email"
+                placeholder="Username"
               />
               <View style={styles.passwordContainer}>
                 <TextInput

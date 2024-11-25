@@ -650,7 +650,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               <View
                 style={[
                   Ustyles.sliderFill,
-                  { width: `${(price / 10) * 100}%` },
+                  { width: `${(price / 100) * 100}%` },
                 ]}
               />
             </View>
