@@ -30,6 +30,7 @@ import {
 } from "@expo-google-fonts/nunito";
 import Ustyles from "../components/UniversalStyles";
 import * as SplashScreen from "expo-splash-screen";
+import { Ionicons } from '@expo/vector-icons';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -39,6 +40,7 @@ export default function Index() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [appIsReady, setAppIsReady] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const signIn = async () => {
     setLoading(true);
@@ -50,6 +52,10 @@ export default function Index() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   let [fontsLoaded] = useFonts({
@@ -99,15 +105,24 @@ export default function Index() {
                 placeholderTextColor="#BCD5AC"
                 placeholder="Email"
               />
-              <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                autoCorrect={false}
-                secureTextEntry
-                placeholder="Password"
-                placeholderTextColor="#BCD5AC"
-              />
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  value={password}
+                  onChangeText={setPassword}
+                  autoCorrect={false}
+                  secureTextEntry={!showPassword}
+                  placeholder="Password"
+                  placeholderTextColor="#BCD5AC"
+                />
+                <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
+                  <Ionicons 
+                    name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                    size={24} 
+                    color="#0D5F13"
+                  />
+                </TouchableOpacity>
+              </View>
 
               {loading ? (
                 <ActivityIndicator size={"small"} style={{ margin: 28 }} />
@@ -145,5 +160,22 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#fff",
     borderColor: "#0D5F13",
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 4,
+    borderWidth: 2,
+    borderRadius: 4,
+    backgroundColor: "#fff",
+    borderColor: "#0D5F13",
+  },
+  passwordInput: {
+    flex: 1,
+    height: 50,
+    padding: 10,
+  },
+  eyeIcon: {
+    padding: 10,
   },
 });
