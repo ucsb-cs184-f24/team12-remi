@@ -48,31 +48,13 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { RecipePost } from "./(tabs)/home";
 import { Float } from "react-native/Libraries/Types/CodegenTypes";
 
-// interface ProfileInfo {
-//     username: string,
-//     userID: string,
-//     num_friends: Float,
-//     num_posts: Float,
-//     num_likes: Float,
-// }
-
-// interface UserProfile {
-//   email: string;
-//   friends_list: Array<String>;
-//   profilePicture?: string; // Optional field
-//   username: string;
-//   visibility: string;
-// }
-
 const { width, height } = Dimensions.get("window");
 const CONTENT_WIDTH = width * 0.94;
 
 const UserProfileInfo = () => {
-  //   const { username } = params;
   const user = auth.currentUser;
   const { username } = useLocalSearchParams(); // Retrieve the username from the URL
   const [loading, setLoading] = useState(false);
-  //   console.log("username: ", username);
   const [userInfo, setUserInfo] = useState(null);
   const [error, setError] = useState("");
   const [bio, setBio] = useState("");
@@ -88,6 +70,7 @@ const UserProfileInfo = () => {
   const [hasBio, setHasBio] = useState(false);
   const [isPrivate, setIsPrivate] = useState(true);
   const user_email = user.email;
+  const [postsText, setPostsText] = useState("No recent activity found.");
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -104,18 +87,15 @@ const UserProfileInfo = () => {
           setError("User not found");
         } else {
           const userData = querySnapshot.docs[0].data();
-          console.log(userData);
+          // console.log(userData);
           setBio(userData.bio || "");
           if (userData.bio) {
             setHasBio(true);
           }
-          console.log(querySnapshot.docs[0].id);
+          // console.log(querySnapshot.docs[0].id);
           setProfilePic(userData.profilePic || profilePic);
           setFriendCount(userData.friends_list.length || 0);
           setVisibility(userData.visibility || "private");
-
-          //   setFriendsList(userData.friends_list || []);
-          console.log("user is : ", user.email);
 
           const postsQuery = query(
             collection(db, "Posts"),
@@ -134,18 +114,14 @@ const UserProfileInfo = () => {
           if (visibility == "public") {
             setIsPrivate(false);
           }
-          console.log("visibility: ", visibility);
-          console.log(
-            "in my friends list: ",
-            userData.friends_list.includes(user_email)
-          );
+
           if (
             visibility == "public" ||
             userData.friends_list.includes(user_email)
           ) {
-            // setIsPublic(true);
-            console.log("i will fetch posts since i'm friends with user");
             fetchUserPosts(postsQuery);
+          } else {
+            setPostsText("Users's posts are private.");
           }
 
           return () => {
@@ -168,15 +144,8 @@ const UserProfileInfo = () => {
     fetchUserProfile();
   }, [username, fadeAnim]);
 
-  //   useEffect(() => {
-  //     fetchUserPosts();
-  //   }, []);
-
   const fetchUserPosts = async (postsQuery: Query<DocumentData>) => {
     try {
-      console.log("fetching posts for user with: ", user_id);
-      //   const postsRef = collection(db, "Posts");
-      //   const q = query(postsRef, where("userId", "==", user_id));
       const querySnapshot = await getDocs(postsQuery);
 
       if (querySnapshot.empty) {
@@ -243,12 +212,7 @@ const UserProfileInfo = () => {
               </View>
             )}
             ListEmptyComponent={
-              //   {isPrivate ? (
-              //     <Text style={styles.emptyText}>>User posts are private.</Text>
-              //   ) : (
-              //     <Text style={styles.emptyText}>No Recent Activity found.</Text>
-              //   )}
-              <Text style={styles.emptyText}>No Recent Activity found.</Text>
+              <Text style={styles.emptyText}>{postsText}</Text>
             }
             ListHeaderComponent={
               <View>
