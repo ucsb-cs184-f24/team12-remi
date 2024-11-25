@@ -62,6 +62,8 @@ const Ustyles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     marginRight: 10,
+    borderWidth: 1,
+    borderColor: "#0D5F13",
   },
   timeAgo: {
     color: "#888",
