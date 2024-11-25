@@ -134,6 +134,7 @@ export default function UserProfileComponent() {
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [userPosts, setUserPosts] = useState<any[]>([]);
+  const [friendsEmails, setFriendsEmails] = useState<string[]>([]);
 
   const [friendCount, setFriendCount] = useState(0);
   const [postCount, setPostCount] = useState(0);
@@ -151,6 +152,7 @@ export default function UserProfileComponent() {
             setUsername(userData.username || "");
             setProfilePic(userData.profilePic || profilePic);
             setBio(userData.bio || "");
+            setFriendsEmails(userData.friends_list || []);
 
             // Set up real-time listener for friends count
             const unsubscribeFriends = onSnapshot(userDocRef, (doc) => {
@@ -196,6 +198,24 @@ export default function UserProfileComponent() {
   useEffect(() => {
     fetchUserPosts();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const userDocRef = doc(db, "RemiUsers", user.uid);
+
+    // Set up a real-time listener on the user's document
+    const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const userData = docSnapshot.data();
+        setFriendsEmails(userData.friends_list || []); // Updates friendsEmails in real time
+        setFriendCount(userData.friends_list?.length || 0); // Updates friend count in real time
+      }
+    });
+
+    // Cleanup listener on component unmount
+    return () => unsubscribe();
+  }, [user]);
 
   const fetchUserPosts = async () => {
     try {
@@ -366,10 +386,40 @@ export default function UserProfileComponent() {
                       </View>
                     </TouchableOpacity>
                     <View style={styles.statsContainer}>
-                      <View style={styles.statItem}>
+                      {/* <View style={styles.statItem}>
                         <Text style={styles.statNumber}>{friendCount}</Text>
                         <Text style={styles.statLabel}>friends</Text>
-                      </View>
+                      </View> */}
+                      <TouchableOpacity
+                        onPress={() =>
+                          router.push({
+                            pathname: "/friends",
+                            // params: { friendsEmails: friendsEmails },
+                            params: { friendsEmails: friendsEmails.join(",") },
+                          })
+                        }
+                      >
+                        <View style={styles.statItem}>
+                          <Text style={styles.statNumber}>{friendCount}</Text>
+                          <Text style={styles.statLabel}>friends</Text>
+                        </View>
+                      </TouchableOpacity>
+                      {/* <TouchableOpacity
+                        onPress={() =>
+                          router.push({
+                            pathname: "/friends", // Ensure the correct path
+                            params: {
+                              friendsEmails: friendsEmails.join(","), // Pass updated list as a comma-separated string
+                            },
+                          })
+                        }
+                      >
+                        <View style={styles.statItem}>
+                          <Text style={styles.statNumber}>{friendCount}</Text>
+                          <Text style={styles.statLabel}>friends</Text>
+                        </View>
+                      </TouchableOpacity> */}
+
                       <View style={styles.statItem}>
                         <Text style={styles.statNumber}>{postCount}</Text>
                         <Text style={styles.statLabel}>posts</Text>
