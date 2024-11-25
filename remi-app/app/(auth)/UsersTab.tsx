@@ -167,7 +167,7 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
         </View>
         {isAlreadyFriend ? (
           <View style={styles.friendStatusContainer}>
-            <Ionicons name="checkmark-circle" size={24} color="#BCD5AC" />
+            <Ionicons name="checkmark-circle" size={24} color="#6CAB44" />
             <Text style={styles.alreadyFriendText}>Friends</Text>
           </View>
         ) : (
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   alreadyFriendText: {
     marginLeft: 4,
     fontSize: 14,
-    color: "#BCD5AC",
+    color: "#6CAB44", 
     fontWeight: "bold",
     fontFamily: "Nunito-Bold",
   },
