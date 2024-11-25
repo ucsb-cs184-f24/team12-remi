@@ -15,9 +15,16 @@ import {
   TextInput,
   ActivityIndicator,
   Dimensions,
+  GestureResponderEvent,
+  TouchableWithoutFeedback,
+  Keyboard,
+  KeyboardAvoidingView,
+  Animated,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons"; // For icons
+import { Image as ExpoImage } from "expo-image";
 import {
   collection,
   addDoc,
@@ -25,23 +32,28 @@ import {
   getDocs,
   doc,
   query,
+  QueryDocumentSnapshot,
   QuerySnapshot,
   DocumentData,
+  orderBy,
+  limit,
+  startAfter,
   where,
   onSnapshot,
   updateDoc,
   arrayUnion,
   deleteDoc,
   arrayRemove,
+  Timestamp,
 } from "firebase/firestore";
 import { db, auth } from "../../../firebaseConfig"; // Ensure correct imports
 import { signOut } from "firebase/auth";
 import Ustyles from "../../../components/UniversalStyles";
-import Spacer from "../../../components/Spacer";
 import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScrollResetContext } from "./_layout";
+import { LinearGradient } from "expo-linear-gradient";
 
 const formatTimeAgo = (date: Date) => {
   const now = new Date();
@@ -65,37 +77,51 @@ const formatTimeAgo = (date: Date) => {
 };
 
 const hashtagMap: { [key: string]: string } = {
+  "0": "Meal Type",
   "1": "Breakfast",
   "2": "Lunch",
   "3": "Dinner",
-  "4": "Vegetarian",
-  "5": "Vegan",
-  "6": "Gluten-Free",
-  "7": "Dairy-Free",
-  "8": "Keto",
-  "9": "Paleo",
-  "10": "Low Carb",
-  "11": "Mediterranean",
-  "12": "Asian",
-  "13": "Italian",
-  "14": "Mexican",
-  "15": "Indian",
-  "16": "Middle Eastern",
-  "17": "French",
-  "18": "American",
-  "19": "African",
-  "20": "Caribbean",
-  "21": "Comfort Food",
-  "22": "Dessert",
-  "23": "Snacks",
-  "24": "Appetizers",
-  "25": "BBQ",
-  "26": "Seafood",
-  "27": "Soups & Stews",
-  "28": "Salads",
-  "29": "Beverages",
-  "30": "Japanese",
+  "4": "Snacks",
+  "5": "Dessert",
+  "6": "Beverages",
+  "100": "Diet",
+  "101": "Vegetarian",
+  "102": "Pescatarian",
+  "103": "Halal",
+  "104": "Vegan",
+  "105": "Jain",
+  "106": "Gluten-Free",
+  "107": "Dairy-Free",
+  "108": "Keto",
+  "109": "Paleo",
+  "110": "Low Carb",
+  "200": "Cuisine",
+  "201": "Italian",
+  "202": "French",
+  "203": "Mexican",
+  "204": "Japanese",
+  "205": "Chinese",
+  "206": "Korean",
+  "207": "Thai",
+  "208": "Malaysian",
+  "209": "Vietnamese",
+  "210": "Indian",
+  "211": "Pakistani",
+  "212": "Mediterranean",
+  "213": "American",
+  "214": "Southern",
+  "215": "Middle Eastern",
+  "216": "African",
+  "217": "Caribbean",
+  "218": "Creole",
+  "219": "Cajun",
+  "300": "Course",
+  "301": "Appetizers",
+  "302": "Main Course",
+  "303": "Side Dish",
 };
+
+const blurhash = "L6PZfSi_.AyE_3t7t7R**0o#DgR4";
 
 interface RecipePostProps {
   postID: string;
@@ -119,22 +145,30 @@ interface Comment {
   postId: string;
   userId: string;
   text: string;
-  createdAt: Date;
+  createdAt: Date | Timestamp;
   username?: string; // Make username optional
+  profilePic?: string;
 }
 
-const getUsername = async (userID: string): Promise<string> => {
+const getUserInfo = async (
+  userID: string
+): Promise<{ username: string; profilePic: string }> => {
   try {
     const userDocRef = doc(db, "RemiUsers", userID);
     const userSnapshot = await getDoc(userDocRef);
     if (userSnapshot.exists()) {
       const userData = userSnapshot.data();
-      return userData.username;
+      return {
+        username: userData.username || "Unknown User",
+
+        profilePic:
+          userData.profilePic || "../../../assets/placeholders/profile-pic.png",
+      };
     }
   } catch (error) {
     console.error("Error fetching user data:", error);
   }
-  return "Unknown User";
+  return { username: "Unknown User", profilePic: "/placeholder-user.jpg" };
 };
 
 export const RecipePost: React.FC<RecipePostProps> = ({
@@ -150,19 +184,20 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   hashtags,
   mediaUrl,
   postID,
-  userHasCommented,
+  userHasCommented: initialUserHasCommented,
 }) => {
   interface LoadingStates {
     [key: string]: boolean;
   }
-
   const [username, setUsername] = useState<string>("");
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [savedBy, setSavedBy] = useState<string[]>([]);
   const [commentVisible, setCommentVisible] = useState(false);
-  // const [userHasCommented, setUserHasCommented] = useState(false);
-
+  const [userHasCommented, setUserHasCommented] = useState(
+    initialUserHasCommented
+  );
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [likesCount, setLikesCount] = useState(likes);
   const [likedBy, setLikedBy] = useState<string[]>([]);
   const [commentsCount, setCommentsCount] = useState(comments);
@@ -172,6 +207,9 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   const [postComments, setPostComments] = useState<Comment[]>([]);
   // const [loading, setLoading] = useState(true);
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({}); // State to track loading for each post
+  const router = useRouter();
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const modalPosition = useRef(new Animated.Value(0)).current;
 
   if (!postID) {
     console.error("postID is undefined");
@@ -179,33 +217,6 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   }
 
   const postRef = doc(db, "Posts", postID);
-
-  const fetchComments = async () => {
-    try {
-      const commentsRef = collection(db, "Comments");
-      const commentsQuery = query(commentsRef, where("postId", "==", postID));
-      const querySnapshot = await getDocs(commentsQuery);
-
-      const mappedComments: Comment[] = await Promise.all(
-        querySnapshot.docs.map(async (doc) => {
-          const commentData = doc.data() as Omit<Comment, "username" | "id">;
-
-          // Use the getUsername function to fetch the username
-          const username = await getUsername(commentData.userId);
-
-          return {
-            ...commentData,
-            id: doc.id,
-            username, // Attach username here
-          } as Comment;
-        })
-      );
-
-      setPostComments(mappedComments); // Set the combined data in state
-    } catch (error) {
-      console.error("Error fetching comments with usernames:", error);
-    }
-  };
 
   const handleAddComment = async (commentText: string) => {
     if (!commentText.trim()) return;
@@ -221,6 +232,9 @@ export const RecipePost: React.FC<RecipePostProps> = ({
       await updateDoc(postRef, {
         comments: commentsCount + 1, // Update the count in the Firestore post document
       });
+      setCommentsCount((prev) => prev + 1);
+
+      setUserHasCommented(true);
     } catch (error) {
       console.error("Error adding comment:", error);
     }
@@ -257,6 +271,116 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   useEffect(() => {
     handleImageStartLoad(postID); // Trigger loading state as true when the component mounts
   }, [postID]);
+
+  useEffect(() => {
+    const keyboardWillShowListener = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+
+      (e) => {
+        Animated.timing(modalPosition, {
+          toValue: -e.endCoordinates.height,
+
+          duration: 250,
+
+          useNativeDriver: true,
+        }).start();
+      }
+    );
+
+    const keyboardWillHideListener = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+
+      () => {
+        Animated.timing(modalPosition, {
+          toValue: 0,
+
+          duration: 250,
+
+          useNativeDriver: true,
+        }).start();
+      }
+    );
+
+    return () => {
+      keyboardWillShowListener.remove();
+
+      keyboardWillHideListener.remove();
+    };
+  }, [modalPosition]);
+
+  useEffect(() => {
+    if (commentVisible) {
+      setIsLoadingComments(true);
+
+      setCommentError(null);
+
+      const commentsRef = collection(db, "Comments");
+
+      const commentsQuery = query(
+        commentsRef,
+
+        where("postId", "==", postID),
+
+        orderBy("createdAt", "desc")
+      );
+
+      const unsubscribe = onSnapshot(
+        commentsQuery,
+
+        async (snapshot) => {
+          try {
+            const updatedComments = await Promise.all(
+              snapshot.docs.map(async (doc) => {
+                const commentData = doc.data() as Omit<
+                  Comment,
+                  "username" | "id" | "profilePicture"
+                >;
+
+                const { username, profilePic } = await getUserInfo(
+                  commentData.userId
+                );
+
+                return {
+                  ...commentData,
+
+                  id: doc.id,
+
+                  username,
+
+                  profilePic,
+
+                  createdAt:
+                    commentData.createdAt instanceof Timestamp
+                      ? commentData.createdAt.toDate()
+                      : commentData.createdAt,
+                } as Comment;
+              })
+            );
+
+            setPostComments(updatedComments);
+
+            setIsLoadingComments(false);
+          } catch (error) {
+            console.error("Error fetching comments:", error);
+
+            setCommentError("Failed to load comments. Please try again.");
+
+            setIsLoadingComments(false);
+          }
+        },
+
+        (error) => {
+          console.error("Error in comment snapshot listener:", error);
+
+          setCommentError("Failed to load comments. Please try again.");
+
+          setIsLoadingComments(false);
+        }
+      );
+
+      return () => unsubscribe();
+    }
+  }, [commentVisible, postID]);
 
   const handleUnsavePost = async () => {
     try {
@@ -362,7 +486,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     if (newComment.trim() === "") return; // Prevent empty comments
     handleAddComment(newComment); // Call parent function to handle comment submission
     setNewComment(""); // Clear the text input
-    setCommentVisible(false); // Close modal after submitting
+    Keyboard.dismiss();
   };
 
   const handleSeeNotesPress = () => {
@@ -373,39 +497,21 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     setModalVisible(false); // Hide the modal
   };
 
+  // const handleAvatarPress =
+  //   (user_name: string) => (event: GestureResponderEvent) => {
+  //     console.log("pressed user avatar");
+  //     console.log("user_name: ", user_name);
+  //     // router.push(`../UserProfileInfo?username=${user_name}`);
+  //     router.push(`../UserProfileInfo?${user_name}`);
+  //   };
+
   const handleCommentsPress = () => {
-    console.log("press comments");
-    // console.log("loading: ", loading);
-    // console.log("postID: ", postID);
     setCommentVisible(true);
-
-    const commentsRef = collection(db, "Comments");
-    const commentsQuery = query(commentsRef, where("postId", "==", postID));
-
-    const unsubscribe = onSnapshot(commentsQuery, async (snapshot) => {
-      const liveComments = await Promise.all(
-        snapshot.docs.map(async (doc) => {
-          const commentData = doc.data() as Omit<Comment, "id" | "username">;
-
-          const username = await getUsername(commentData.userId);
-
-          return {
-            ...commentData,
-            id: doc.id,
-            username,
-          } as Comment;
-        })
-      );
-
-      setPostComments(liveComments);
-    });
-
-    return unsubscribe;
   };
 
-  const hanldeCloseComments = () => {
-    setCommentVisible(false); // Hide the modal
-    setCommentText(""); // Reset comment input
+  const handleCloseComments = () => {
+    setCommentVisible(false);
+    setNewComment("");
   };
 
   const handleLikePress = async () => {
@@ -463,8 +569,9 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   useEffect(() => {
     const fetchUsername = async () => {
       try {
-        const name = await getUsername(userID);
-        setUsername(name);
+        const { username } = await getUserInfo(userID);
+
+        setUsername(username);
       } catch (error) {
         console.error("Error fetching username:", error);
       }
@@ -495,12 +602,32 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     <View style={Ustyles.post}>
       <View style={Ustyles.postHeader}>
         <View style={Ustyles.userInfo}>
-          <Image
-            source={require("../../../assets/placeholders/user-avatar.png")}
-            style={Ustyles.avatar}
-          />
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: "/(auth)/UserProfileInfo",
+                params: { username: username },
+              })
+            }
+          >
+            <ExpoImage
+              source={require("../../../assets/placeholders/profile-pic.png")}
+              style={Ustyles.avatar}
+              placeholder={blurhash}
+              transition={200}
+            />
+          </TouchableOpacity>
           <View>
-            <Text style={Ustyles.username}>{username}</Text>
+            <TouchableOpacity
+              onPress={() =>
+                router.push({
+                  pathname: "/(auth)/UserProfileInfo",
+                  params: { username: username },
+                })
+              }
+            >
+              <Text style={Ustyles.username}>{username}</Text>
+            </TouchableOpacity>
             <Text style={Ustyles.timeAgo}>{formatTimeAgo(timeAgo)}</Text>
           </View>
         </View>
@@ -551,45 +678,106 @@ export const RecipePost: React.FC<RecipePostProps> = ({
             visible={commentVisible}
             animationType="slide"
             transparent={true}
-            onRequestClose={() => setCommentVisible(false)}
+            onRequestClose={handleCloseComments}
           >
-            <View style={styles.overlay}>
-              <View style={styles.modalContainer}>
-                <Text style={styles.title}>Comments</Text>
+            <TouchableWithoutFeedback onPress={handleCloseComments}>
+              <View style={styles.overlay}>
+                <TouchableWithoutFeedback>
+                  <Animated.View
+                    style={[
+                      styles.commentContainer,
+                      { transform: [{ translateY: modalPosition }] },
+                    ]} // TODO: figure out why lineargradient not applying to borders
+                  >
+                    <LinearGradient
+                      colors={["#BCD5AC", "#FFF9E6"]}
+                      style={styles.gradient_container}
+                    >
+                      <KeyboardAvoidingView
+                        behavior={Platform.OS === "ios" ? "padding" : "height"}
+                        style={{ flex: 1 }}
+                        keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
+                      >
+                        <View style={styles.commentContent}>
+                          <View style={styles.header}>
+                            <Text style={styles.header_2}>Comments</Text>
+                          </View>
 
-                {/* Display existing comments */}
-                <FlatList
-                  data={postComments}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
-                    <View style={styles.commentItem}>
-                      <Text style={styles.commentUser}>
-                        {item.username || "Unknown User"}
-                      </Text>
-                      <Text style={styles.commentText}>{item.text}</Text>
-                    </View>
-                  )}
-                  ListEmptyComponent={
-                    <Text style={styles.emptyComments}>
-                      No comments yet. Be the first!
-                    </Text>
-                  }
-                />
+                          {isLoadingComments ? (
+                            <Text style={Ustyles.text}>
+                              Loading comments...
+                            </Text>
+                          ) : commentError ? (
+                            <Text style={Ustyles.text}>{commentError}</Text>
+                          ) : (
+                            <FlatList
+                              data={postComments}
+                              keyExtractor={(item) => item.id}
+                              renderItem={({ item }) => (
+                                <TouchableWithoutFeedback onPress={() => {}}>
+                                  <View style={styles.commentItem}>
+                                    <Image
+                                      source={{ uri: item.profilePic }}
+                                      style={Ustyles.avatar}
+                                    />
+                                    <View style={styles.commentTextContent}>
+                                      <View>
+                                        <Text style={styles.username}>
+                                          {item.username?.trim() ||
+                                            "Unknown User"}
+                                        </Text>
 
-                <TextInput
-                  style={styles.textInput}
-                  value={newComment}
-                  onChangeText={setNewComment}
-                  placeholder="Add a comment..."
-                  multiline
-                />
-                <Button title="Submit" onPress={onSubmitComment} />
-                <Button
-                  title="Close"
-                  onPress={() => setCommentVisible(false)}
-                />
+                                        <Text style={Ustyles.timeAgo}>
+                                          {formatTimeAgo(
+                                            item.createdAt instanceof Date
+                                              ? item.createdAt
+                                              : item.createdAt.toDate()
+                                          )}
+                                        </Text>
+                                      </View>
+
+                                      <View>
+                                        <Text style={styles.commentText}>
+                                          {item.text?.trim() ||
+                                            "No comment text available"}
+                                        </Text>
+                                      </View>
+                                    </View>
+                                  </View>
+                                </TouchableWithoutFeedback>
+                              )}
+                              ListEmptyComponent={
+                                <Text style={styles.emptyComments}>
+                                  No comments yet. Be the first!
+                                </Text>
+                              }
+                              contentContainerStyle={styles.commentsList}
+                            />
+                          )}
+
+                          <View style={styles.inputContainer}>
+                            <TextInput
+                              style={styles.textInput}
+                              value={newComment}
+                              onChangeText={setNewComment}
+                              placeholder="Add a comment..."
+                              placeholderTextColor="#0D5F13"
+                              multiline
+                            />
+                            <TouchableOpacity
+                              style={styles.button}
+                              onPress={onSubmitComment}
+                            >
+                              <Text style={styles.buttonText}>Submit</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </KeyboardAvoidingView>
+                    </LinearGradient>
+                  </Animated.View>
+                </TouchableWithoutFeedback>
               </View>
-            </View>
+            </TouchableWithoutFeedback>
           </Modal>
         </View>
       </View>
@@ -602,13 +790,15 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                   <ActivityIndicator size="large" color="#0D5F13" />
                 </View>
               )}
-              <Image
+              <ExpoImage
                 source={
                   mediaUrl
                     ? { uri: mediaUrl }
                     : require("../../../assets/placeholders/recipe-image.png")
                 }
                 style={Ustyles.recipeImage}
+                placeholder={blurhash}
+                transition={200}
                 onLoad={() => handleImageLoad(postID)} // Updates loading state to false
                 onError={() => handleImageError(postID)} // Handles errors
               />
@@ -650,7 +840,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               <View
                 style={[
                   Ustyles.sliderFill,
-                  { width: `${(price / 100) * 100}%` },
+                  { width: `${(price / 10) * 100}%` },
                 ]}
               />
             </View>
@@ -674,9 +864,6 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                 ]}
               />
             </View>
-            {/* <Text style={Ustyles.subDetailText}>
-              20 active minutes + 10 passive minutes
-            </Text> */}
           </View>
         </View>
       </View>
@@ -698,10 +885,12 @@ export const RecipePost: React.FC<RecipePostProps> = ({
             >
               <Ionicons name="close" size={30} color="#FFF" />
             </TouchableOpacity>
-            <Image
+            <ExpoImage
               source={{ uri: mediaUrl }}
               style={styles.fullScreenImage}
-              resizeMode="contain"
+              placeholder={blurhash}
+              transition={200}
+              contentFit="contain"
             />
           </View>
         </Modal>
@@ -714,49 +903,80 @@ export const RecipePost: React.FC<RecipePostProps> = ({
 const Home: React.FC = () => {
   const insets = useSafeAreaInsets();
   const user = auth.currentUser;
-  const [posts, setPosts] = useState<DocumentData[]>([]);
+  const postsArrRef = useRef<DocumentData[]>([]);
   //record notification count using state
   // const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [friendRequests, setFriendRequests] = useState<
     { id: string; [key: string]: any }[]
   >([]);
   const router = useRouter();
-  const [friendsList, setFriendsList] = useState<string[]>([]);
+  const friendsList = useRef<string[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const setResetScroll = useContext(ScrollResetContext);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [friendsListChange, setFriendsListChange] = useState(false);
+  const POSTS_PER_PAGE = 20;
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    console.log("Trying to refresh");
+    await fetchPostsWithCommentsFlag();
+    setRefreshing(false);
+    console.log("Done w refresh");
+  }, []);
 
   const fetchPostsWithCommentsFlag = async () => {
+    console.log(friendsList.current);
+    if (loading) return;
+    if (friendsList.current.length == 0) {
+      postsArrRef.current = [];
+      return;
+    }
+
+    setLoading(true);
     const postsRef = collection(db, "Posts");
-    const postsQuery = query(postsRef, where("userId", "in", friendsList));
-
-    const querySnapshot = await getDocs(postsQuery);
-    const currentUserId = auth.currentUser?.uid;
-
-    const postsWithCommentsFlag = await Promise.all(
-      querySnapshot.docs.map(async (doc) => {
-        const postData = doc.data();
-        const postId = doc.id;
-
-        // Check if the current user has commented on this post
-        const commentsRef = collection(db, "Comments");
-        const commentsQuery = query(
-          commentsRef,
-          where("postId", "==", postId),
-          where("userId", "==", currentUserId)
-        );
-
-        const userHasCommentedSnapshot = await getDocs(commentsQuery);
-        const userHasCommented = !userHasCommentedSnapshot.empty;
-
-        return {
-          ...postData,
-          postID: postId,
-          userHasCommented,
-        };
-      })
+    let postsQuery = query(
+      postsRef,
+      where("userId", "in", friendsList.current),
+      orderBy("createdAt", "asc"),
+      limit(POSTS_PER_PAGE)
     );
-    console.log("Refreshing from hometsx..");
-    setPosts(postsWithCommentsFlag);
+
+    try {
+      const querySnapshot = await getDocs(postsQuery);
+      const currentUserId = auth.currentUser?.uid;
+
+      const newPosts = await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
+          const postData = doc.data();
+          const postId = doc.id;
+
+          // Check if the current user has commented on this post
+          const commentsRef = collection(db, "Comments");
+          const commentsQuery = query(
+            commentsRef,
+            where("postId", "==", postId),
+            where("userId", "==", currentUserId)
+          );
+
+          const userHasCommentedSnapshot = await getDocs(commentsQuery);
+          const userHasCommented = !userHasCommentedSnapshot.empty;
+
+          return {
+            ...postData,
+            postID: postId,
+            userHasCommented,
+          };
+        })
+      );
+
+      postsArrRef.current = newPosts.reverse();
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -769,19 +989,67 @@ const Home: React.FC = () => {
     }
   }, [setResetScroll]);
 
-  // Fetch all posts from Firestore
-  useEffect(() => {
-    if (friendsList.length === 0) return;
-
-    fetchPostsWithCommentsFlag();
-  }, [friendsList]);
-
   // Use `useEffect` to fetch posts when the component mounts and every minute
   useEffect(() => {
-    fetchPostsWithCommentsFlag();
-    const interval = setInterval(fetchPostsWithCommentsFlag, 60000); // 60000 ms = 1 minute
-    return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, []);
+    console.log("HERE");
+    let isMounted = true;
+    const fetchData = async () => {
+      if (isMounted) {
+        await fetchPostsWithCommentsFlag();
+      }
+    };
+
+    fetchData();
+
+    const interval = setInterval(() => {
+      if (isMounted) {
+        fetchPostsWithCommentsFlag();
+      }
+    }, 60000); // 60000 ms = 1 minute
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval); // Cleanup interval on component unmount
+    };
+  }, [friendsListChange]);
+
+  useEffect(() => {
+    const subscribeToFriendsList = async () => {
+      if (!user) return;
+
+      const userDocRef = doc(db, "RemiUsers", user.uid);
+
+      const unsubscribe = onSnapshot(
+        userDocRef,
+        async (docSnapshot) => {
+          if (docSnapshot.exists()) {
+            const userData = docSnapshot.data();
+            const friendsEmails = userData.friends_list || [];
+            if (friendsEmails.length > 0) {
+              const q = query(
+                collection(db, "RemiUsers"),
+                where("email", "in", friendsEmails)
+              );
+              const friendsSnapshot = await getDocs(q);
+              const friendsIds = friendsSnapshot.docs.map((doc) => doc.id);
+              friendsList.current = friendsIds;
+              setFriendsListChange(!friendsListChange);
+              console.log("Updated friendsList:", friendsIds);
+            }
+          } else {
+            console.log("No such document!");
+          }
+        },
+        (error) => {
+          console.error("Error listening to document:", error);
+        }
+      );
+
+      return () => unsubscribe();
+    };
+
+    subscribeToFriendsList();
+  }, [user]);
 
   useEffect(() => {
     // Set up real-time listener for pending friend requests
@@ -804,35 +1072,6 @@ const Home: React.FC = () => {
     }
   }, [user]);
 
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      doc(db, "RemiUsers", user?.uid || ""),
-      (doc) => {
-        if (doc.exists()) {
-          const userData = doc.data();
-          const friendsEmails = userData.friends_list || [];
-
-          if (friendsEmails.length > 0) {
-            const q = query(
-              collection(db, "RemiUsers"),
-              where("email", "in", friendsEmails)
-            );
-            getDocs(q)
-              .then((querySnapshot) => {
-                const friendsIds = querySnapshot.docs.map((doc) => doc.id);
-                setFriendsList(friendsIds);
-              })
-              .catch((error) => {
-                console.error("Error fetching friend list:", error);
-              });
-          }
-        }
-      }
-    );
-
-    return () => unsubscribe();
-  }, [user]);
-
   return (
     <SafeAreaView style={Ustyles.background} edges={["top"]}>
       <View style={Ustyles.background}>
@@ -840,6 +1079,9 @@ const Home: React.FC = () => {
           ref={scrollViewRef}
           stickyHeaderIndices={[0]}
           style={Ustyles.feed}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
           <View
             style={[
@@ -850,7 +1092,7 @@ const Home: React.FC = () => {
             ]}
           >
             <View style={styles.headerContent}>
-              <Text style={styles.logoText}>Remi</Text>
+              <Text style={styles.logoText}>remi</Text>
               <TouchableOpacity
                 onPress={() => router.push("../../notifications")}
               >
@@ -869,37 +1111,31 @@ const Home: React.FC = () => {
               </TouchableOpacity>
             </View>
           </View>
-          {posts
-            .sort((a, b) => {
-              const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
-              const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
-              return dateB.getTime() - dateA.getTime();
-            })
-            .map((post, index) => (
-              <View key={post.postID}>
-                <RecipePost
-                  key={index}
-                  userID={post.userId || "Anonymous"}
-                  timeAgo={
-                    post.createdAt
-                      ? new Date(post.createdAt)
-                      : new Date(2002, 2, 8)
-                  }
-                  likes={post.likesCount || 0}
-                  comments={post.comments || 0}
-                  recipeName={post.title || "Untitled Recipe"}
-                  price={post.Price || 0.0}
-                  difficulty={post.Difficulty || 0}
-                  time={post.Time || 0}
-                  caption={post.caption || "No caption"}
-                  hashtags={post.hashtags || ["None"]}
-                  mediaUrl={post.mediaUrl || ""}
-                  postID={post.postID}
-                  userHasCommented={post.userHasCommented}
-                />
-                <View style={Ustyles.separator} />
-              </View>
-            ))}
+          {postsArrRef.current.map((post, index) => (
+            <View key={post.postID}>
+              <RecipePost
+                key={index}
+                userID={post.userId || "Anonymous"}
+                timeAgo={
+                  post.createdAt
+                    ? new Date(post.createdAt)
+                    : new Date(2002, 2, 8)
+                }
+                likes={post.likesCount || 0}
+                comments={post.comments || 0}
+                recipeName={post.title || "Untitled Recipe"}
+                price={post.Price || 0.0}
+                difficulty={post.Difficulty || 0}
+                time={post.Time || 0}
+                caption={post.caption || "No caption"}
+                hashtags={post.hashtags || ["None"]}
+                mediaUrl={post.mediaUrl || ""}
+                postID={post.postID}
+                userHasCommented={post.userHasCommented}
+              />
+              <View style={Ustyles.separator} />
+            </View>
+          ))}
         </ScrollView>
         {/* <Button title="Sign out" onPress={() => signOut(auth)} color="#0D5F13" /> */}
       </View>
@@ -930,6 +1166,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
   },
+  gradient_container: {
+    flex: 1,
+    borderTopLeftRadius: 20, // Match the parent's border radius
+    borderTopRightRadius: 20,
+    overflow: "hidden", // Clip content to match rounded corners
+  },
   headerText: {
     fontSize: 18,
     fontWeight: "bold",
@@ -946,16 +1188,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center", // Center the logo
-    height: 60,
+    paddingBottom: 10,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#BCD5AC",
     position: "relative", // Add this to allow absolute positioning of children
   },
   logoText: {
     fontFamily: "OrelegaOne_400Regular",
     fontSize: 24,
-    color: "0D5F13",
+    color: "#0D5F13",
   },
   iconContainer: {
     position: "absolute",
@@ -964,28 +1204,46 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: "center",
   },
-  contentItem: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-  },
   contentText: {
     fontSize: 16,
   },
   commentContainer: {
+    height: "50%",
+    backgroundColor: "#BCD5AC", // Background is handled by LinearGradient
+    borderTopLeftRadius: 20, // Rounded top-left corner
+    borderTopRightRadius: 20, // Rounded top-right corner
+    borderColor: "rgba(13,95,19,0.7)", // Border color
+    borderWidth: 4, // Border thickness
+    borderBottomWidth: 0, // No border at the bottom
+    overflow: "hidden", // Ensures child content respects rounded corners
+  },
+  commentContent: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0)", // Semi-transparent background
+    padding: 20,
   },
   modalContent: {
     width: "80%",
+
     padding: 20,
+
     backgroundColor: "#fff",
+
     borderWidth: 2,
+
     borderColor: "#0D5F13",
+
     borderRadius: 10,
+
     elevation: 5, // Shadow for Android
+  },
+  modalContainer: {
+    flex: 1,
+
+    justifyContent: "center",
+
+    alignItems: "center",
+
+    backgroundColor: "rgba(0,0,0,0)",
   },
   modalText: {
     fontSize: 16,
@@ -1012,45 +1270,98 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0)",
   },
-  modalContainer: {
-    width: "100%",
-    padding: 20,
-    backgroundColor: "white",
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
+  container: {
+    flex: 1,
+
+    backgroundColor: "#fff",
+  },
+  commentsList: {
+    flexGrow: 1,
   },
   title: {
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
     textAlign: "center",
+    fontFamily: "Nunito_700Bold",
+  },
+
+  inputContainer: {
+    flexDirection: "row",
+
+    alignItems: "center",
+
+    borderTopWidth: 1,
+
+    borderTopColor: "#ddd",
+
+    paddingTop: 10,
+
+    marginTop: 10,
+
+    marginBottom: 20,
   },
   textInput: {
-    height: 60,
+    flex: 1,
+
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10,
+
+    borderColor: "#0D5F13",
+
+    borderRadius: 4,
+
+    paddingHorizontal: 15,
+
+    paddingVertical: 8,
+
+    marginRight: 10,
+
+    color: "#0D5F13",
+
+    fontFamily: "Nunito_600SemiBold",
   },
   commentItem: {
-    paddingVertical: 8,
+    flex: 1,
+
+    marginVertical: 10,
+    marginTop: 0,
+    paddingBottom: 10,
+
     borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+
+    borderBottomColor: "#BCD5AC",
+
+    flexDirection: "row",
   },
   commentUser: {
     fontWeight: "bold",
     marginBottom: 4,
   },
   commentText: {
-    fontSize: 14,
+    marginTop: 5,
+
+    color: "#0D5F13",
+
+    fontFamily: "Nunito_400Regular",
+    fontSize: 17,
+    flexWrap: "wrap",
   },
   emptyComments: {
     textAlign: "center",
     marginVertical: 10,
     color: "#666",
+  },
+  engagementItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  engagementText: {
+    marginLeft: 5,
+    fontSize: 16,
+    color: "#555",
   },
   spinnerContainer: {
     position: "absolute",
@@ -1060,6 +1371,53 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "center",
     zIndex: 1,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+
+    alignItems: "center",
+
+    justifyContent: "space-evenly",
+  },
+  button: {
+    backgroundColor: "#0D5F13",
+
+    borderRadius: 20,
+
+    paddingVertical: 8,
+
+    paddingHorizontal: 15,
+  },
+
+  buttonText: {
+    color: "#FFF",
+
+    fontSize: 15,
+
+    fontWeight: "bold",
+
+    fontFamily: "Nunito_600SemiBold",
+  },
+
+  commentTextContent: {
+    flex: 1,
+    gap: 5,
+    marginLeft: 10,
+  },
+  header_2: {
+    fontFamily: "Nunito_700Bold",
+    fontSize: 22,
+    color: "#0D5F13",
+    padding: 0,
+    justifyContent: "center",
+    alignContent: "center",
+    textAlign: "center",
+    alignSelf: "center",
+  },
+  username: {
+    fontFamily: "Nunito_700Bold",
+    fontSize: 18,
+    color: "#0D5F13",
   },
 });
 
