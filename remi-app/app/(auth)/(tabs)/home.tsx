@@ -918,7 +918,6 @@ const Home: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const setResetScroll = useContext(ScrollResetContext);
   const [refreshing, setRefreshing] = useState(false);
-  const lastCreatedAtRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [friendsListChange, setFriendsListChange] = useState(false);
   const POSTS_PER_PAGE = 20;
@@ -933,7 +932,11 @@ const Home: React.FC = () => {
 
   const fetchPostsWithCommentsFlag = async () => {
     console.log(friendsList.current);
-    if (friendsList.current.length === 0 || loading) return;
+    if (loading) return;
+    if (friendsList.current.length == 0) {
+      postsArrRef.current = [];
+      return;
+    }
 
     setLoading(true);
     const postsRef = collection(db, "Posts");
@@ -943,10 +946,6 @@ const Home: React.FC = () => {
       orderBy("createdAt", "asc"),
       limit(POSTS_PER_PAGE)
     );
-
-    if (lastCreatedAtRef.current) {
-      postsQuery = query(postsQuery, startAfter(lastCreatedAtRef.current));
-    }
 
     try {
       const querySnapshot = await getDocs(postsQuery);
@@ -976,14 +975,7 @@ const Home: React.FC = () => {
         })
       );
 
-      postsArrRef.current = [...newPosts.reverse(), ...postsArrRef.current];
-      if (!querySnapshot.empty) {
-        // Set lastVisible to the last document in the current query snapshot
-        const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-        lastCreatedAtRef.current = lastDoc.data().createdAt;
-      } else {
-        console.log("NO NEW POSTS");
-      }
+      postsArrRef.current = newPosts.reverse();
     } catch (error) {
       console.error("Error fetching posts:", error);
     } finally {
