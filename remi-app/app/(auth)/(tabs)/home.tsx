@@ -529,68 +529,68 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               onPress={handleCommentsPress} // Opens the comment modal
             />
             <Text style={Ustyles.engagementText}>{commentsCount}</Text>
-            <View style={Ustyles.engagementItem}>
-              <Ionicons
-                name={
-                  savedBy.includes(auth.currentUser?.uid ?? "")
-                    ? "bookmark"
-                    : "bookmark-outline"
-                }
-                size={27}
-                color={
-                  savedBy.includes(auth.currentUser?.uid ?? "")
-                    ? "#FBC02D"
-                    : "gray"
-                }
-                onPress={handleSavePress}
-              />
-            </View>
-            {/* Modal for adding a comment */}
-            <Modal
-              visible={commentVisible}
-              animationType="slide"
-              transparent={true}
-              onRequestClose={() => setCommentVisible(false)}
-            >
-              <View style={styles.overlay}>
-                <View style={styles.modalContainer}>
-                  <Text style={styles.title}>Comments</Text>
-
-                  {/* Display existing comments */}
-                  <FlatList
-                    data={postComments}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                      <View style={styles.commentItem}>
-                        <Text style={styles.commentUser}>
-                          {item.username || "Unknown User"}
-                        </Text>
-                        <Text style={styles.commentText}>{item.text}</Text>
-                      </View>
-                    )}
-                    ListEmptyComponent={
-                      <Text style={styles.emptyComments}>
-                        No comments yet. Be the first!
-                      </Text>
-                    }
-                  />
-
-                  <TextInput
-                    style={styles.textInput}
-                    value={newComment}
-                    onChangeText={setNewComment}
-                    placeholder="Add a comment..."
-                    multiline
-                  />
-                  <Button title="Submit" onPress={onSubmitComment} />
-                  <Button
-                    title="Close"
-                    onPress={() => setCommentVisible(false)}
-                  />
-                </View>
-              </View>
-            </Modal>
           </View>
+          <View style={Ustyles.engagementItem}>
+            <Ionicons
+              name={
+                savedBy.includes(auth.currentUser?.uid ?? "")
+                  ? "bookmark"
+                  : "bookmark-outline"
+              }
+              size={27}
+              color={
+                savedBy.includes(auth.currentUser?.uid ?? "")
+                  ? "#FBC02D"
+                  : "gray"
+              }
+              onPress={handleSavePress}
+            />
+          </View>
+          {/* Modal for adding a comment */}
+          <Modal
+            visible={commentVisible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={() => setCommentVisible(false)}
+          >
+            <View style={styles.overlay}>
+              <View style={styles.modalContainer}>
+                <Text style={styles.title}>Comments</Text>
+
+                {/* Display existing comments */}
+                <FlatList
+                  data={postComments}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <View style={styles.commentItem}>
+                      <Text style={styles.commentUser}>
+                        {item.username || "Unknown User"}
+                      </Text>
+                      <Text style={styles.commentText}>{item.text}</Text>
+                    </View>
+                  )}
+                  ListEmptyComponent={
+                    <Text style={styles.emptyComments}>
+                      No comments yet. Be the first!
+                    </Text>
+                  }
+                />
+
+                <TextInput
+                  style={styles.textInput}
+                  value={newComment}
+                  onChangeText={setNewComment}
+                  placeholder="Add a comment..."
+                  multiline
+                />
+                <Button title="Submit" onPress={onSubmitComment} />
+                <Button
+                  title="Close"
+                  onPress={() => setCommentVisible(false)}
+                />
+              </View>
+            </View>
+          </Modal>
         </View>
       </View>
       <View style={Ustyles.recipeContent}>
@@ -650,7 +650,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               <View
                 style={[
                   Ustyles.sliderFill,
-                  { width: `${(price / 10) * 100}%` },
+                  { width: `${(price / 100) * 100}%` },
                 ]}
               />
             </View>
@@ -1051,16 +1051,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginVertical: 10,
     color: "#666",
-  },
-  engagementItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 10,
-  },
-  engagementText: {
-    marginLeft: 5,
-    fontSize: 16,
-    color: "#555",
   },
   spinnerContainer: {
     position: "absolute",
