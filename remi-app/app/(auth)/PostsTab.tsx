@@ -1,49 +1,34 @@
-// PostsTab.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
-  Text,
   View,
-  StyleSheet,
-  Modal,
   FlatList,
-  Button,
-  Image,
   Alert,
-  TouchableOpacity,
-  ScrollView,
-  Platform,
-  StatusBar,
+  RefreshControl,
+  StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons"; // For icons
 import {
   collection,
-  addDoc,
-  getDoc,
   getDocs,
-  doc,
   query,
-  QuerySnapshot,
-  DocumentData,
   where,
-  onSnapshot,
-  updateDoc,
-  arrayUnion,
   orderBy,
   limit,
+  DocumentData,
 } from "firebase/firestore";
-import { db, auth } from "../../firebaseConfig"; // Ensure correct imports
-import { signOut } from "firebase/auth";
+import { db, auth } from "../../firebaseConfig";
 import Ustyles from "../../components/UniversalStyles";
-import Spacer from "../../components/Spacer";
-import { useNavigation } from "@react-navigation/native";
-import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RecipePost } from "./(tabs)/home";
 
 interface PostsTabProps {
   searchQuery: string;
+  filters: {
+    price: [number, number];
+    difficulty: [number, number];
+    time: [number, number];
+  };
 }
+
 interface Post {
   id: string;
   title?: string;
@@ -51,100 +36,164 @@ interface Post {
   likesCount?: number;
   userId?: string;
   createdAt?: string;
-  [key: string]: any; // For additional properties
+  comments?: number;
+  Price?: number;
+  Difficulty?: number;
+  Time?: number;
+  hashtags?: string;
+  mediaUrl?: string;
+  userHasCommented?: boolean;
+  [key: string]: any;
 }
 
-const PostsTab: React.FC<PostsTabProps> = ({ searchQuery }) => {
-  const [posts, setPosts] = useState<DocumentData[]>([]);
-  const user = auth.currentUser;
+const PostsTab: React.FC<PostsTabProps> = ({ searchQuery, filters }) => {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch all posts from Firestore
-  const fetchAllPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
-      const postsRef = collection(db, "Posts");
-      let querySnapshot = await getDocs(postsRef);
+      const usersRef = collection(db, "RemiUsers");
+      const usersQuery = query(usersRef, where("visibility", "==", "public"));
+      const userSnapshot = await getDocs(usersQuery);
 
-      const allPosts: Post[] = querySnapshot.docs.map((doc) => ({
+      const publicUserIds = userSnapshot.docs.map((doc) => doc.id);
+
+      if (publicUserIds.length === 0) {
+        setPosts([]);
+        return;
+      }
+
+      const postsRef = collection(db, "Posts");
+      const isDefaultFilters =
+        filters.price[0] === 1 &&
+        filters.price[1] === 100 &&
+        filters.difficulty[0] === 0 &&
+        filters.difficulty[1] === 5 &&
+        filters.time[0] === 1 &&
+        filters.time[1] === 120;
+
+      let postsQuery;
+      if (!searchQuery && isDefaultFilters) {
+        postsQuery = query(
+          postsRef,
+          where("userId", "in", publicUserIds),
+          orderBy("likesCount", "desc"),
+          limit(10)
+        );
+      } else {
+        postsQuery = query(
+          postsRef,
+          where("userId", "in", publicUserIds),
+          orderBy("likesCount", "desc"),
+          limit(50)
+        );
+      }
+
+      const querySnapshot = await getDocs(postsQuery);
+
+      let fetchedPosts: Post[] = querySnapshot.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
       })) as Post[];
 
+      // Apply search query if present
       if (searchQuery) {
-        // Split the search query into individual keywords
         const keywords = searchQuery.toLowerCase().split(" ");
-
-        // Filter posts where title or caption contains any of the keywords
-        const filteredPosts = allPosts.filter((post) => {
+        fetchedPosts = fetchedPosts.filter((post) => {
           const title = post.title?.toLowerCase() || "";
           const caption = post.caption?.toLowerCase() || "";
           return keywords.some(
             (keyword) => title.includes(keyword) || caption.includes(keyword)
           );
         });
-
-        setPosts(filteredPosts);
-      } else {
-        querySnapshot = await getDocs(
-          query(postsRef, orderBy("likesCount", "desc"), limit(10))
-        );
-        const defaultPosts = querySnapshot.docs.map((doc) => ({
-          ...doc.data(),
-          id: doc.id,
-        }));
-        setPosts(defaultPosts);
       }
+
+      // Apply filters for price, difficulty, and time
+      if (!isDefaultFilters) {
+        fetchedPosts = fetchedPosts.filter((post) => {
+          const price = post.Price || 0.0;
+          const difficulty = post.Difficulty || 0;
+          const time = post.Time || 0;
+
+          return (
+            price >= filters.price[0] &&
+            price <= filters.price[1] &&
+            difficulty >= filters.difficulty[0] &&
+            difficulty <= filters.difficulty[1] &&
+            time >= filters.time[0] &&
+            time <= filters.time[1]
+          );
+        });
+      }
+
+      setPosts(fetchedPosts);
     } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert("Error", `Failed to fetch posts: ${error.message}`);
-      } else {
-        Alert.alert("Error", "An unknown error occurred.");
-      }
+      console.error("Error fetching posts:", error);
+      Alert.alert(
+        "Error",
+        "Failed to fetch posts. Please check your connection and try again."
+      );
     }
-  };
+  }, [searchQuery, filters]);
 
-  // Use `useEffect` to fetch posts when the component mounts and every minute
   useEffect(() => {
-    fetchAllPosts();
-    const interval = setInterval(fetchAllPosts, 60000); // 60000 ms = 1 minute
+    fetchPosts();
+    const interval = setInterval(fetchPosts, 60000); // 1 minute
     return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, [searchQuery]);
+  }, [fetchPosts]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchPosts();
+    setRefreshing(false);
+  }, [fetchPosts]);
+
+  const renderPost = ({ item: post }: { item: Post }) => (
+    <View style={styles.postContainer}>
+      <RecipePost
+        userID={post.userId || "Anonymous"}
+        timeAgo={post.createdAt ? new Date(post.createdAt) : new Date()}
+        likes={post.likesCount || 0}
+        comments={post.comments || 0}
+        recipeName={post.title || "Untitled Recipe"}
+        price={post.Price || 0.0}
+        difficulty={post.Difficulty || 0}
+        time={post.Time || 0}
+        caption={post.caption || "No caption"}
+        hashtags={post.hashtags || "None"}
+        mediaUrl={post.mediaUrl || ""}
+        postID={post.id}
+        userHasCommented={post.userHasCommented ?? false}
+      />
+      <View style={Ustyles.separator} />
+    </View>
+  );
 
   return (
-    <SafeAreaView style={Ustyles.background}>
-      <View style={Ustyles.background}>
-        <ScrollView style={Ustyles.feed}>
-          {posts
-            .sort((a, b) => b.likesCount - a.likesCount)
-            .map((post, index) => (
-              <View key={post.id}>
-                <RecipePost
-                  key={index}
-                  userID={post.userId || "Anonymous"}
-                  timeAgo={
-                    post.createdAt
-                      ? new Date(post.createdAt)
-                      : new Date(2002, 2, 8)
-                  }
-                  likes={post.likesCount || 0}
-                  comments={post.comments || 0}
-                  recipeName={post.title || "Untitled Recipe"}
-                  price={post.Price || 0.0}
-                  difficulty={post.Difficulty || 0}
-                  time={post.Time || 0}
-                  caption={post.caption || "No caption"}
-                  hashtags={post.hashtags || ["None"]}
-                  mediaUrl={post.mediaUrl || ""}
-                  postID={post.id}
-                  userHasCommented={post.userHasCommented}
-                />
-                <View style={Ustyles.separator} />
-              </View>
-            ))}
-        </ScrollView>
-        {/* <Button title="Sign out" onPress={() => signOut(auth)} color="#0D5F13" /> */}
-      </View>
+    <SafeAreaView style={Ustyles.background} edges={[]}>
+      <FlatList
+        data={posts}
+        renderItem={renderPost}
+        keyExtractor={(post) => post.id}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        contentContainerStyle={styles.flatListContent}
+        showsVerticalScrollIndicator={false}
+      />
     </SafeAreaView>
   );
 };
 
+const styles = StyleSheet.create({
+  postContainer: {
+    width: "100%",
+  },
+  flatListContent: {
+    flexGrow: 1,
+    paddingVertical: 10,
+  },
+});
+
 export default PostsTab;
+
