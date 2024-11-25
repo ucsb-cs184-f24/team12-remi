@@ -20,9 +20,11 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Animated,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons"; // For icons
+import { Image as ExpoImage } from "expo-image";
 import {
   collection,
   addDoc,
@@ -30,15 +32,18 @@ import {
   getDocs,
   doc,
   query,
+  QueryDocumentSnapshot,
   QuerySnapshot,
   DocumentData,
+  orderBy,
+  limit,
+  startAfter,
   where,
   onSnapshot,
   updateDoc,
   arrayUnion,
   deleteDoc,
   arrayRemove,
-  orderBy,
   Timestamp,
 } from "firebase/firestore";
 import { db, auth } from "../../../firebaseConfig"; // Ensure correct imports
@@ -113,8 +118,10 @@ const hashtagMap: { [key: string]: string } = {
   "300": "Course",
   "301": "Appetizers",
   "302": "Main Course",
-  "303": "Side Dish"
+  "303": "Side Dish",
 };
+
+const blurhash = "L6PZfSi_.AyE_3t7t7R**0o#DgR4";
 
 interface RecipePostProps {
   postID: string;
@@ -603,9 +610,11 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               })
             }
           >
-            <Image
+            <ExpoImage
               source={require("../../../assets/placeholders/profile-pic.png")}
               style={Ustyles.avatar}
+              placeholder={blurhash}
+              transition={200}
             />
           </TouchableOpacity>
           <View>
@@ -785,13 +794,15 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                   <ActivityIndicator size="large" color="#0D5F13" />
                 </View>
               )}
-              <Image
+              <ExpoImage
                 source={
                   mediaUrl
                     ? { uri: mediaUrl }
                     : require("../../../assets/placeholders/recipe-image.png")
                 }
                 style={Ustyles.recipeImage}
+                placeholder={blurhash}
+                transition={200}
                 onLoad={() => handleImageLoad(postID)} // Updates loading state to false
                 onError={() => handleImageError(postID)} // Handles errors
               />
@@ -878,10 +889,12 @@ export const RecipePost: React.FC<RecipePostProps> = ({
             >
               <Ionicons name="close" size={30} color="#FFF" />
             </TouchableOpacity>
-            <Image
+            <ExpoImage
               source={{ uri: mediaUrl }}
               style={styles.fullScreenImage}
-              resizeMode="contain"
+              placeholder={blurhash}
+              transition={200}
+              contentFit="contain"
             />
           </View>
         </Modal>
@@ -894,49 +907,80 @@ export const RecipePost: React.FC<RecipePostProps> = ({
 const Home: React.FC = () => {
   const insets = useSafeAreaInsets();
   const user = auth.currentUser;
-  const [posts, setPosts] = useState<DocumentData[]>([]);
+  const postsArrRef = useRef<DocumentData[]>([]);
   //record notification count using state
   // const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [friendRequests, setFriendRequests] = useState<
     { id: string; [key: string]: any }[]
   >([]);
   const router = useRouter();
-  const [friendsList, setFriendsList] = useState<string[]>([]);
+  const friendsList = useRef<string[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const setResetScroll = useContext(ScrollResetContext);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [friendsListChange, setFriendsListChange] = useState(false);
+  const POSTS_PER_PAGE = 20;
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    console.log("Trying to refresh");
+    await fetchPostsWithCommentsFlag();
+    setRefreshing(false);
+    console.log("Done w refresh");
+  }, []);
 
   const fetchPostsWithCommentsFlag = async () => {
+    console.log(friendsList.current);
+    if (loading) return;
+    if (friendsList.current.length == 0) {
+      postsArrRef.current = [];
+      return;
+    }
+
+    setLoading(true);
     const postsRef = collection(db, "Posts");
-    const postsQuery = query(postsRef, where("userId", "in", friendsList));
-
-    const querySnapshot = await getDocs(postsQuery);
-    const currentUserId = auth.currentUser?.uid;
-
-    const postsWithCommentsFlag = await Promise.all(
-      querySnapshot.docs.map(async (doc) => {
-        const postData = doc.data();
-        const postId = doc.id;
-
-        // Check if the current user has commented on this post
-        const commentsRef = collection(db, "Comments");
-        const commentsQuery = query(
-          commentsRef,
-          where("postId", "==", postId),
-          where("userId", "==", currentUserId)
-        );
-
-        const userHasCommentedSnapshot = await getDocs(commentsQuery);
-        const userHasCommented = !userHasCommentedSnapshot.empty;
-
-        return {
-          ...postData,
-          postID: postId,
-          userHasCommented,
-        };
-      })
+    let postsQuery = query(
+      postsRef,
+      where("userId", "in", friendsList.current),
+      orderBy("createdAt", "asc"),
+      limit(POSTS_PER_PAGE)
     );
-    console.log("Refreshing from hometsx..");
-    setPosts(postsWithCommentsFlag);
+
+    try {
+      const querySnapshot = await getDocs(postsQuery);
+      const currentUserId = auth.currentUser?.uid;
+
+      const newPosts = await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
+          const postData = doc.data();
+          const postId = doc.id;
+
+          // Check if the current user has commented on this post
+          const commentsRef = collection(db, "Comments");
+          const commentsQuery = query(
+            commentsRef,
+            where("postId", "==", postId),
+            where("userId", "==", currentUserId)
+          );
+
+          const userHasCommentedSnapshot = await getDocs(commentsQuery);
+          const userHasCommented = !userHasCommentedSnapshot.empty;
+
+          return {
+            ...postData,
+            postID: postId,
+            userHasCommented,
+          };
+        })
+      );
+
+      postsArrRef.current = newPosts.reverse();
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -949,19 +993,67 @@ const Home: React.FC = () => {
     }
   }, [setResetScroll]);
 
-  // Fetch all posts from Firestore
-  useEffect(() => {
-    if (friendsList.length === 0) return;
-
-    fetchPostsWithCommentsFlag();
-  }, [friendsList]);
-
   // Use `useEffect` to fetch posts when the component mounts and every minute
   useEffect(() => {
-    fetchPostsWithCommentsFlag();
-    const interval = setInterval(fetchPostsWithCommentsFlag, 60000); // 60000 ms = 1 minute
-    return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, []);
+    console.log("HERE");
+    let isMounted = true;
+    const fetchData = async () => {
+      if (isMounted) {
+        await fetchPostsWithCommentsFlag();
+      }
+    };
+
+    fetchData();
+
+    const interval = setInterval(() => {
+      if (isMounted) {
+        fetchPostsWithCommentsFlag();
+      }
+    }, 60000); // 60000 ms = 1 minute
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval); // Cleanup interval on component unmount
+    };
+  }, [friendsListChange]);
+
+  useEffect(() => {
+    const subscribeToFriendsList = async () => {
+      if (!user) return;
+
+      const userDocRef = doc(db, "RemiUsers", user.uid);
+
+      const unsubscribe = onSnapshot(
+        userDocRef,
+        async (docSnapshot) => {
+          if (docSnapshot.exists()) {
+            const userData = docSnapshot.data();
+            const friendsEmails = userData.friends_list || [];
+            if (friendsEmails.length > 0) {
+              const q = query(
+                collection(db, "RemiUsers"),
+                where("email", "in", friendsEmails)
+              );
+              const friendsSnapshot = await getDocs(q);
+              const friendsIds = friendsSnapshot.docs.map((doc) => doc.id);
+              friendsList.current = friendsIds;
+              setFriendsListChange(!friendsListChange);
+              console.log("Updated friendsList:", friendsIds);
+            }
+          } else {
+            console.log("No such document!");
+          }
+        },
+        (error) => {
+          console.error("Error listening to document:", error);
+        }
+      );
+
+      return () => unsubscribe();
+    };
+
+    subscribeToFriendsList();
+  }, [user]);
 
   useEffect(() => {
     // Set up real-time listener for pending friend requests
@@ -984,35 +1076,6 @@ const Home: React.FC = () => {
     }
   }, [user]);
 
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      doc(db, "RemiUsers", user?.uid || ""),
-      (doc) => {
-        if (doc.exists()) {
-          const userData = doc.data();
-          const friendsEmails = userData.friends_list || [];
-
-          if (friendsEmails.length > 0) {
-            const q = query(
-              collection(db, "RemiUsers"),
-              where("email", "in", friendsEmails)
-            );
-            getDocs(q)
-              .then((querySnapshot) => {
-                const friendsIds = querySnapshot.docs.map((doc) => doc.id);
-                setFriendsList(friendsIds);
-              })
-              .catch((error) => {
-                console.error("Error fetching friend list:", error);
-              });
-          }
-        }
-      }
-    );
-
-    return () => unsubscribe();
-  }, [user]);
-
   return (
     <SafeAreaView style={Ustyles.background} edges={["top"]}>
       <View style={Ustyles.background}>
@@ -1020,6 +1083,9 @@ const Home: React.FC = () => {
           ref={scrollViewRef}
           stickyHeaderIndices={[0]}
           style={Ustyles.feed}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
           <View
             style={[
@@ -1049,37 +1115,31 @@ const Home: React.FC = () => {
               </TouchableOpacity>
             </View>
           </View>
-          {posts
-            .sort((a, b) => {
-              const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
-              const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
-              return dateB.getTime() - dateA.getTime();
-            })
-            .map((post, index) => (
-              <View key={post.postID}>
-                <RecipePost
-                  key={index}
-                  userID={post.userId || "Anonymous"}
-                  timeAgo={
-                    post.createdAt
-                      ? new Date(post.createdAt)
-                      : new Date(2002, 2, 8)
-                  }
-                  likes={post.likesCount || 0}
-                  comments={post.comments || 0}
-                  recipeName={post.title || "Untitled Recipe"}
-                  price={post.Price || 0.0}
-                  difficulty={post.Difficulty || 0}
-                  time={post.Time || 0}
-                  caption={post.caption || "No caption"}
-                  hashtags={post.hashtags || ["None"]}
-                  mediaUrl={post.mediaUrl || ""}
-                  postID={post.postID}
-                  userHasCommented={post.userHasCommented}
-                />
-                <View style={Ustyles.separator} />
-              </View>
-            ))}
+          {postsArrRef.current.map((post, index) => (
+            <View key={post.postID}>
+              <RecipePost
+                key={index}
+                userID={post.userId || "Anonymous"}
+                timeAgo={
+                  post.createdAt
+                    ? new Date(post.createdAt)
+                    : new Date(2002, 2, 8)
+                }
+                likes={post.likesCount || 0}
+                comments={post.comments || 0}
+                recipeName={post.title || "Untitled Recipe"}
+                price={post.Price || 0.0}
+                difficulty={post.Difficulty || 0}
+                time={post.Time || 0}
+                caption={post.caption || "No caption"}
+                hashtags={post.hashtags || ["None"]}
+                mediaUrl={post.mediaUrl || ""}
+                postID={post.postID}
+                userHasCommented={post.userHasCommented}
+              />
+              <View style={Ustyles.separator} />
+            </View>
+          ))}
         </ScrollView>
         {/* <Button title="Sign out" onPress={() => signOut(auth)} color="#0D5F13" /> */}
       </View>
