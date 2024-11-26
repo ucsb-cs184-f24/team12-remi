@@ -53,10 +53,20 @@ const Notifs = () => {
       pan.flattenOffset();
     },
     onPanResponderGrant: () => {
+      let xValue = 0;
+      
+      // Access the current animated value using addListener
+      const listenerId = pan.x.addListener((value) => {
+        xValue = value.value;
+      });
+    
       pan.setOffset({
-        x: pan.x._value,
+        x: xValue,
         y: 0,
       });
+    
+      // Clean up the listener
+      pan.x.removeListener(listenerId);
     },
   });
 
@@ -110,24 +120,26 @@ const Notifs = () => {
         collection(db, "RemiUsers"),
         where("email", "==", senderEmail)
       );
-      const receiverRef = doc(db, "RemiUsers", user?.uid);
 
-      const snapshot = await getDocs(senderRef);
-      snapshot.forEach(async (doc) => {
-        await updateDoc(doc.ref, {
-          friends_list: arrayUnion(receiverEmail),
+      if (user?.uid) {
+        const receiverRef = doc(db, "RemiUsers", user?.uid);
+
+        const snapshot = await getDocs(senderRef);
+        snapshot.forEach(async (doc) => {
+          await updateDoc(doc.ref, {
+            friends_list: arrayUnion(receiverEmail),
+          });
         });
-      });
 
-      await updateDoc(receiverRef, {
-        friends_list: arrayUnion(senderEmail),
-      });
+        await updateDoc(receiverRef, {
+          friends_list: arrayUnion(senderEmail),
+        });
 
-      await updateDoc(doc(db, "Notifications", request.id), {
-        read_flag: false,
-      });
+        await updateDoc(doc(db, "Notifications", request.id), {
+          read_flag: false,
+        });
 
-      Alert.alert("Success", `You are now friends with ${senderEmail}`);
+      } Alert.alert("Success", `You are now friends with ${senderEmail}`);
     } catch (error) {
       console.error("Error accepting friend request:", error);
     }
