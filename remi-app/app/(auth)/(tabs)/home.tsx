@@ -21,6 +21,7 @@ import {
   KeyboardAvoidingView,
   Animated,
   RefreshControl,
+  ImageBackground,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons"; // For icons
@@ -817,16 +818,27 @@ export const RecipePost: React.FC<RecipePostProps> = ({
             visible={modalVisible}
             onRequestClose={handleCloseModal} // Close on back button press
           >
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalText}>{caption}</Text>
-                {/* Add more content as needed */}
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={handleCloseModal}
+            <View style={styles.notesOverlay}>
+              <View style={styles.notesContent}>
+                <ImageBackground
+                  source={require("../../../assets/images/background-lineart.png")}
+                  style={styles.backgroundImage}
+                  imageStyle={styles.backgroundImageStyle}
                 >
-                  <Text style={styles.closeButtonText}>Close</Text>
-                </TouchableOpacity>
+                  {" "}
+                  <View style={styles.notesInnerContent}>
+                    <Text style={styles.notesHeader}>Chef's Notes:</Text>
+                    <ScrollView contentContainerStyle={styles.notesScroll}>
+                      <Text style={styles.notesText}>{caption}</Text>
+                    </ScrollView>
+                    <TouchableOpacity
+                      style={styles.closeButton}
+                      onPress={handleCloseModal}
+                    >
+                      <Text style={styles.closeButtonText}>Close</Text>
+                    </TouchableOpacity>
+                  </View>
+                </ImageBackground>
               </View>
             </View>
           </Modal>
@@ -840,7 +852,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               <View
                 style={[
                   Ustyles.sliderFill,
-                  { width: `${(price / 10) * 100}%` },
+                  { width: `${(price / 100) * 100}%` },
                 ]}
               />
             </View>
@@ -1143,6 +1155,8 @@ const Home: React.FC = () => {
   );
 };
 
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+
 const styles = StyleSheet.create({
   modalContainer2: {
     flex: 1,
@@ -1245,11 +1259,20 @@ const styles = StyleSheet.create({
 
     backgroundColor: "rgba(0,0,0,0)",
   },
-  modalText: {
+  notesText: {
     fontSize: 16,
     marginBottom: 20,
     color: "#0D5F13",
     fontFamily: "Nunito_400Regular",
+    textAlign: "left",
+  },
+  notesHeader: {
+    fontSize: 24,
+    marginBottom: 10,
+    color: "#0D5F13",
+    fontFamily: "Nunito_700Bold",
+    textAlign: "left",
+    alignSelf: "center",
   },
   closeButton: {
     alignSelf: "center",
@@ -1271,6 +1294,41 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-end",
     backgroundColor: "rgba(0, 0, 0, 0)",
+  },
+  notesOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  notesContent: {
+    width: screenWidth * 0.9,
+    height: screenHeight * 0.8,
+    backgroundColor: "#FFF9E6",
+    borderRadius: 20,
+    //padding: 20,
+    //alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    borderWidth: 3,
+    borderColor: "#0D5F13"
+  },
+  notesInnerContent:{
+    flex: 1,
+    padding: 20,
+    justifyContent: "space-between",
+  },
+  notesScroll: {
+    flexGrow: 0.8,
+    justifyContent: "flex-start",
+    //alignItems: "center",
+    paddingBottom: 0,
   },
   container: {
     flex: 1,
@@ -1418,6 +1476,12 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
     fontSize: 18,
     color: "#0D5F13",
+  },
+  backgroundImage: {
+    flex: 1,
+  },
+  backgroundImageStyle: {
+    opacity: 0.2,
   },
 });
 
