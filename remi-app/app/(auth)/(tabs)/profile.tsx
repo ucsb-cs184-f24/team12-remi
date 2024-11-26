@@ -317,6 +317,7 @@ export default function UserProfileComponent() {
 
   const handleBookmarksPress = () => {
     setBookmarkVisible(false);
+    setIsMenuVisible(false);
     router.push("../../bookmarks");
   };
 
@@ -500,8 +501,8 @@ export default function UserProfileComponent() {
           <Modal
             isVisible={isMenuVisible}
             onBackdropPress={() => setIsMenuVisible(false)}
-            animationIn="slideInRight"
-            animationOut="slideOutRight"
+            animationIn="fadeIn"
+            animationOut="fadeOut"
             style={styles.modal}
           >
             <View style={styles.menuContainer}>

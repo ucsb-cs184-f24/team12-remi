@@ -90,6 +90,10 @@ export default function RootLayout() {
         name="(auth)"
         options={{ headerTitle: "Home", headerShown: false }}
       />
+      <Stack.Screen
+        name="bookmarks"
+        options={{ headerShown: false }}
+      />
     </Stack>
   );
 }
