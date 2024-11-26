@@ -33,6 +33,7 @@ import {
   arrayUnion,
   deleteDoc,
   arrayRemove,
+  orderBy,
 } from "firebase/firestore";
 import {
   ref,
@@ -220,7 +221,11 @@ export default function UserProfileComponent() {
   const fetchUserPosts = async () => {
     try {
       const postsRef = collection(db, "Posts");
-      const q = query(postsRef, where("userId", "==", user?.uid));
+      const q = query(
+        postsRef,
+        where("userId", "==", user?.uid),
+        orderBy("createdAt", "desc")
+      );
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
