@@ -83,6 +83,7 @@ export default function RootLayout() {
             fontSize: 25,
             color: "#0D5F13", // Text color
           },
+          headerShown: false
         }}
       />
       <Stack.Screen
