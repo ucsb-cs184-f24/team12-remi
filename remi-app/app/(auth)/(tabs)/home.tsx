@@ -926,7 +926,6 @@ const Home: React.FC = () => {
     console.log("Trying to refresh");
     lastCreatedAt.current = null;
     setHasMorePosts(true);
-    console.log("gyatt");
     await fetchPostsWithCommentsFlag();
     setRefreshing(false);
     console.log("Done w refresh");
@@ -936,7 +935,6 @@ const Home: React.FC = () => {
     if (loading || loadingMore || !hasMorePosts) return;
     const loadingState = doomScroll ? setLoadingMore : setLoading;
 
-    console.log(friendsList.current);
     if (friendsList.current.length == 0) {
       postsArrRef.current = [];
       return;
@@ -950,9 +948,6 @@ const Home: React.FC = () => {
       orderBy("createdAt", "desc"),
       limit(POSTS_PER_PAGE)
     );
-
-    console.log("Created at", lastCreatedAt.current);
-    console.log("PASSED");
 
     if (doomScroll && lastCreatedAt.current) {
       postsQuery = query(
@@ -988,14 +983,6 @@ const Home: React.FC = () => {
           };
         })
       );
-      console.log("POSTS ARRAY CURRENTLY:");
-      postsArrRef.current.forEach((post) => {
-        console.log(post.title, post.createdAt);
-      });
-      console.log("NEWER POSTS:");
-      newPosts.forEach((post) => {
-        console.log(post.title, post.createdAt);
-      });
 
       if (doomScroll) {
         postsArrRef.current = [...postsArrRef.current, ...newPosts];
@@ -1027,7 +1014,6 @@ const Home: React.FC = () => {
 
   // Use `useEffect` to fetch posts when the component mounts and every minute
   useEffect(() => {
-    console.log("HERE");
     let isMounted = true;
     const fetchData = async () => {
       if (isMounted) {
@@ -1102,7 +1088,6 @@ const Home: React.FC = () => {
 
   const handleLoadMore = async () => {
     if (!loading && !loadingMore && hasMorePosts) {
-      console.log("skibidi");
       await fetchPostsWithCommentsFlag(true);
     }
   };
