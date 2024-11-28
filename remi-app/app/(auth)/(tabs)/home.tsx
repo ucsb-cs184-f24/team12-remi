@@ -54,6 +54,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScrollResetContext } from "./_layout";
 import { LinearGradient } from "expo-linear-gradient";
+import { NewPostBanner } from "./components/NewPostBanner";
 
 const formatTimeAgo = (date: Date) => {
   const now = new Date();
@@ -915,6 +916,7 @@ const Home: React.FC = () => {
   const setResetScroll = useContext(ScrollResetContext);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [newPostAvail, setNewPostAvail] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(true);
   const lastCreatedAt = useRef(null);
@@ -922,6 +924,7 @@ const Home: React.FC = () => {
   const POSTS_PER_PAGE = 3;
 
   const onRefresh = React.useCallback(async () => {
+    setNewPostAvail(false);
     setRefreshing(true);
     console.log("Trying to refresh");
     lastCreatedAt.current = null;
@@ -1012,12 +1015,44 @@ const Home: React.FC = () => {
     }
   }, [setResetScroll]);
 
-  // Use `useEffect` to fetch posts when the component mounts and every minute
+  // Use `useEffect` to fetch posts when the component mounts, listening for latest post as well
   useEffect(() => {
     let isMounted = true;
     const fetchData = async () => {
       if (isMounted) {
         await fetchPostsWithCommentsFlag();
+
+        if (friendsList.current.length === 0) return;
+
+        const postsRef = collection(db, "Posts");
+        const postsQuery = query(
+          postsRef,
+          where("userId", "in", friendsList.current),
+          orderBy("createdAt", "desc"),
+          limit(1)
+        );
+
+        const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
+          if (!querySnapshot.empty) {
+            const latestPostID = querySnapshot.docs[0].id;
+            if (
+              postsArrRef.current.length > 0 &&
+              latestPostID === postsArrRef.current[0].postID
+            ) {
+              console.log("Up to date on posts.");
+              setNewPostAvail(false);
+            } else {
+              console.log("Can refresh for more.");
+              console.log(postsArrRef.current);
+              console.log(querySnapshot.docs[0].data());
+              setNewPostAvail(true);
+            }
+          } else {
+            console.log("No posts found.");
+          }
+        });
+
+        return () => unsubscribe();
       }
     };
     fetchData();
@@ -1092,6 +1127,11 @@ const Home: React.FC = () => {
     }
   };
 
+  const handleNewPostsBannerPress = () => {
+    scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+    onRefresh();
+  };
+
   return (
     <SafeAreaView style={Ustyles.background} edges={["top"]}>
       <View style={Ustyles.background}>
@@ -1143,6 +1183,9 @@ const Home: React.FC = () => {
               </TouchableOpacity>
             </View>
           </View>
+          {newPostAvail && (
+            <NewPostBanner onPress={handleNewPostsBannerPress} />
+          )}
           {postsArrRef.current.map((post, index) => (
             <View key={post.postID}>
               <RecipePost
