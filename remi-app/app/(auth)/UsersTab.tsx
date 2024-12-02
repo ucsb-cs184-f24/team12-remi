@@ -20,6 +20,7 @@ import {
 } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "react-native-elements";
+import { useRouter } from "expo-router";
 import { Friends } from "../friends";
 
 interface User {
@@ -39,6 +40,7 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
   const [loading, setLoading] = useState(true);
   const [currentUserFriends, setCurrentUserFriends] = useState<string[]>([]);
   const currentUser = auth.currentUser;
+  const router = useRouter();
 
   useEffect(() => {
     if (!currentUser) {
@@ -140,29 +142,46 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
     // console.log(item.profilePic.uri)
     return (
       <View style={styles.item}>
-        <Avatar
-          size={50}
-          rounded
-          source={(() => {
-            if (typeof item.profilePic === "object" && item.profilePic) {
-              // If profilePic is an object with a `uri` key
-              if (item.profilePic) {
-                return require("../../assets/placeholders/profile-pic.png"); // Local asset fallback
+        <TouchableOpacity
+          onPress={() =>
+            router.push({
+              pathname: "/(auth)/UserProfileInfo",
+              params: { username: item.username },
+            })
+          }
+        >
+          <Avatar
+            size={50}
+            rounded
+            source={(() => {
+              if (typeof item.profilePic === "object" && item.profilePic) {
+                // If profilePic is an object with a `uri` key
+                if (item.profilePic) {
+                  return require("../../assets/placeholders/profile-pic.png"); // Local asset fallback
+                } else {
+                  return { uri: item.profilePic }; // External URL
+                }
+              } else if (typeof item.profilePic === "string") {
+                // If profilePic is a string (likely a direct URL)
+                return { uri: item.profilePic };
               } else {
                 return { uri: item.profilePic }; // External URL
               }
-            } else if (typeof item.profilePic === "string") {
-              // If profilePic is a string (likely a direct URL)
-              return { uri: item.profilePic };
-            } else {
-              // Default fallback to placeholder
-              return require("../../assets/placeholders/user-avatar.png");
-            }
-          })()}
-          containerStyle={styles.avatarContainer}
-        />
+            })()}
+            containerStyle={styles.avatarContainer}
+          />
+        </TouchableOpacity>
         <View style={styles.userInfo}>
-          <Text style={styles.username}>{item.username}</Text>
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: "/(auth)/UserProfileInfo",
+                params: { username: item.username },
+              })
+            }
+          >
+            <Text style={styles.username}>{item.username}</Text>
+          </TouchableOpacity>
         </View>
         {isAlreadyFriend ? (
           <View style={styles.friendStatusContainer}>
