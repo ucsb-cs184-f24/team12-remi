@@ -14,6 +14,8 @@ import {
   collection,
   addDoc,
   getDocs,
+  getDoc,
+  writeBatch,
   doc,
   query,
   QuerySnapshot,
@@ -32,141 +34,156 @@ import { useRouter } from "expo-router";
 import ChatBubble from "react-native-chat-bubble";
 import { Avatar } from "react-native-elements";
 
+const Separator = () => {
+  return <View style={{ height: 10 }} />;
+};
+
 const Notifs = () => {
   const user = auth.currentUser;
-  const [friendRequests, setFriendRequests] = useState([]); // Friend requests data
-  const router = useRouter();
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
-    // Set up real-time listener for pending friend requests
     if (user) {
-      const q = query(
+      const notificationsQuery = query(
         collection(db, "Notifications"),
-        where("to", "==", user.email),
-        where("read_flag", "==", true) // Only show unread friend requests
+        where("read_flag", "==", true),
+        where("to", "in", [user.uid, user.email])
       );
 
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const requests = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setFriendRequests(requests);
+      const unsubscribe = onSnapshot(notificationsQuery, async (snapshot) => {
+        const notificationsWithUsernames = await Promise.all(
+          snapshot.docs.map(async (document) => {
+            const notification = document.data();
+
+            const isFriendRequest = notification.from.includes("@");
+            let username = "Unknown User"; // Default username
+
+            if (!isFriendRequest) {
+              // Fetch the user document only if not a friend request
+              const userRef = doc(db, "RemiUsers", notification.from);
+              const userDoc = await getDoc(userRef).catch((error) => {
+                console.error("Failed to fetch user document:", error);
+                return null; // Handle the promise gracefully on error
+              });
+
+              if (userDoc && userDoc.exists()) {
+                username = userDoc.data().username;
+              } else {
+                console.log(
+                  "User document does not exist for ID:",
+                  notification.from
+                );
+              }
+            } else {
+              // Handle friend requests differently if needed
+              username = notification.from; // Directly use the email as username for friend requests
+            }
+
+            console.log(
+              "Fetched username for",
+              notification.from,
+              ":",
+              username
+            );
+
+            return {
+              id: document.id,
+              ...notification,
+              fromUsername: username, // Replace user ID with username
+              isFriendRequest, // Add flag to the notification object
+            };
+          })
+        );
+
+        console.log("Processed notifications:", notificationsWithUsernames);
+        setNotifications(notificationsWithUsernames);
       });
 
       return () => unsubscribe();
     }
   }, [user]);
 
-  const handleAccept = async (request) => {
-    const senderEmail = request.from;
-    const receiverEmail = user?.email;
-
+  const handleAction = async (notification, accepted = false) => {
     try {
-      const senderRef = query(
-        collection(db, "RemiUsers"),
-        where("email", "==", senderEmail)
-      );
-      const receiverRef = doc(db, "RemiUsers", user?.uid);
+      if (notification.isFriendRequest && accepted) {
+        const senderRef = query(
+          collection(db, "RemiUsers"),
+          where("email", "==", notification.from)
+        );
+        const receiverRef = doc(db, "RemiUsers", user.uid);
 
-      const snapshot = await getDocs(senderRef);
-      snapshot.forEach(async (doc) => {
-        await updateDoc(doc.ref, {
-          friends_list: arrayUnion(receiverEmail),
+        const senderSnapshot = await getDocs(senderRef);
+        senderSnapshot.forEach(async (doc) => {
+          await updateDoc(doc.ref, {
+            friends_list: arrayUnion(user.email),
+          });
         });
-      });
 
-      await updateDoc(receiverRef, {
-        friends_list: arrayUnion(senderEmail),
-      });
+        await updateDoc(receiverRef, {
+          friends_list: arrayUnion(notification.from),
+        });
+      }
 
-      await updateDoc(doc(db, "Notifications", request.id), {
+      await updateDoc(doc(db, "Notifications", notification.id), {
         read_flag: false,
       });
 
-      Alert.alert("Success", `You are now friends with ${senderEmail}`);
+      Alert.alert(
+        accepted ? "Accepted" : "Rejected",
+        `You have ${accepted ? "accepted" : "rejected"} the ${notification.isFriendRequest ? "friend request" : "notification"}.`
+      );
     } catch (error) {
-      console.error("Error accepting friend request:", error);
+      console.error("Error handling action:", error);
     }
-  };
-
-  const handleReject = async (request) => {
-    try {
-      await updateDoc(doc(db, "Notifications", request.id), {
-        read_flag: false,
-      });
-      Alert.alert("Friend Request Rejected");
-    } catch (error) {
-      console.error("Error rejecting friend request:", error);
-    }
-  };
-
-  const showConfirmationAlert = async (request) => {
-    Alert.alert("Confirmation", "Accept friend request?", [
-      {
-        text: "Yes",
-        onPress: () => handleAccept(request),
-      },
-      {
-        text: "No",
-        onPress: () => handleReject(request),
-      },
-    ]);
   };
 
   return (
     <View style={Ustyles.background}>
       <Spacer size={20} />
-      <Text style={Ustyles.header}>Pending Friend Requests</Text>
-      <Spacer size={20} />
-      {friendRequests.length === 0 ? (
-        <Text style={Ustyles.text}>No friend requests.</Text>
+      {notifications.length === 0 ? (
+        <Text style={Ustyles.text}>No notifications.</Text>
       ) : (
         <FlatList
-          data={friendRequests}
+          data={notifications}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View>
-              <View style={styles.container}>
-                <Avatar
-                  size={50}
-                  rounded
-                  source={require("../assets/placeholders/user-avatar.png")}
-                  containerStyle={{
-                    marginLeft: 20,
-                    marginRight: 10,
-                    marginTop: 5,
-                    borderWidth: 3,
-                    borderColor: "#0D5F13",
-                  }}
-                />
-                <View style={styles.chatBubbleContainer}>
-                  <View style={styles.notifButton}>
-                    <Text style={Ustyles.notif_text}>
-                      {item.from} wants to add you as a friend!
-                    </Text>
-                  </View>
+            <View style={styles.container}>
+              <Avatar
+                size={50}
+                rounded
+                source={require("../assets/placeholders/user-avatar.png")}
+                containerStyle={styles.avatarStyle}
+              />
 
-                  <View style={styles.container2}>
-                    <TouchableOpacity
-                      onPress={() => handleAccept(item)}
-                      style={styles.acceptButton}
-                    >
-                      <Text style={styles.green_text}>Accept</Text>
-                    </TouchableOpacity>
+              <View style={styles.chatBubbleContainer}>
+                <View style={styles.notifButton}>
+                  <Text style={Ustyles.notif_text}>
+                    {item.isFriendRequest
+                      ? `${item.from} wants to add you as a friend!`
+                      : `${item.fromUsername} ${item.action} your post '${item.title}'`}
+                  </Text>
 
-                    <TouchableOpacity
-                      onPress={() => handleReject(item)}
-                      style={styles.rejectButton}
-                    >
-                      <Text style={styles.red_text}>Reject</Text>
-                    </TouchableOpacity>
-                  </View>
+                  {item.isFriendRequest && (
+                    <View style={styles.container2}>
+                      <TouchableOpacity
+                        onPress={() => handleAction(item, true)}
+                        style={styles.acceptButton}
+                      >
+                        <Text style={styles.green_text}>Accept</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleAction(item, false)}
+                        style={styles.rejectButton}
+                      >
+                        <Text style={styles.red_text}>Reject</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
               </View>
-              <Spacer size={40} />
             </View>
           )}
+          ItemSeparatorComponent={Separator}
         />
       )}
     </View>
@@ -191,8 +208,8 @@ const styles = StyleSheet.create({
     textAlignVertical: "center",
     alignSelf: "center",
     alignItems: "center",
-    paddingHorizontal: 15,
-    paddingVertical: 15,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
     borderRadius: 15,
     borderWidth: 2,
     borderColor: "#0D5F13",
@@ -212,6 +229,7 @@ const styles = StyleSheet.create({
   chatBubbleContainer: {
     alignItems: "center",
     paddingRight: 50,
+    flex: 1,
   },
   acceptButton: {
     alignItems: "center",
@@ -236,14 +254,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#0D5F13",
     alignSelf: "center",
-    //paddingBottom: 0,
   },
   red_text: {
     fontFamily: "Nunito_400Regular",
     fontSize: 12,
     color: "#871717",
     alignSelf: "center",
-    //paddingBottom: 0,
   },
 });
 
