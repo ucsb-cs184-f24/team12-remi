@@ -17,7 +17,7 @@ import {
   Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { signOut } from "firebase/auth";
+// import { signOut } from "firebase/auth";
 import { auth, db, storage } from "../../firebaseConfig";
 import {
   collection,
@@ -53,7 +53,7 @@ const { width, height } = Dimensions.get("window");
 const CONTENT_WIDTH = width * 0.94;
 
 const UserProfileInfo = () => {
-  const user = auth.currentUser;
+  const user = auth.currentUser; //This is us right now
   const { username } = useLocalSearchParams(); // Retrieve the username from the URL
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
@@ -72,8 +72,11 @@ const UserProfileInfo = () => {
   const [userEmail, setUserEmail] = useState("");
   const [isPrivate, setIsPrivate] = useState(true);
   const [curr_username, setCurrUsername] = useState("Unknown User");
-  const user_email = user.email;
+  const user_email = user?.email;
   const [postsText, setPostsText] = useState("No recent activity found.");
+  const [isFriend, setIsFriend] = useState(false);
+  const [isMe, setIsMe] = useState(false);
+  let content;
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -128,6 +131,14 @@ const UserProfileInfo = () => {
             fetchUserPosts(postsQuery);
           } else {
             setPostsText("Users's posts are private.");
+          }
+
+          if (userData.friends_list.includes(user_email)) {
+            // if you're friends
+            setIsFriend(true);
+          }
+          if (user_email == userData.email) {
+            setIsMe(true);
           }
 
           return () => {
@@ -185,15 +196,67 @@ const UserProfileInfo = () => {
         );
         return;
       }
+      console.log("user.email: ", user.email);
 
       await addDoc(notificationsRef, {
-        from: user_email,
-        to: user.email,
+        from: user.email,
+        to: userEmail,
         read_flag: true,
       });
       Alert.alert("Success", `Friend request sent to ${username}`);
     } catch (error) {
       console.error("Error sending invite:", error);
+    }
+  };
+
+  const removeFriend = async () => {
+    try {
+      console.log(
+        `Removing friend relationship between ${user_email} and ${userEmail}`
+      );
+
+      // Remove friend from current user's `friends_list`
+      const currentUserQuery = query(
+        collection(db, "RemiUsers"),
+        where("email", "==", user_email)
+      );
+
+      const currentUserSnapshot = await getDocs(currentUserQuery);
+      if (!currentUserSnapshot.empty) {
+        const currentUserDoc = currentUserSnapshot.docs[0].ref;
+        console.log("Current user document reference:", currentUserDoc.path);
+
+        await updateDoc(currentUserDoc, {
+          friends_list: arrayRemove(userEmail),
+        });
+        console.log(
+          `Successfully removed ${userEmail} from ${user_email}'s friends_list`
+        );
+      }
+
+      // Remove current user from friend's `friends_list`
+      const friendQuery = query(
+        collection(db, "RemiUsers"),
+        where("email", "==", userEmail)
+      );
+
+      const friendSnapshot = await getDocs(friendQuery);
+      if (!friendSnapshot.empty) {
+        const friendDoc = friendSnapshot.docs[0].ref;
+        console.log("Friend document reference:", friendDoc.path);
+
+        await updateDoc(friendDoc, {
+          friends_list: arrayRemove(user_email),
+        });
+        console.log(
+          `Successfully removed ${user_email} from ${userEmail}'s friends_list`
+        );
+      }
+
+      alert("Friend removed successfully");
+    } catch (error) {
+      console.error("Error removing friend:", error);
+      alert("Failed to remove friend");
     }
   };
 
@@ -227,6 +290,31 @@ const UserProfileInfo = () => {
     );
   }
 
+  if (!isFriend) {
+    if (isMe) {
+      content = <View></View>;
+    } else {
+      content = (
+        <TouchableOpacity
+          style={styles.addFriendButton}
+          onPress={() => addFriend()}
+        >
+          <Text style={styles.addFriendButtonText}>Invite Friend</Text>
+        </TouchableOpacity>
+      );
+    }
+  } else {
+    // Not friends or yourself
+    content = (
+      <TouchableOpacity
+        style={styles.removeFriendButton}
+        onPress={() => removeFriend()}
+      >
+        <Text style={styles.removeFriendButtonText}>Remove Friend</Text>
+      </TouchableOpacity>
+    );
+  }
+
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <LinearGradient
@@ -240,12 +328,7 @@ const UserProfileInfo = () => {
         >
           <View style={styles.header}>
             <Text style={styles.username}>{username}</Text>
-            <TouchableOpacity
-              style={styles.addFriendButton}
-              onPress={() => addFriend()}
-            >
-              <Text style={styles.addFriendButtonText}>Invite Friend</Text>
-            </TouchableOpacity>
+            {content}
           </View>
 
           <FlatList
@@ -467,6 +550,15 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   addFriendButtonText: {
+    color: "#333",
+    fontWeight: "bold",
+  },
+  removeFriendButton: {
+    backgroundColor: "#FFCCCC",
+    padding: 8,
+    borderRadius: 5,
+  },
+  removeFriendButtonText: {
     color: "#333",
     fontWeight: "bold",
   },
