@@ -17,7 +17,8 @@ import {
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
-import { auth } from "../firebaseConfig";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db, auth } from "../firebaseConfig";
 import * as Font from "expo-font";
 import {
   useFonts,
@@ -30,26 +31,57 @@ import {
 } from "@expo-google-fonts/nunito";
 import Ustyles from "../components/UniversalStyles";
 import * as SplashScreen from "expo-splash-screen";
+import { Ionicons } from "@expo/vector-icons";
 
 SplashScreen.preventAutoHideAsync();
 
+async function signInWithUsername(username: string, password: string) {
+  try {
+    // Query Firestore to find the user document with the given username
+    const usersRef = collection(db, "RemiUsers");
+    const q = query(usersRef, where("username", "==", username));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      throw new Error("User not found");
+    }
+
+    // Assume username is unique, so we can safely get the first document
+    const userDoc = querySnapshot.docs[0];
+    const userData = userDoc.data();
+
+    // Use the email associated with the username to sign in
+    const userCredential = await signInWithEmailAndPassword(auth, userData.email, password);
+    return userCredential.user;
+  } catch (error) {
+    console.error("Error signing in with username:", error);
+    throw error;
+  }
+}
+
 export default function Index() {
   const router = useRouter();
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [appIsReady, setAppIsReady] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const signIn = async () => {
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithUsername(username, password);
     } catch (e: any) {
       const err = e as FirebaseError;
       alert("Sign in failed: " + err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   let [fontsLoaded] = useFonts({
@@ -80,34 +112,47 @@ export default function Index() {
       <View style={Ustyles.background}>
         <ImageBackground
           source={require("../assets/images/background-lineart.png")}
-          style={Ustyles.backgroundImage}>
+          style={Ustyles.backgroundImage}
+        >
           <View style={styles.container}>
             <ImageBackground
               source={require("../assets/images/bg-ellipse.png")}
               style={{ justifyContent: "center" }}
-              resizeMode="contain">
+              resizeMode="contain"
+            >
               <Text style={Ustyles.logotext}>remi</Text>
             </ImageBackground>
             <KeyboardAvoidingView behavior="padding">
-              <TextInput
+            <TextInput
                 style={styles.input}
-                value={email}
-                onChangeText={setEmail}
+                value={username}
+                onChangeText={setUsername}
                 autoCorrect={false}
                 autoCapitalize="none"
-                keyboardType="email-address"
                 placeholderTextColor="#BCD5AC"
-                placeholder="Email"
+                placeholder="Username"
               />
-              <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                autoCorrect={false}
-                secureTextEntry
-                placeholder="Password"
-                placeholderTextColor="#BCD5AC"
-              />
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  value={password}
+                  onChangeText={setPassword}
+                  autoCorrect={false}
+                  secureTextEntry={!showPassword}
+                  placeholder="Password"
+                  placeholderTextColor="#BCD5AC"
+                />
+                <TouchableOpacity
+                  onPress={togglePasswordVisibility}
+                  style={styles.eyeIcon}
+                >
+                  <Ionicons
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={24}
+                    color="#0D5F13"
+                  />
+                </TouchableOpacity>
+              </View>
 
               {loading ? (
                 <ActivityIndicator size={"small"} style={{ margin: 28 }} />
@@ -118,7 +163,8 @@ export default function Index() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={Ustyles.button}
-                    onPress={() => router.push("./(auth)/register")}>
+                    onPress={() => router.push("./(auth)/register")}
+                  >
                     <Text style={Ustyles.header_2}>Create Account</Text>
                   </TouchableOpacity>
                 </View>
@@ -145,5 +191,22 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#fff",
     borderColor: "#0D5F13",
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 4,
+    borderWidth: 2,
+    borderRadius: 4,
+    backgroundColor: "#fff",
+    borderColor: "#0D5F13",
+  },
+  passwordInput: {
+    flex: 1,
+    height: 50,
+    padding: 10,
+  },
+  eyeIcon: {
+    padding: 10,
   },
 });

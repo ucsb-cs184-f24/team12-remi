@@ -20,9 +20,12 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Animated,
+  RefreshControl,
+  ImageBackground,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons"; // For icons
+import { Image as ExpoImage } from "expo-image";
 import {
   collection,
   addDoc,
@@ -30,15 +33,18 @@ import {
   getDocs,
   doc,
   query,
+  QueryDocumentSnapshot,
   QuerySnapshot,
   DocumentData,
+  orderBy,
+  limit,
+  startAfter,
   where,
   onSnapshot,
   updateDoc,
   arrayUnion,
   deleteDoc,
   arrayRemove,
-  orderBy,
   Timestamp,
 } from "firebase/firestore";
 import { db, auth } from "../../../firebaseConfig"; // Ensure correct imports
@@ -49,6 +55,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScrollResetContext } from "./_layout";
 import { LinearGradient } from "expo-linear-gradient";
+import { NewPostBanner } from "./components/NewPostBanner";
 
 const formatTimeAgo = (date: Date) => {
   const now = new Date();
@@ -113,8 +120,10 @@ const hashtagMap: { [key: string]: string } = {
   "300": "Course",
   "301": "Appetizers",
   "302": "Main Course",
-  "303": "Side Dish"
+  "303": "Side Dish",
 };
+
+const blurhash = "L6PZfSi_.AyE_3t7t7R**0o#DgR4";
 
 interface RecipePostProps {
   postID: string;
@@ -203,6 +212,8 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   const router = useRouter();
   const [commentError, setCommentError] = useState<string | null>(null);
   const modalPosition = useRef(new Animated.Value(0)).current;
+  const heartScale = useRef(new Animated.Value(1)).current;
+  const glimmerOpacity = useRef(new Animated.Value(0)).current;
 
   if (!postID) {
     console.error("postID is undefined");
@@ -534,6 +545,33 @@ export const RecipePost: React.FC<RecipePostProps> = ({
             likesCount: postData.likesCount + 1, // Directly update Firestore
             likedBy: arrayUnion(userId), // Add user ID
           });
+          // Trigger the heart animation with glimmer
+          Animated.parallel([
+            Animated.sequence([
+              Animated.timing(heartScale, {
+                toValue: 1.2,
+                duration: 150,
+                useNativeDriver: true,
+              }),
+              Animated.timing(heartScale, {
+                toValue: 1,
+                duration: 150,
+                useNativeDriver: true,
+              }),
+            ]),
+            Animated.sequence([
+              Animated.timing(glimmerOpacity, {
+                toValue: 1,
+                duration: 150,
+                useNativeDriver: true,
+              }),
+              Animated.timing(glimmerOpacity, {
+                toValue: 0,
+                duration: 150,
+                useNativeDriver: true,
+              }),
+            ]),
+          ]).start();
         }
       }
     } catch (error) {
@@ -603,9 +641,11 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               })
             }
           >
-            <Image
+            <ExpoImage
               source={require("../../../assets/placeholders/profile-pic.png")}
               style={Ustyles.avatar}
+              placeholder={blurhash}
+              transition={200}
             />
           </TouchableOpacity>
           <View>
@@ -623,21 +663,46 @@ export const RecipePost: React.FC<RecipePostProps> = ({
           </View>
         </View>
         <View style={Ustyles.engagement}>
-          <View style={Ustyles.engagementItem}>
-            <Ionicons
-              name={
-                likedBy.includes(auth.currentUser?.uid ?? "")
-                  ? "heart"
-                  : "heart-outline"
-              }
-              size={27}
-              color={
-                likedBy.includes(auth.currentUser?.uid ?? "") ? "red" : "gray"
-              }
-              onPress={handleLikePress}
-            />
+          <Animated.View
+            style={[
+              Ustyles.engagementItem,
+              { transform: [{ scale: heartScale }] },
+            ]}
+          >
+            <View style={{ position: "relative" }}>
+              <TouchableOpacity onPress={handleLikePress}>
+                <Ionicons
+                  name={
+                    likedBy.includes(auth.currentUser?.uid ?? "")
+                      ? "heart"
+                      : "heart-outline"
+                  }
+                  size={27}
+                  color={
+                    likedBy.includes(auth.currentUser?.uid ?? "")
+                      ? "red"
+                      : "gray"
+                  }
+                />
+              </TouchableOpacity>
+              <Animated.View
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  opacity: glimmerOpacity,
+                  transform: [{ scale: 1.5 }], // Scale the sparkles to fit over the heart
+                }}
+              >
+                <Ionicons name="sparkles" size={27} color="gold" />
+              </Animated.View>
+            </View>
             <Text style={Ustyles.engagementText}>{likesCount}</Text>
-          </View>
+          </Animated.View>
           <View style={Ustyles.engagementItem}>
             {/* Comment Icon */}
             <Ionicons
@@ -647,133 +712,129 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               onPress={handleCommentsPress} // Opens the comment modal
             />
             <Text style={Ustyles.engagementText}>{commentsCount}</Text>
-            <View style={Ustyles.engagementItem}>
-              <Ionicons
-                name={
-                  savedBy.includes(auth.currentUser?.uid ?? "")
-                    ? "bookmark"
-                    : "bookmark-outline"
-                }
-                size={27}
-                color={
-                  savedBy.includes(auth.currentUser?.uid ?? "")
-                    ? "#FBC02D"
-                    : "gray"
-                }
-                onPress={handleSavePress}
-              />
-            </View>
-            {/* Modal for adding a comment */}
-            <Modal
-              visible={commentVisible}
-              animationType="slide"
-              transparent={true}
-              onRequestClose={handleCloseComments}
-            >
-              <TouchableWithoutFeedback onPress={handleCloseComments}>
-                <View style={styles.overlay}>
-                  <TouchableWithoutFeedback>
-                    <Animated.View
-                      style={[
-                        styles.commentContainer,
-                        { transform: [{ translateY: modalPosition }] },
-                      ]} // TODO: figure out why lineargradient not applying to borders
+          </View>
+          <View style={Ustyles.engagementItem}>
+            <Ionicons
+              name={
+                savedBy.includes(auth.currentUser?.uid ?? "")
+                  ? "bookmark"
+                  : "bookmark-outline"
+              }
+              size={27}
+              color={
+                savedBy.includes(auth.currentUser?.uid ?? "")
+                  ? "#FBC02D"
+                  : "gray"
+              }
+              onPress={handleSavePress}
+            />
+          </View>
+          {/* Modal for adding a comment */}
+          <Modal
+            visible={commentVisible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={handleCloseComments}
+          >
+            <TouchableWithoutFeedback onPress={handleCloseComments}>
+              <View style={styles.overlay}>
+                <TouchableWithoutFeedback>
+                  <Animated.View
+                    style={[
+                      styles.commentContainer,
+                      { transform: [{ translateY: modalPosition }] },
+                    ]} // TODO: figure out why lineargradient not applying to borders
+                  >
+                    <LinearGradient
+                      colors={["#BCD5AC", "#FFF9E6"]}
+                      style={styles.gradient_container}
                     >
-                      <LinearGradient
-                        colors={["#BCD5AC", "#FFF9E6"]}
-                        style={styles.gradient_container}
+                      <KeyboardAvoidingView
+                        behavior={Platform.OS === "ios" ? "padding" : "height"}
+                        style={{ flex: 1 }}
+                        keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
                       >
-                        <KeyboardAvoidingView
-                          behavior={
-                            Platform.OS === "ios" ? "padding" : "height"
-                          }
-                          style={{ flex: 1 }}
-                          keyboardVerticalOffset={
-                            Platform.OS === "ios" ? 40 : 0
-                          }
-                        >
-                          <View style={styles.commentContent}>
-                            <View style={styles.header}>
-                              <Text style={styles.header_2}>Comments</Text>
-                            </View>
+                        <View style={styles.commentContent}>
+                          <View style={styles.header}>
+                            <Text style={styles.header_2}>Comments</Text>
+                          </View>
 
-                            {isLoadingComments ? (
-                              <Text style={Ustyles.text}>
-                                Loading comments...
-                              </Text>
-                            ) : commentError ? (
-                              <Text style={Ustyles.text}>{commentError}</Text>
-                            ) : (
-                              <FlatList
-                                data={postComments}
-                                keyExtractor={(item) => item.id}
-                                renderItem={({ item }) => (
-                                  <TouchableWithoutFeedback onPress={() => {}}>
-                                    <View style={styles.commentItem}>
-                                      <Image
-                                        source={{ uri: item.profilePic }}
-                                        style={Ustyles.avatar}
-                                      />
-                                      <View style={styles.commentTextContent}>
-                                        <View>
-                                          <Text style={styles.username}>
-                                            {item.username?.trim() ||
-                                              "Unknown User"}
-                                          </Text>
+                          {isLoadingComments ? (
+                            <Text style={Ustyles.text}>
+                              Loading comments...
+                            </Text>
+                          ) : commentError ? (
+                            <Text style={Ustyles.text}>{commentError}</Text>
+                          ) : (
+                            <FlatList
+                              data={postComments}
+                              keyExtractor={(item) => item.id}
+                              renderItem={({ item }) => (
+                                <TouchableWithoutFeedback onPress={() => {}}>
+                                  <View style={styles.commentItem}>
+                                    <Image
+                                      source={{ uri: item.profilePic }}
+                                      style={Ustyles.avatar}
+                                    />
+                                    <View style={styles.commentTextContent}>
+                                      <View>
+                                        <Text style={styles.username}>
+                                          {item.username?.trim() ||
+                                            "Unknown User"}
+                                        </Text>
 
-                                          <Text style={Ustyles.timeAgo}>
-                                            {formatTimeAgo(
-                                              item.createdAt instanceof Date
-                                                ? item.createdAt
-                                                : item.createdAt.toDate()
-                                            )}
-                                          </Text>
-                                        </View>
+                                        <Text style={Ustyles.timeAgo}>
+                                          {formatTimeAgo(
+                                            item.createdAt instanceof Date
+                                              ? item.createdAt
+                                              : item.createdAt.toDate()
+                                          )}
+                                        </Text>
+                                      </View>
 
-                                        <View>
-                                          <Text style={styles.commentText}>
-                                            {item.text?.trim() ||
-                                              "No comment text available"}
-                                          </Text>
-                                        </View>
+                                      <View>
+                                        <Text style={styles.commentText}>
+                                          {item.text?.trim() ||
+                                            "No comment text available"}
+                                        </Text>
                                       </View>
                                     </View>
-                                  </TouchableWithoutFeedback>
-                                )}
-                                ListEmptyComponent={
-                                  <Text style={styles.emptyComments}>
-                                    No comments yet. Be the first!
-                                  </Text>
-                                }
-                                contentContainerStyle={styles.commentsList}
-                              />
-                            )}
+                                  </View>
+                                </TouchableWithoutFeedback>
+                              )}
+                              ListEmptyComponent={
+                                <Text style={styles.emptyComments}>
+                                  No comments yet. Be the first!
+                                </Text>
+                              }
+                              contentContainerStyle={styles.commentsList}
+                            />
+                          )}
 
-                            <View style={styles.inputContainer}>
-                              <TextInput
-                                style={styles.textInput}
-                                value={newComment}
-                                onChangeText={setNewComment}
-                                placeholder="Add a comment..."
-                                placeholderTextColor="#0D5F13"
-                                multiline
-                              />
-                              <TouchableOpacity
-                                style={styles.button}
-                                onPress={onSubmitComment}
-                              >
-                                <Text style={styles.buttonText}>Submit</Text>
-                              </TouchableOpacity>
-                            </View>
+                          <View style={styles.inputContainer}>
+                            <TextInput
+                              style={styles.textInput}
+                              value={newComment}
+                              onChangeText={setNewComment}
+                              placeholder="Add a comment..."
+                              placeholderTextColor="#0D5F13"
+                              multiline
+                            />
+                            <TouchableOpacity
+                              style={styles.button}
+                              onPress={onSubmitComment}
+                            >
+                              <Text style={styles.buttonText}>Submit</Text>
+                            </TouchableOpacity>
                           </View>
-                        </KeyboardAvoidingView>
-                      </LinearGradient>
-                    </Animated.View>
-                  </TouchableWithoutFeedback>
-                </View>
-              </TouchableWithoutFeedback>
-            </Modal>
-          </View>
+                        </View>
+                      </KeyboardAvoidingView>
+                    </LinearGradient>
+                  </Animated.View>
+                </TouchableWithoutFeedback>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
         </View>
       </View>
       <View style={Ustyles.recipeContent}>
@@ -785,13 +846,15 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                   <ActivityIndicator size="large" color="#0D5F13" />
                 </View>
               )}
-              <Image
+              <ExpoImage
                 source={
                   mediaUrl
                     ? { uri: mediaUrl }
                     : require("../../../assets/placeholders/recipe-image.png")
                 }
                 style={Ustyles.recipeImage}
+                placeholder={blurhash}
+                transition={200}
                 onLoad={() => handleImageLoad(postID)} // Updates loading state to false
                 onError={() => handleImageError(postID)} // Handles errors
               />
@@ -810,16 +873,27 @@ export const RecipePost: React.FC<RecipePostProps> = ({
             visible={modalVisible}
             onRequestClose={handleCloseModal} // Close on back button press
           >
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalText}>{caption}</Text>
-                {/* Add more content as needed */}
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={handleCloseModal}
+            <View style={styles.notesOverlay}>
+              <View style={styles.notesContent}>
+                <ImageBackground
+                  source={require("../../../assets/images/background-lineart.png")}
+                  style={styles.backgroundImage}
+                  imageStyle={styles.backgroundImageStyle}
                 >
-                  <Text style={styles.closeButtonText}>Close</Text>
-                </TouchableOpacity>
+                  {" "}
+                  <View style={styles.notesInnerContent}>
+                    <Text style={styles.notesHeader}>Chef's Notes:</Text>
+                    <ScrollView contentContainerStyle={styles.notesScroll}>
+                      <Text style={styles.notesText}>{caption}</Text>
+                    </ScrollView>
+                    <TouchableOpacity
+                      style={styles.closeButton}
+                      onPress={handleCloseModal}
+                    >
+                      <Text style={styles.closeButtonText}>Close</Text>
+                    </TouchableOpacity>
+                  </View>
+                </ImageBackground>
               </View>
             </View>
           </Modal>
@@ -833,7 +907,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               <View
                 style={[
                   Ustyles.sliderFill,
-                  { width: `${(price / 10) * 100}%` },
+                  { width: `${(price / 100) * 100}%` },
                 ]}
               />
             </View>
@@ -878,10 +952,12 @@ export const RecipePost: React.FC<RecipePostProps> = ({
             >
               <Ionicons name="close" size={30} color="#FFF" />
             </TouchableOpacity>
-            <Image
+            <ExpoImage
               source={{ uri: mediaUrl }}
               style={styles.fullScreenImage}
-              resizeMode="contain"
+              placeholder={blurhash}
+              transition={200}
+              contentFit="contain"
             />
           </View>
         </Modal>
@@ -894,49 +970,105 @@ export const RecipePost: React.FC<RecipePostProps> = ({
 const Home: React.FC = () => {
   const insets = useSafeAreaInsets();
   const user = auth.currentUser;
-  const [posts, setPosts] = useState<DocumentData[]>([]);
+  const postsArrRef = useRef<DocumentData[]>([]);
   //record notification count using state
   // const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [friendRequests, setFriendRequests] = useState<
     { id: string; [key: string]: any }[]
   >([]);
   const router = useRouter();
-  const [friendsList, setFriendsList] = useState<string[]>([]);
+  const friendsList = useRef<string[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const setResetScroll = useContext(ScrollResetContext);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [newPostAvail, setNewPostAvail] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
+  const lastCreatedAt = useRef(null);
+  const [friendsListChange, setFriendsListChange] = useState(false);
+  const POSTS_PER_PAGE = 3;
 
-  const fetchPostsWithCommentsFlag = async () => {
+  const onRefresh = React.useCallback(async () => {
+    setNewPostAvail(false);
+    setRefreshing(true);
+    console.log("Trying to refresh");
+    lastCreatedAt.current = null;
+    setHasMorePosts(true);
+    await fetchPostsWithCommentsFlag();
+    setRefreshing(false);
+    console.log("Done w refresh");
+  }, []);
+
+  const fetchPostsWithCommentsFlag = async (doomScroll = false) => {
+    if (loading || loadingMore || !hasMorePosts) return;
+    const loadingState = doomScroll ? setLoadingMore : setLoading;
+
+    if (friendsList.current.length == 0) {
+      postsArrRef.current = [];
+      return;
+    }
+
+    loadingState(true);
     const postsRef = collection(db, "Posts");
-    const postsQuery = query(postsRef, where("userId", "in", friendsList));
-
-    const querySnapshot = await getDocs(postsQuery);
-    const currentUserId = auth.currentUser?.uid;
-
-    const postsWithCommentsFlag = await Promise.all(
-      querySnapshot.docs.map(async (doc) => {
-        const postData = doc.data();
-        const postId = doc.id;
-
-        // Check if the current user has commented on this post
-        const commentsRef = collection(db, "Comments");
-        const commentsQuery = query(
-          commentsRef,
-          where("postId", "==", postId),
-          where("userId", "==", currentUserId)
-        );
-
-        const userHasCommentedSnapshot = await getDocs(commentsQuery);
-        const userHasCommented = !userHasCommentedSnapshot.empty;
-
-        return {
-          ...postData,
-          postID: postId,
-          userHasCommented,
-        };
-      })
+    let postsQuery = query(
+      postsRef,
+      where("userId", "in", friendsList.current),
+      orderBy("createdAt", "desc"),
+      limit(POSTS_PER_PAGE)
     );
-    console.log("Refreshing from hometsx..");
-    setPosts(postsWithCommentsFlag);
+
+    if (doomScroll && lastCreatedAt.current) {
+      postsQuery = query(
+        postsQuery,
+        where("createdAt", "<", lastCreatedAt.current)
+      );
+    }
+
+    try {
+      const querySnapshot = await getDocs(postsQuery);
+      const currentUserId = auth.currentUser?.uid;
+
+      const newPosts = await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
+          const postData = doc.data();
+          const postId = doc.id;
+
+          // Check if the current user has commented on this post
+          const commentsRef = collection(db, "Comments");
+          const commentsQuery = query(
+            commentsRef,
+            where("postId", "==", postId),
+            where("userId", "==", currentUserId)
+          );
+
+          const userHasCommentedSnapshot = await getDocs(commentsQuery);
+          const userHasCommented = !userHasCommentedSnapshot.empty;
+
+          return {
+            ...postData,
+            postID: postId,
+            userHasCommented,
+          };
+        })
+      );
+
+      if (doomScroll) {
+        postsArrRef.current = [...postsArrRef.current, ...newPosts];
+      } else {
+        postsArrRef.current = newPosts;
+      }
+
+      if (!querySnapshot.empty) {
+        const lastCreated = querySnapshot.docs[querySnapshot.docs.length - 1];
+        lastCreatedAt.current = lastCreated.data().createdAt;
+      }
+      setHasMorePosts(querySnapshot.docs.length === POSTS_PER_PAGE);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    } finally {
+      loadingState(false);
+    }
   };
 
   useEffect(() => {
@@ -949,19 +1081,90 @@ const Home: React.FC = () => {
     }
   }, [setResetScroll]);
 
-  // Fetch all posts from Firestore
+  // Use `useEffect` to fetch posts when the component mounts, listening for latest post as well
   useEffect(() => {
-    if (friendsList.length === 0) return;
+    let isMounted = true;
+    const fetchData = async () => {
+      if (isMounted) {
+        await fetchPostsWithCommentsFlag();
 
-    fetchPostsWithCommentsFlag();
-  }, [friendsList]);
+        if (friendsList.current.length === 0) return;
 
-  // Use `useEffect` to fetch posts when the component mounts and every minute
+        const postsRef = collection(db, "Posts");
+        const postsQuery = query(
+          postsRef,
+          where("userId", "in", friendsList.current),
+          orderBy("createdAt", "desc"),
+          limit(1)
+        );
+
+        const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
+          if (!querySnapshot.empty) {
+            const latestPostID = querySnapshot.docs[0].id;
+            if (
+              postsArrRef.current.length > 0 &&
+              latestPostID === postsArrRef.current[0].postID
+            ) {
+              console.log("Up to date on posts.");
+              setNewPostAvail(false);
+            } else {
+              console.log("Can refresh for more.");
+              console.log(postsArrRef.current);
+              console.log(querySnapshot.docs[0].data());
+              setNewPostAvail(true);
+            }
+          } else {
+            console.log("No posts found.");
+          }
+        });
+
+        return () => unsubscribe();
+      }
+    };
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [friendsListChange]);
+
   useEffect(() => {
-    fetchPostsWithCommentsFlag();
-    const interval = setInterval(fetchPostsWithCommentsFlag, 60000); // 60000 ms = 1 minute
-    return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, []);
+    const subscribeToFriendsList = async () => {
+      if (!user) return;
+
+      const userDocRef = doc(db, "RemiUsers", user.uid);
+
+      const unsubscribe = onSnapshot(
+        userDocRef,
+        async (docSnapshot) => {
+          if (docSnapshot.exists()) {
+            const userData = docSnapshot.data();
+            const friendsEmails = userData.friends_list || [];
+            if (friendsEmails.length > 0) {
+              const q = query(
+                collection(db, "RemiUsers"),
+                where("email", "in", friendsEmails)
+              );
+              const friendsSnapshot = await getDocs(q);
+              const friendsIds = friendsSnapshot.docs.map((doc) => doc.id);
+              friendsList.current = friendsIds;
+              setFriendsListChange(!friendsListChange);
+              console.log("Updated friendsList:", friendsIds);
+            }
+          } else {
+            console.log("No such document!");
+          }
+        },
+        (error) => {
+          console.error("Error listening to document:", error);
+        }
+      );
+
+      return () => unsubscribe();
+    };
+
+    subscribeToFriendsList();
+  }, [user]);
 
   useEffect(() => {
     // Set up real-time listener for pending friend requests
@@ -984,34 +1187,16 @@ const Home: React.FC = () => {
     }
   }, [user]);
 
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      doc(db, "RemiUsers", user?.uid || ""),
-      (doc) => {
-        if (doc.exists()) {
-          const userData = doc.data();
-          const friendsEmails = userData.friends_list || [];
+  const handleLoadMore = async () => {
+    if (!loading && !loadingMore && hasMorePosts) {
+      await fetchPostsWithCommentsFlag(true);
+    }
+  };
 
-          if (friendsEmails.length > 0) {
-            const q = query(
-              collection(db, "RemiUsers"),
-              where("email", "in", friendsEmails)
-            );
-            getDocs(q)
-              .then((querySnapshot) => {
-                const friendsIds = querySnapshot.docs.map((doc) => doc.id);
-                setFriendsList(friendsIds);
-              })
-              .catch((error) => {
-                console.error("Error fetching friend list:", error);
-              });
-          }
-        }
-      }
-    );
-
-    return () => unsubscribe();
-  }, [user]);
+  const handleNewPostsBannerPress = () => {
+    scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+    onRefresh();
+  };
 
   return (
     <SafeAreaView style={Ustyles.background} edges={["top"]}>
@@ -1020,6 +1205,21 @@ const Home: React.FC = () => {
           ref={scrollViewRef}
           stickyHeaderIndices={[0]}
           style={Ustyles.feed}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          onMomentumScrollEnd={({ nativeEvent }) => {
+            const { layoutMeasurement, contentOffset, contentSize } =
+              nativeEvent;
+            const paddingToBottom = layoutMeasurement.height * 0.1;
+            if (
+              layoutMeasurement.height + contentOffset.y >=
+              contentSize.height - paddingToBottom
+            ) {
+              handleLoadMore();
+            }
+          }}
+          scrollEventThrottle={100}
         >
           <View
             style={[
@@ -1049,43 +1249,49 @@ const Home: React.FC = () => {
               </TouchableOpacity>
             </View>
           </View>
-          {posts
-            .sort((a, b) => {
-              const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
-              const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
-              return dateB.getTime() - dateA.getTime();
-            })
-            .map((post, index) => (
-              <View key={post.postID}>
-                <RecipePost
-                  key={index}
-                  userID={post.userId || "Anonymous"}
-                  timeAgo={
-                    post.createdAt
-                      ? new Date(post.createdAt)
-                      : new Date(2002, 2, 8)
-                  }
-                  likes={post.likesCount || 0}
-                  comments={post.comments || 0}
-                  recipeName={post.title || "Untitled Recipe"}
-                  price={post.Price || 0.0}
-                  difficulty={post.Difficulty || 0}
-                  time={post.Time || 0}
-                  caption={post.caption || "No caption"}
-                  hashtags={post.hashtags || ["None"]}
-                  mediaUrl={post.mediaUrl || ""}
-                  postID={post.postID}
-                  userHasCommented={post.userHasCommented}
-                />
-                <View style={Ustyles.separator} />
-              </View>
-            ))}
+          {newPostAvail && (
+            <NewPostBanner onPress={handleNewPostsBannerPress} />
+          )}
+          {postsArrRef.current.map((post, index) => (
+            <View key={post.postID}>
+              <RecipePost
+                key={index}
+                userID={post.userId || "Anonymous"}
+                timeAgo={
+                  post.createdAt
+                    ? new Date(post.createdAt)
+                    : new Date(2002, 2, 8)
+                }
+                likes={post.likesCount || 0}
+                comments={post.comments || 0}
+                recipeName={post.title || "Untitled Recipe"}
+                price={post.Price || 0.0}
+                difficulty={post.Difficulty || 0}
+                time={post.Time || 0}
+                caption={post.caption || "No caption"}
+                hashtags={post.hashtags || ["None"]}
+                mediaUrl={post.mediaUrl || ""}
+                postID={post.postID}
+                userHasCommented={post.userHasCommented}
+              />
+              <View style={Ustyles.separator} />
+            </View>
+          ))}
+          {loadingMore && (
+            <ActivityIndicator
+              size="large"
+              color="#0D5F13"
+              style={{ marginVertical: 20 }}
+            />
+          )}
         </ScrollView>
         {/* <Button title="Sign out" onPress={() => signOut(auth)} color="#0D5F13" /> */}
       </View>
     </SafeAreaView>
   );
 };
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   modalContainer2: {
@@ -1189,11 +1395,20 @@ const styles = StyleSheet.create({
 
     backgroundColor: "rgba(0,0,0,0)",
   },
-  modalText: {
+  notesText: {
     fontSize: 16,
     marginBottom: 20,
     color: "#0D5F13",
     fontFamily: "Nunito_400Regular",
+    textAlign: "left",
+  },
+  notesHeader: {
+    fontSize: 24,
+    marginBottom: 10,
+    color: "#0D5F13",
+    fontFamily: "Nunito_700Bold",
+    textAlign: "left",
+    alignSelf: "center",
   },
   closeButton: {
     alignSelf: "center",
@@ -1215,6 +1430,41 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-end",
     backgroundColor: "rgba(0, 0, 0, 0)",
+  },
+  notesOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  notesContent: {
+    width: screenWidth * 0.9,
+    height: screenHeight * 0.8,
+    backgroundColor: "#FFF9E6",
+    borderRadius: 20,
+    //padding: 20,
+    //alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    borderWidth: 3,
+    borderColor: "#0D5F13",
+  },
+  notesInnerContent: {
+    flex: 1,
+    padding: 20,
+    justifyContent: "space-between",
+  },
+  notesScroll: {
+    flexGrow: 0.8,
+    justifyContent: "flex-start",
+    //alignItems: "center",
+    paddingBottom: 0,
   },
   container: {
     flex: 1,
@@ -1362,6 +1612,12 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
     fontSize: 18,
     color: "#0D5F13",
+  },
+  backgroundImage: {
+    flex: 1,
+  },
+  backgroundImageStyle: {
+    opacity: 0.2,
   },
 });
 

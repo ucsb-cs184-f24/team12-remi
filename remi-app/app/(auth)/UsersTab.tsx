@@ -21,6 +21,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "react-native-elements";
 import { useRouter } from "expo-router";
+import { Friends } from "../friends";
 
 interface User {
   friends_list: Array<string>;
@@ -164,8 +165,7 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
                 // If profilePic is a string (likely a direct URL)
                 return { uri: item.profilePic };
               } else {
-                // Default fallback to placeholder
-                return require("../../assets/placeholders/user-avatar.png");
+                return { uri: item.profilePic }; // External URL
               }
             })()}
             containerStyle={styles.avatarContainer}
@@ -191,8 +191,7 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
         ) : (
           <TouchableOpacity
             style={styles.inviteButton}
-            onPress={() => handleInvite(item)}
-          >
+            onPress={() => handleInvite(item)}>
             <Ionicons name="person-add" size={20} color="#FFFFFF" />
             <Text style={styles.inviteButtonText}>Invite</Text>
           </TouchableOpacity>
@@ -219,19 +218,15 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
     );
   }
 
-  return (
-    <View style={styles.container}>
-      <FlatList
-        data={filteredFriends}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.email}
-        ListEmptyComponent={
-          searchQuery ? (
-            <Text style={styles.emptyText}>No users found</Text>
-          ) : null
-        }
-      />
-    </View>
+  return searchQuery.trim() === "" ? (
+    <Friends /> // Render the Friends component
+  ) : (
+    <FlatList
+      data={filteredFriends}
+      renderItem={renderItem}
+      keyExtractor={(item) => item.email}
+      ListEmptyComponent={<Text style={styles.emptyText}>No users found</Text>}
+    />
   );
 };
 

@@ -71,19 +71,21 @@ const Ustyles = StyleSheet.create({
     fontFamily: "Nunito_400Regular",
   },
   engagement: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginHorizontal: -15,
+    marginTop: 8,
   },
   engagementItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: 20,
+    paddingRight: 15,
   },
   engagementText: {
+    marginLeft: 4,
     fontSize: 14,
-    marginLeft: 5,
-    color: "#8B4513",
-    textAlignVertical: "center",
+    color: '#555',
   },
   recipeContent: {
     flexDirection: "row",

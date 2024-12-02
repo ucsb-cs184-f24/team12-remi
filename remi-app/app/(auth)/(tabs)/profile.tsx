@@ -33,6 +33,7 @@ import {
   arrayUnion,
   deleteDoc,
   arrayRemove,
+  orderBy,
 } from "firebase/firestore";
 import {
   ref,
@@ -220,7 +221,11 @@ export default function UserProfileComponent() {
   const fetchUserPosts = async () => {
     try {
       const postsRef = collection(db, "Posts");
-      const q = query(postsRef, where("userId", "==", user?.uid));
+      const q = query(
+        postsRef,
+        where("userId", "==", user?.uid),
+        orderBy("createdAt", "desc")
+      );
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
@@ -312,6 +317,7 @@ export default function UserProfileComponent() {
 
   const handleBookmarksPress = () => {
     setBookmarkVisible(false);
+    setIsMenuVisible(false);
     router.push("../../bookmarks");
   };
 
@@ -495,8 +501,8 @@ export default function UserProfileComponent() {
           <Modal
             isVisible={isMenuVisible}
             onBackdropPress={() => setIsMenuVisible(false)}
-            animationIn="slideInRight"
-            animationOut="slideOutRight"
+            animationIn="fadeIn"
+            animationOut="fadeOut"
             style={styles.modal}
           >
             <View style={styles.menuContainer}>
