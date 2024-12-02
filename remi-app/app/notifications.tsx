@@ -178,7 +178,7 @@ const Notifs = () => {
         <Spacer size={20} />
         {friendRequests.length === 0 ? (
           <Text style={[Ustyles.text, styles.noRequestsText]}>
-            No friend requests.
+            No Notifications.
           </Text>
         ) : (
           <FlatList
