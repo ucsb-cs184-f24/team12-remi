@@ -212,6 +212,8 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   const router = useRouter();
   const [commentError, setCommentError] = useState<string | null>(null);
   const modalPosition = useRef(new Animated.Value(0)).current;
+  const heartScale = useRef(new Animated.Value(1)).current;
+  const glimmerOpacity = useRef(new Animated.Value(0)).current;
 
   if (!postID) {
     console.error("postID is undefined");
@@ -543,6 +545,33 @@ export const RecipePost: React.FC<RecipePostProps> = ({
             likesCount: postData.likesCount + 1, // Directly update Firestore
             likedBy: arrayUnion(userId), // Add user ID
           });
+          // Trigger the heart animation with glimmer
+          Animated.parallel([
+            Animated.sequence([
+              Animated.timing(heartScale, {
+                toValue: 1.2,
+                duration: 150,
+                useNativeDriver: true,
+              }),
+              Animated.timing(heartScale, {
+                toValue: 1,
+                duration: 150,
+                useNativeDriver: true,
+              }),
+            ]),
+            Animated.sequence([
+              Animated.timing(glimmerOpacity, {
+                toValue: 1,
+                duration: 150,
+                useNativeDriver: true,
+              }),
+              Animated.timing(glimmerOpacity, {
+                toValue: 0,
+                duration: 150,
+                useNativeDriver: true,
+              }),
+            ]),
+          ]).start();
         }
       }
     } catch (error) {
@@ -634,21 +663,46 @@ export const RecipePost: React.FC<RecipePostProps> = ({
           </View>
         </View>
         <View style={Ustyles.engagement}>
-          <View style={Ustyles.engagementItem}>
-            <Ionicons
-              name={
-                likedBy.includes(auth.currentUser?.uid ?? "")
-                  ? "heart"
-                  : "heart-outline"
-              }
-              size={27}
-              color={
-                likedBy.includes(auth.currentUser?.uid ?? "") ? "red" : "gray"
-              }
-              onPress={handleLikePress}
-            />
+          <Animated.View
+            style={[
+              Ustyles.engagementItem,
+              { transform: [{ scale: heartScale }] },
+            ]}
+          >
+            <View style={{ position: "relative" }}>
+              <TouchableOpacity onPress={handleLikePress}>
+                <Ionicons
+                  name={
+                    likedBy.includes(auth.currentUser?.uid ?? "")
+                      ? "heart"
+                      : "heart-outline"
+                  }
+                  size={27}
+                  color={
+                    likedBy.includes(auth.currentUser?.uid ?? "")
+                      ? "red"
+                      : "gray"
+                  }
+                />
+              </TouchableOpacity>
+              <Animated.View
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  opacity: glimmerOpacity,
+                  transform: [{ scale: 1.5 }], // Scale the sparkles to fit over the heart
+                }}
+              >
+                <Ionicons name="sparkles" size={27} color="gold" />
+              </Animated.View>
+            </View>
             <Text style={Ustyles.engagementText}>{likesCount}</Text>
-          </View>
+          </Animated.View>
           <View style={Ustyles.engagementItem}>
             {/* Comment Icon */}
             <Ionicons
@@ -1399,9 +1453,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
     borderWidth: 3,
-    borderColor: "#0D5F13"
+    borderColor: "#0D5F13",
   },
-  notesInnerContent:{
+  notesInnerContent: {
     flex: 1,
     padding: 20,
     justifyContent: "space-between",
