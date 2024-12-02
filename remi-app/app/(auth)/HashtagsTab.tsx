@@ -1,6 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { Text, View, StyleSheet, FlatList, ScrollView, RefreshControl, ActivityIndicator } from "react-native";
-import { collection, getDocs, DocumentData } from "firebase/firestore";
+import {
+  Text,
+  View,
+  StyleSheet,
+  FlatList,
+  ScrollView,
+  RefreshControl,
+  ActivityIndicator,
+} from "react-native";
+import {
+  collection,
+  getDocs,
+  DocumentData,
+  query,
+  where,
+  orderBy,
+  limit,
+} from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 import { RecipePost } from "./(tabs)/home";
 import Ustyles from "../../components/UniversalStyles";
@@ -22,42 +38,63 @@ const HashtagsTab: React.FC<HashtagsTabProps> = ({ selectedTags }) => {
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchPostsByTags = async () => {
-    if (selectedTags.length === 0) {
-      setError("No tags selected.");
-      setPosts([]);
-      setLoading(false);
-      return;
-    }
-
     setError(null);
     setLoading(true);
+
     try {
       const postsRef = collection(db, "Posts");
-      const snapshot = await getDocs(postsRef);
 
-      const selectedTagIds = selectedTags.map((tag) => tag.id);
+      let postsQuery;
 
-      const filteredPosts = snapshot.docs
-        .map((doc) => {
-          const data = doc.data() as Omit<RecipePostType, "id">;
-          return { id: doc.id, ...data };
-        })
-        .filter((post) => {
-          const postHashtags = post.hashtags
-            ?.split(",")
-            .map((tagId) => parseInt(tagId.trim(), 10))
-            .filter((tagId) => !isNaN(tagId));
+      if (selectedTags.length === 0) {
+        // Default fetch logic when no tags are selected
+        postsQuery = query(
+          postsRef,
+          orderBy("likesCount", "desc"), // Order by likes as an example
+          limit(10) // Limit to top 10 posts
+        );
+      } else {
+        // Fetch posts matching selected tags
+        const selectedTagIds = selectedTags.map((tag) => tag.id);
 
-          return (
-            postHashtags &&
-            selectedTagIds.every((tagId) => postHashtags.includes(tagId))
-          );
-        });
+        const snapshot = await getDocs(postsRef);
+        const filteredPosts = snapshot.docs
+          .map((doc) => {
+            const data = doc.data() as Omit<RecipePostType, "id">;
+            return { id: doc.id, ...data };
+          })
+          .filter((post) => {
+            const postHashtags = post.hashtags
+              ?.split(",")
+              .map((tagId) => parseInt(tagId.trim(), 10))
+              .filter((tagId) => !isNaN(tagId));
 
-      setPosts(filteredPosts);
+            return (
+              postHashtags &&
+              selectedTagIds.every((tagId) => postHashtags.includes(tagId))
+            );
+          });
 
-      if (filteredPosts.length === 0) {
-        setError("No posts found with the selected tags.");
+        setPosts(filteredPosts);
+
+        if (filteredPosts.length === 0) {
+          setError("No posts found with the selected tags.");
+        }
+
+        return;
+      }
+
+      // Fetch default posts if no tags are selected
+      const defaultSnapshot = await getDocs(postsQuery);
+      const defaultPosts = defaultSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setPosts(defaultPosts);
+
+      if (defaultPosts.length === 0) {
+        setError("No posts available at the moment.");
       }
     } catch (error) {
       setError("Error fetching posts.");
@@ -75,6 +112,7 @@ const HashtagsTab: React.FC<HashtagsTabProps> = ({ selectedTags }) => {
     setRefreshing(true);
     fetchPostsByTags().then(() => setRefreshing(false));
   }, [selectedTags]);
+  console.log(selectedTags);
 
   if (loading) {
     return (
@@ -95,13 +133,18 @@ const HashtagsTab: React.FC<HashtagsTabProps> = ({ selectedTags }) => {
         <ScrollView
           style={styles.scrollView}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#0D5F13"]} />
-          }
-        >
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={["#0D5F13"]}
+            />
+          }>
           {posts.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No posts found</Text>
-              <Text style={styles.emptySubtext}>Try selecting different tags or refresh the page.</Text>
+              <Text style={styles.emptySubtext}>
+                Try selecting different tags or refresh the page.
+              </Text>
             </View>
           ) : (
             posts
@@ -148,8 +191,8 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: "#FFFBF0",
   },
   loadingText: {
@@ -167,18 +210,18 @@ const styles = StyleSheet.create({
   errorText: {
     color: "#D32F2F",
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     fontFamily: "Nunito-Regular",
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: "#333333",
     marginBottom: 10,
     fontFamily: "Nunito-Bold",
@@ -186,12 +229,12 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 14,
     color: "#666666",
-    textAlign: 'center',
+    textAlign: "center",
     fontFamily: "Nunito-Regular",
   },
   postContainer: {
     marginBottom: 15,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 8,
     shadowColor: "#000",
     shadowOffset: {

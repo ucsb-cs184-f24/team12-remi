@@ -425,7 +425,7 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "../firebaseConfig"; // Adjust the path based on your project structure
 
-const Friends = () => {
+export const Friends = () => {
   const router = useRouter();
   const { friendsEmails } = useLocalSearchParams(); // Get params passed from profile.tsx
   const [friends, setFriends] = useState<any[]>([]);
@@ -594,8 +594,7 @@ const Friends = () => {
             </View>
             <TouchableOpacity
               style={styles.removeButton}
-              onPress={() => removeFriend(item.email)}
-            >
+              onPress={() => removeFriend(item.email)}>
               <Text style={styles.removeButtonText}>Remove</Text>
             </TouchableOpacity>
           </View>
