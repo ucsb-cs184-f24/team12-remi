@@ -29,9 +29,10 @@ const AuthLayout = () => {
     // console.log('Segments are: ', segments);
     console.log("and is: ", segments, segments[0]);
 
-    const inAuthGroup = segments && segments[0] === "(tabs)";
+    const inAuthGroup = segments; //&& segments[0] === "(tabs)";
 
     if (user && !inAuthGroup) {
+      console.log("Entered here where it shouldnt?");
       router.replace("./home");
     } else if (!user && inAuthGroup) {
       router.replace("/");

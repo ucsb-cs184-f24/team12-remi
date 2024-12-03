@@ -78,7 +78,10 @@ const UserProfileInfo = () => {
   const [isMe, setIsMe] = useState(false);
   let content;
 
+  console.log("This is the user we are at: ", username);
+
   useEffect(() => {
+    console.log("What???");
     const fetchUserProfile = async () => {
       setLoading(true);
       setError("");

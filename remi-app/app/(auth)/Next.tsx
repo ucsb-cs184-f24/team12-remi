@@ -30,57 +30,76 @@ import { LinearGradient } from "expo-linear-gradient";
 const { width } = Dimensions.get("window");
 
 const recipeTagItems = [
-  { name: "Meal Type", id: 0, children: [
-    { name: "Breakfast", id: 1 },
-    { name: "Lunch", id: 2 },
-    { name: "Dinner", id: 3 },
-    { name: "Snacks", id: 4 },
-    { name: "Dessert", id: 5 },
-    { name: "Beverages", id: 6 },
-  ]},
-  { name: "Diet", id: 100, children: [
-    { name: "Vegetarian", id: 101 },
-    { name: "Pescatarian", id: 102 },
-    { name: "Halal", id: 103 },
-    { name: "Vegan", id: 104 },
-    { name: "Jain", id: 105 },
-    { name: "Gluten-Free", id: 106 },
-    { name: "Dairy-Free", id: 107 },
-    { name: "Keto", id: 108 },
-    { name: "Paleo", id: 109 },
-    { name: "Low Carb", id: 110 },
-  ]},
-  { name: "Cuisine", id: 200, children: [
-    { name: "Italian", id: 201 },
-    { name: "French", id: 202 },
-    { name: "Mexican", id: 203 },
-    { name: "Japanese", id: 204 },
-    { name: "Chinese", id: 205 },
-    { name: "Korean", id: 206 },
-    { name: "Thai", id: 207 },
-    { name: "Malaysian", id: 208 },
-    { name: "Vietnamese", id: 209 },
-    { name: "Indian", id: 210 },
-    { name: "Pakistani", id: 211 },
-    { name: "Mediterranean", id: 212 },
-    { name: "American", id: 213 },
-    { name: "Southern", id: 214 },
-    { name: "Middle Eastern", id: 215 },
-    { name: "African", id: 216 },
-    { name: "Caribbean", id: 217 },
-    { name: "Creole", id: 218 },
-    { name: "Cajun", id: 219 },
-  ]},
-  { name: "Course", id: 300, children: [
-    { name: "Appetizers", id: 301 },
-    { name: "Main Course", id: 302 },
-    { name: "Side Dish", id: 303 },
-  ]},
+  {
+    name: "Meal Type",
+    id: 0,
+    children: [
+      { name: "Breakfast", id: 1 },
+      { name: "Lunch", id: 2 },
+      { name: "Dinner", id: 3 },
+      { name: "Snacks", id: 4 },
+      { name: "Dessert", id: 5 },
+      { name: "Beverages", id: 6 },
+    ],
+  },
+  {
+    name: "Diet",
+    id: 100,
+    children: [
+      { name: "Vegetarian", id: 101 },
+      { name: "Pescatarian", id: 102 },
+      { name: "Halal", id: 103 },
+      { name: "Vegan", id: 104 },
+      { name: "Jain", id: 105 },
+      { name: "Gluten-Free", id: 106 },
+      { name: "Dairy-Free", id: 107 },
+      { name: "Keto", id: 108 },
+      { name: "Paleo", id: 109 },
+      { name: "Low Carb", id: 110 },
+    ],
+  },
+  {
+    name: "Cuisine",
+    id: 200,
+    children: [
+      { name: "Italian", id: 201 },
+      { name: "French", id: 202 },
+      { name: "Mexican", id: 203 },
+      { name: "Japanese", id: 204 },
+      { name: "Chinese", id: 205 },
+      { name: "Korean", id: 206 },
+      { name: "Thai", id: 207 },
+      { name: "Malaysian", id: 208 },
+      { name: "Vietnamese", id: 209 },
+      { name: "Indian", id: 210 },
+      { name: "Pakistani", id: 211 },
+      { name: "Mediterranean", id: 212 },
+      { name: "American", id: 213 },
+      { name: "Southern", id: 214 },
+      { name: "Middle Eastern", id: 215 },
+      { name: "African", id: 216 },
+      { name: "Caribbean", id: 217 },
+      { name: "Creole", id: 218 },
+      { name: "Cajun", id: 219 },
+    ],
+  },
+  {
+    name: "Course",
+    id: 300,
+    children: [
+      { name: "Appetizers", id: 301 },
+      { name: "Main Course", id: 302 },
+      { name: "Side Dish", id: 303 },
+    ],
+  },
 ];
 
 const getTagNamesFromIds = (tagIds: string) => {
   const allTags = recipeTagItems.flatMap((category) => category.children);
-  return tagIds.split(',').map(id => allTags.find((tag) => tag.id === parseInt(id))?.name).filter(Boolean);
+  return tagIds
+    .split(",")
+    .map((id) => allTags.find((tag) => tag.id === parseInt(id))?.name)
+    .filter(Boolean);
 };
 
 const uploadImageToStorage = async (uri: string): Promise<string> => {
@@ -184,7 +203,7 @@ export default function RecipeSubmissionPage() {
 
       alert("Recipe submitted successfully!");
       resetState();
-      router.push("../(tabs)/add-recipe");
+      router.replace("../(tabs)/add-recipe");
     } catch (error) {
       const errorMessage =
         (error as FirebaseError).message || (error as Error).message;
@@ -202,16 +221,24 @@ export default function RecipeSubmissionPage() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={["#FFF9E6", "#BCD5AC"]} style={styles.gradientBackground}>
-        <Image source={require("../../assets/images/background-lineart.png")} style={styles.backgroundImage} />
+      <LinearGradient
+        colors={["#FFF9E6", "#BCD5AC"]}
+        style={styles.gradientBackground}
+      >
+        <Image
+          source={require("../../assets/images/background-lineart.png")}
+          style={styles.backgroundImage}
+        />
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
           <View style={styles.content}>
             <Text style={styles.title}>{title}</Text>
             <Image source={{ uri: decodedImage }} style={styles.image} />
-            
+
             <View style={styles.card}>
               <View style={styles.sliderContainer}>
-                <Text style={styles.label}>Price: ${price.toFixed(2)}/Serving</Text>
+                <Text style={styles.label}>
+                  Price: ${price.toFixed(2)}/Serving
+                </Text>
                 <Slider
                   style={styles.slider}
                   minimumValue={0}
@@ -226,7 +253,9 @@ export default function RecipeSubmissionPage() {
               </View>
 
               <View style={styles.sliderContainer}>
-                <Text style={styles.label}>Difficulty: {difficulty.toFixed(1)}/5</Text>
+                <Text style={styles.label}>
+                  Difficulty: {difficulty.toFixed(1)}/5
+                </Text>
                 <Slider
                   style={styles.slider}
                   minimumValue={0}
@@ -281,7 +310,12 @@ export default function RecipeSubmissionPage() {
                 <ActivityIndicator color="#FFF" />
               ) : (
                 <>
-                  <Ionicons name="checkmark-circle-outline" size={24} color="#FFF" style={styles.submitIcon} />
+                  <Ionicons
+                    name="checkmark-circle-outline"
+                    size={24}
+                    color="#FFF"
+                    style={styles.submitIcon}
+                  />
                   <Text style={styles.submitButtonText}>Submit Recipe</Text>
                 </>
               )}
@@ -301,11 +335,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   backgroundImage: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
+    position: "absolute",
+    width: "100%",
+    height: "100%",
     opacity: 0.3,
-    top: '-5%',
+    top: "-5%",
   },
   scrollViewContent: {
     flexGrow: 1,
@@ -320,7 +354,7 @@ const styles = StyleSheet.create({
     color: "#0D5F13",
     textAlign: "center",
     marginBottom: 20,
-    fontFamily: 'Nunito_600SemiBold',
+    fontFamily: "Nunito_600SemiBold",
   },
   image: {
     width: width * 0.6,
@@ -358,7 +392,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 5, // Reduced from 10 to 5
     color: "#0D5F13",
-    fontFamily: 'Nunito_600SemiBold',
+    fontFamily: "Nunito_600SemiBold",
   },
   slider: {
     width: "100%",
@@ -368,7 +402,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
     lineHeight: 22,
-    fontFamily: 'Nunito_600SemiBold',
+    fontFamily: "Nunito_600SemiBold",
   },
   tagsList: {
     flexDirection: "row",
@@ -386,7 +420,7 @@ const styles = StyleSheet.create({
   tagText: {
     color: "#0D5F13",
     fontSize: 14,
-    fontFamily: 'Nunito_600SemiBold',
+    fontFamily: "Nunito_600SemiBold",
   },
   submitButton: {
     backgroundColor: "#0D5F13",
@@ -396,13 +430,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginTop: 20,
-
   },
   submitButtonText: {
     color: "#FFF",
     fontSize: 18,
     fontWeight: "bold",
-    fontFamily: 'Nunito_600SemiBold',
+    fontFamily: "Nunito_600SemiBold",
   },
   submitIcon: {
     marginRight: 10,
