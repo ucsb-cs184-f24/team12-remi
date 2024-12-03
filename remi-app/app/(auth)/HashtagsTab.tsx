@@ -233,22 +233,12 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito-Regular",
   },
   postContainer: {
-    marginBottom: 15,
-    backgroundColor: "#FFFFFF",
+    marginBottom: 10,
     borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   separator: {
     height: 1,
     backgroundColor: "#E0E0E0",
-    marginHorizontal: 15,
   },
 });
 

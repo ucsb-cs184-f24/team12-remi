@@ -165,7 +165,7 @@ const PostsTab: React.FC<PostsTabProps> = ({ searchQuery, filters }) => {
         postID={post.id}
         userHasCommented={post.userHasCommented ?? false}
       />
-      <View style={Ustyles.separator} />
+      <View style={styles.separator} />
     </View>
   );
 
@@ -187,11 +187,16 @@ const PostsTab: React.FC<PostsTabProps> = ({ searchQuery, filters }) => {
 
 const styles = StyleSheet.create({
   postContainer: {
-    width: "100%",
+    marginBottom: 10,
+    borderRadius: 8,
   },
   flatListContent: {
     flexGrow: 1,
-    paddingVertical: 10,
+    paddingVertical: 0,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: "#E0E0E0",
   },
 });
 

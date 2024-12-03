@@ -10,6 +10,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   FlatList,
+  StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -172,6 +173,7 @@ export default function Explore() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF9E6" />
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Ionicons name="compass-outline" size={28} color="#006400" />
@@ -450,8 +452,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#BCD5AC",
     borderRadius: 25,
+    height: 55, //comment heigth and width out and just use padding vertical and horizontal if this is causing problems 
+    width: 385,
     paddingHorizontal: 15,
-    paddingVertical: 10,
+    // paddingVertical: 10,
     elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
