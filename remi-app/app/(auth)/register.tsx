@@ -163,7 +163,7 @@ export default function Register() {
               style={styles.backButton}
               onPress={() => router.back()}
             >
-              <Ionicons name="arrow-back" size={24} color="#0D5F13" />
+              <Ionicons name="arrow-back" size={30} color="#0D5F13" />
               <Text style={styles.backButtonText}>Back to Login</Text>
             </TouchableOpacity>
 
