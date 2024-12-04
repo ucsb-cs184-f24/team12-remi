@@ -22,6 +22,7 @@ import {
 } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "react-native-elements";
+import { useRouter } from "expo-router";
 
 interface User {
   id: string;
@@ -41,6 +42,7 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
   const [friends, setFriends] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const currentUser = auth.currentUser;
+  const router = useRouter();
 
   useEffect(() => {
     if (!currentUser) {
@@ -209,18 +211,46 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
 
     return (
       <View style={styles.item}>
-        <Avatar
-          size={50}
-          rounded
-          source={
-            item.profilePic
-              ? { uri: item.profilePic }
-              : require("../../assets/placeholders/profile-pic.png")
+        <TouchableOpacity
+          onPress={() =>
+            router.push({
+              pathname: "/(auth)/UserProfileInfo",
+              params: { username: item.username },
+            })
           }
-          containerStyle={styles.avatarContainer}
-        />
+        >
+          <Avatar
+            size={50}
+            rounded
+            source={(() => {
+              if (typeof item.profilePic === "object" && item.profilePic) {
+                // If profilePic is an object with a `uri` key
+                if (item.profilePic) {
+                  return require("../../assets/placeholders/profile-pic.png"); // Local asset fallback
+                } else {
+                  return { uri: item.profilePic }; // External URL
+                }
+              } else if (typeof item.profilePic === "string") {
+                // If profilePic is a string (likely a direct URL)
+                return { uri: item.profilePic };
+              } else {
+                return { uri: item.profilePic }; // External URL
+              }
+            })()}
+            containerStyle={styles.avatarContainer}
+          />
+        </TouchableOpacity>
         <View style={styles.userInfo}>
-          <Text style={styles.username}>{item.username}</Text>
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: "/(auth)/UserProfileInfo",
+                params: { username: item.username },
+              })
+            }
+          >
+            <Text style={styles.username}>{item.username}</Text>
+          </TouchableOpacity>
         </View>
         {isSearchResult ? (
           isFriend ? (
