@@ -7,7 +7,7 @@ interface Props {
   keyboardVerticalOffset?: number;
 }
 
-export const ConditionalKeyboardAvoidingView: React.FC<Props> = ({
+const ConditionalKeyboardAvoidingView: React.FC<Props> = ({
   children,
   keyboardVerticalOffset = 0,
 }) => {
@@ -30,3 +30,5 @@ const styles = StyleSheet.create({
     justifyContent: "space-evenly",
   },
 });
+
+export default ConditionalKeyboardAvoidingView;

@@ -83,11 +83,16 @@ export default function RootLayout() {
             fontSize: 25,
             color: "#0D5F13", // Text color
           },
+          headerShown: false
         }}
       />
       <Stack.Screen
         name="(auth)"
         options={{ headerTitle: "Home", headerShown: false }}
+      />
+      <Stack.Screen
+        name="bookmarks"
+        options={{ headerShown: false }}
       />
     </Stack>
   );
