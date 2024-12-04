@@ -35,6 +35,7 @@ import {
   deleteDoc,
   arrayRemove,
   Query,
+  orderBy,
 } from "firebase/firestore";
 import {
   ref,
@@ -110,7 +111,8 @@ const UserProfileInfo = () => {
 
           const postsQuery = query(
             collection(db, "Posts"),
-            where("userId", "==", querySnapshot.docs[0].id)
+            where("userId", "==", querySnapshot.docs[0].id),
+            orderBy("createdAt", "desc")
           );
 
           const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
