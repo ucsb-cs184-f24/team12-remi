@@ -192,6 +192,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     [key: string]: boolean;
   }
   const [username, setUsername] = useState<string>("");
+  const [profilePic, setProfilePic] = useState<string>("");
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [savedBy, setSavedBy] = useState<string[]>([]);
@@ -598,17 +599,18 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   }, [postID]);
 
   useEffect(() => {
-    const fetchUsername = async () => {
+    const fetchUsernameAndProfilePic = async () => {
       try {
-        const { username } = await getUserInfo(userID);
+        const { username, profilePic } = await getUserInfo(userID);
 
         setUsername(username);
+        setProfilePic(profilePic);
       } catch (error) {
         console.error("Error fetching username:", error);
       }
     };
 
-    fetchUsername();
+    fetchUsernameAndProfilePic();
   }, [userID]);
 
   // useEffect(() => {
@@ -642,7 +644,11 @@ export const RecipePost: React.FC<RecipePostProps> = ({
             }
           >
             <ExpoImage
-              source={require("../../../assets/placeholders/profile-pic.png")}
+              source={
+                profilePic
+                  ? { uri: profilePic }
+                  : require("../../../assets/placeholders/profile-pic.png")
+              }
               style={Ustyles.avatar}
               placeholder={blurhash}
               transition={200}
