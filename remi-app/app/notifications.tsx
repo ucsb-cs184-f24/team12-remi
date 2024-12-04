@@ -186,8 +186,10 @@ const Notifs = () => {
           style={styles.backButton}
           onPress={() => router.back()}
         >
+          <Spacer size={26} />
           <Ionicons name="arrow-back" size={30} color="#0D5F13" />
         </TouchableOpacity>
+        <Spacer size={60} />
         <Text style={styles.headerText}>Notifications</Text>
         {notifications.length === 0 ? (
           <Text style={[styles.noRequestsText]}>No notifications.</Text>
@@ -282,7 +284,7 @@ const styles = StyleSheet.create({
   chatBubbleContainer: {
     alignItems: "center",
     flex: 1,
-    paddingRight: 50, 
+    paddingRight: 50,
   },
   acceptButton: {
     alignItems: "center",
@@ -323,7 +325,7 @@ const styles = StyleSheet.create({
   avatar: {
     marginRight: -2,
     marginLeft: 15,
-    marginTop: -50,
+    marginTop: 0,
     borderWidth: 3,
     borderColor: "#0D5F13",
   },
@@ -348,6 +350,5 @@ const styles = StyleSheet.create({
     opacity: 0.25,
   },
 });
-
 
 export default Notifs;
