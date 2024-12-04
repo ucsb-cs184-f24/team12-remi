@@ -693,6 +693,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               </TouchableOpacity>
               <Animated.View
                 style={{
+                  pointerEvents: "none",
                   position: "absolute",
                   top: 0,
                   left: 0,
