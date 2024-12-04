@@ -581,7 +581,7 @@ export const Friends = () => {
           <View style={styles.friendItem}>
             <TouchableOpacity
               onPress={() =>
-                router.replace({
+                router.push({
                   pathname: "/(auth)/UserProfileInfo",
                   params: { username: item.username },
                 })
