@@ -1,1 +1,0 @@
-Hi everyone! I’m Kavi, I’m a 4th year CS major and I took 148 last year. I’ve got some industry experience with Agile and front end testing. I’m excited to make a fun mobile app, and to not work with Swift iOS!

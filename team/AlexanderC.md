@@ -1,1 +1,0 @@
-Hi, I’m Alex 😋, a 4th year CS major. I’ve worked in the past on Go backend development and Ruby on Rails full stack projects.
