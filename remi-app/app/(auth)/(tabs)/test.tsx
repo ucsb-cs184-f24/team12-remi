@@ -452,10 +452,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#BCD5AC",
     borderRadius: 25,
-    height: 55, //comment heigth and width out and just use padding vertical and horizontal if this is causing problems 
-    width: 385,
+    // height: 55, //comment heigth and width out and just use padding vertical and horizontal if this is causing problems 
+    // width: 385,
     paddingHorizontal: 15,
-    // paddingVertical: 10,
+    paddingVertical: 10,
     elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
