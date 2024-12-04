@@ -35,7 +35,7 @@ import {
   where,
 } from "firebase/firestore";
 import Ustyles from "../../components/UniversalStyles";
-import { ConditionalKeyboardAvoidingView } from './ConditionalKeyboardAvoidingView';
+import ConditionalKeyboardAvoidingView from "./ConditionalKeyboardAvoidingView";
 
 export default function Register() {
   const [email, setEmail] = useState("");

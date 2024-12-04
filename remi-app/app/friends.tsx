@@ -430,6 +430,7 @@ export const Friends = () => {
   const { friendsEmails } = useLocalSearchParams(); // Get params passed from profile.tsx
   const [friends, setFriends] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const currentUserEmailTwo = auth.currentUser?.email;
 
   useEffect(() => {
     const currentUserEmail = auth.currentUser?.email;
@@ -578,14 +579,23 @@ export const Friends = () => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.friendItem}>
-            <Image
-              source={
-                item.profilePic
-                  ? { uri: item.profilePic }
-                  : require("../assets/placeholders/user-avatar.png") // Adjust the path as per your project structure
+            <TouchableOpacity
+              onPress={() =>
+                router.push({
+                  pathname: "/(auth)/UserProfileInfo",
+                  params: { username: item.username },
+                })
               }
-              style={styles.profilePic}
-            />
+            >
+              <Image
+                source={
+                  item.profilePic
+                    ? { uri: item.profilePic }
+                    : require("../assets/placeholders/user-avatar.png") // Adjust the path as per your project structure
+                }
+                style={styles.profilePic}
+              />
+            </TouchableOpacity>
             <View style={styles.friendInfo}>
               <Text style={styles.friendName}>
                 {item.username || "No Name"}
@@ -594,7 +604,8 @@ export const Friends = () => {
             </View>
             <TouchableOpacity
               style={styles.removeButton}
-              onPress={() => removeFriend(item.email)}>
+              onPress={() => removeFriend(item.email)}
+            >
               <Text style={styles.removeButtonText}>Remove</Text>
             </TouchableOpacity>
           </View>

@@ -35,6 +35,7 @@ import {
   deleteDoc,
   arrayRemove,
   Query,
+  orderBy,
 } from "firebase/firestore";
 import {
   ref,
@@ -78,7 +79,10 @@ const UserProfileInfo = () => {
   const [isMe, setIsMe] = useState(false);
   let content;
 
+  console.log("This is the user we are at: ", username);
+
   useEffect(() => {
+    console.log("What???");
     const fetchUserProfile = async () => {
       setLoading(true);
       setError("");
@@ -107,7 +111,8 @@ const UserProfileInfo = () => {
 
           const postsQuery = query(
             collection(db, "Posts"),
-            where("userId", "==", querySnapshot.docs[0].id)
+            where("userId", "==", querySnapshot.docs[0].id),
+            orderBy("createdAt", "desc")
           );
 
           const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
