@@ -19,7 +19,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router"; // Add this import
 import Ionicons from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
-import { auth, db, storage } from "../../firebaseConfig";
+import { auth, db, storage } from "../firebaseConfig";
 import {
   ref,
   uploadBytes,
@@ -34,8 +34,8 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import Ustyles from "../../components/UniversalStyles";
-import ConditionalKeyboardAvoidingView from "./ConditionalKeyboardAvoidingView";
+import Ustyles from "../components/UniversalStyles";
+import ConditionalKeyboardAvoidingView from "./(auth)/ConditionalKeyboardAvoidingView";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -43,7 +43,7 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
-  const profilePicPlaceholder = require("../../assets/placeholders/profile-pic.png");
+  const profilePicPlaceholder = require("../assets/placeholders/profile-pic.png");
   const [profilePic, setProfilePic] = useState<any>(profilePicPlaceholder);
   const router = useRouter(); // Initialize router
   const [passwordMismatch, setPasswordMismatch] = useState(false);
@@ -163,7 +163,7 @@ export default function Register() {
           colors={["#FFF9E6", "#BCD5AC"]}
           style={styles.backgroundGradient}>
           <ImageBackground
-            source={require("../../assets/images/background-lineart.png")}
+            source={require("../assets/images/background-lineart.png")}
             style={styles.backgroundImage}
             imageStyle={styles.backgroundImageStyle}>
             <TouchableOpacity
@@ -236,7 +236,7 @@ export default function Register() {
                 <ActivityIndicator size={"small"} style={{ margin: 28 }} />
               ) : (
                 <TouchableOpacity style={styles.button} onPress={signUp}>
-                  <Text style={Ustyles.header_2}>Submit</Text>
+                  <Text style={Ustyles.buttonText}>Submit</Text>
                 </TouchableOpacity>
               )}
             </ScrollView>
@@ -318,15 +318,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   button: {
-    alignSelf: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 6,
-    borderWidth: 2,
     borderColor: "#0D5F13",
-    backgroundColor: "transparent",
-    marginVertical: 20,
+    borderWidth: 3,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    alignSelf: "center",
+    marginTop: 20,
   },
   buttonText: {
     color: "#fff",

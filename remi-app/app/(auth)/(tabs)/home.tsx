@@ -152,6 +152,15 @@ interface Comment {
   profilePic?: string;
 }
 
+interface Notification {
+  to: string;
+  from: string;
+  action: string;
+  title: string;
+  read_flag: boolean;
+  timestamp: Date;
+}
+
 const getUserInfo = async (
   userID: string
 ): Promise<{ username: string; profilePic: string }> => {
@@ -223,23 +232,60 @@ export const RecipePost: React.FC<RecipePostProps> = ({
 
   const postRef = doc(db, "Posts", postID);
 
+  // const handleAddComment = async (commentText: string) => {
+  //   if (!commentText.trim()) return;
+
+  //   try {
+  //     await addDoc(collection(db, "Comments"), {
+  //       postId: postID,
+  //       text: commentText,
+  //       userId: auth.currentUser?.uid, // Current user's ID
+  //       createdAt: new Date(),
+  //     });
+
+  //     await updateDoc(postRef, {
+  //       comments: commentsCount + 1, // Update the count in the Firestore post document
+  //     });
+  //     setCommentsCount((prev) => prev + 1);
+
+  //     setUserHasCommented(true);
+  //     sendNotification(postRef.userId, "commented", postRef.title);
+  //   } catch (error) {
+  //     console.error("Error adding comment:", error);
+  //   }
+  // };
   const handleAddComment = async (commentText: string) => {
     if (!commentText.trim()) return;
 
     try {
-      await addDoc(collection(db, "Comments"), {
-        postId: postID,
-        text: commentText,
-        userId: auth.currentUser?.uid, // Current user's ID
-        createdAt: new Date(),
-      });
+      // First, ensure we get the current post data
+      const postSnapshot = await getDoc(postRef);
 
-      await updateDoc(postRef, {
-        comments: commentsCount + 1, // Update the count in the Firestore post document
-      });
-      setCommentsCount((prev) => prev + 1);
+      if (postSnapshot.exists()) {
+        const postData = postSnapshot.data(); // Get the data from the snapshot
 
-      setUserHasCommented(true);
+        // Add the comment to the "Comments" collection
+        await addDoc(collection(db, "Comments"), {
+          postId: postID,
+          text: commentText,
+          userId: auth.currentUser?.uid, // Current user's ID
+          createdAt: new Date(),
+        });
+
+        // Update the comment count in the post document
+        await updateDoc(postRef, {
+          comments: postData.comments + 1, // Increment the current comment count
+        });
+        setCommentsCount((prev) => prev + 1);
+        setUserHasCommented(true);
+
+        // Send notification only if the commenter is not the post owner
+        if (postData.userId !== auth.currentUser?.uid) {
+          sendNotification(postData.userId, "commented", postData.title);
+        }
+      } else {
+        console.error("Post data not found");
+      }
     } catch (error) {
       console.error("Error adding comment:", error);
     }
@@ -546,6 +592,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
             likesCount: postData.likesCount + 1, // Directly update Firestore
             likedBy: arrayUnion(userId), // Add user ID
           });
+
           // Trigger the heart animation with glimmer
           Animated.parallel([
             Animated.sequence([
@@ -573,11 +620,56 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               }),
             ]),
           ]).start();
+          
+          if (postData.userId !== userId) {
+            sendNotification(postData.userId, "liked", postData.title);
+          }
         }
       }
     } catch (error) {
       console.error("Error updating like:", error);
       Alert.alert("Error", "Failed to update like. Please try again.");
+    }
+  };
+
+  const sendNotification = async (
+    targetUserId: string,
+    action: string,
+    title: string
+  ): Promise<void> => {
+    console.log("sendNotification called with:", {
+      targetUserId,
+      action,
+      title,
+    });
+
+    // Check if the notification is being sent to the user themselves
+    if (auth.currentUser?.uid === targetUserId) {
+      console.log("Attempt to send notification to self; aborting.");
+      return; // Do not send notification if the user is liking their own post
+    }
+
+    console.log(
+      `Preparing to send notification to ${targetUserId}: ${action} on '${title}'`
+    );
+
+    const newNotification = {
+      to: targetUserId,
+      from: auth.currentUser?.uid,
+      action: action,
+      title: title,
+      read_flag: true,
+      timestamp: new Date(),
+    };
+
+    try {
+      const docRef = await addDoc(
+        collection(db, "Notifications"),
+        newNotification
+      );
+      console.log("Notification sent successfully, doc ID:", docRef.id);
+    } catch (error) {
+      console.error("Error sending notification:", error);
     }
   };
 
@@ -693,6 +785,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               </TouchableOpacity>
               <Animated.View
                 style={{
+                  pointerEvents: "none",
                   position: "absolute",
                   top: 0,
                   left: 0,
@@ -979,7 +1072,7 @@ const Home: React.FC = () => {
   const postsArrRef = useRef<DocumentData[]>([]);
   //record notification count using state
   // const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
-  const [friendRequests, setFriendRequests] = useState<
+  const [notification, setNotification] = useState<
     { id: string; [key: string]: any }[]
   >([]);
   const router = useRouter();
@@ -1173,12 +1266,12 @@ const Home: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
-    // Set up real-time listener for pending friend requests
+    // Set up real-time listener for notifications
     if (user) {
       const q = query(
         collection(db, "Notifications"),
-        where("to", "==", user.email),
-        where("read_flag", "==", true) // Only show unread friend requests
+        where("to", "in", [user.uid, user.email]),
+        where("read_flag", "==", true)
       );
 
       const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -1186,7 +1279,7 @@ const Home: React.FC = () => {
           id: doc.id,
           ...doc.data(),
         }));
-        setFriendRequests(requests);
+        setNotification(requests);
       });
 
       return () => unsubscribe();
@@ -1245,10 +1338,10 @@ const Home: React.FC = () => {
                   size={27}
                   color="#0D5F13"
                 />
-                {friendRequests.length > 0 && (
+                {notification.length > 0 && (
                   <View style={Ustyles.notificationBadge}>
                     <Text style={Ustyles.notificationText}>
-                      {friendRequests.length}
+                      {notification.length}
                     </Text>
                   </View>
                 )}

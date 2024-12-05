@@ -20,52 +20,68 @@ import SectionedMultiSelect from "react-native-sectioned-multi-select";
 import { LinearGradient } from "expo-linear-gradient";
 
 const recipeTagItems = [
-  { name: "Meal Type", id: 0, children: [
-    { name: "Breakfast", id: 1 },
-    { name: "Lunch", id: 2 },
-    { name: "Dinner", id: 3 },
-    { name: "Snacks", id: 4 },
-    { name: "Dessert", id: 5 },
-    { name: "Beverages", id: 6 },
-  ]},
-  { name: "Diet", id: 100, children: [
-    { name: "Vegetarian", id: 101 },
-    { name: "Pescatarian", id: 102 },
-    { name: "Halal", id: 103 },
-    { name: "Vegan", id: 104 },
-    { name: "Jain", id: 105 },
-    { name: "Gluten-Free", id: 106 },
-    { name: "Dairy-Free", id: 107 },
-    { name: "Keto", id: 108 },
-    { name: "Paleo", id: 109 },
-    { name: "Low Carb", id: 110 },
-  ]},
-  { name: "Cuisine", id: 200, children: [
-    { name: "Italian", id: 201 },
-    { name: "French", id: 202 },
-    { name: "Mexican", id: 203 },
-    { name: "Japanese", id: 204 },
-    { name: "Chinese", id: 205 },
-    { name: "Korean", id: 206 },
-    { name: "Thai", id: 207 },
-    { name: "Malaysian", id: 208 },
-    { name: "Vietnamese", id: 209 },
-    { name: "Indian", id: 210 },
-    { name: "Pakistani", id: 211 },
-    { name: "Mediterranean", id: 212 },
-    { name: "American", id: 213 },
-    { name: "Southern", id: 214 },
-    { name: "Middle Eastern", id: 215 },
-    { name: "African", id: 216 },
-    { name: "Caribbean", id: 217 },
-    { name: "Creole", id: 218 },
-    { name: "Cajun", id: 219 },
-  ]},
-  { name: "Course", id: 300, children: [
-    { name: "Appetizers", id: 301 },
-    { name: "Main Course", id: 302 },
-    { name: "Side Dish", id: 303 },
-  ]},
+  {
+    name: "Meal Type",
+    id: 0,
+    children: [
+      { name: "Breakfast", id: 1 },
+      { name: "Lunch", id: 2 },
+      { name: "Dinner", id: 3 },
+      { name: "Snacks", id: 4 },
+      { name: "Dessert", id: 5 },
+      { name: "Beverages", id: 6 },
+    ],
+  },
+  {
+    name: "Diet",
+    id: 100,
+    children: [
+      { name: "Vegetarian", id: 101 },
+      { name: "Pescatarian", id: 102 },
+      { name: "Halal", id: 103 },
+      { name: "Vegan", id: 104 },
+      { name: "Jain", id: 105 },
+      { name: "Gluten-Free", id: 106 },
+      { name: "Dairy-Free", id: 107 },
+      { name: "Keto", id: 108 },
+      { name: "Paleo", id: 109 },
+      { name: "Low Carb", id: 110 },
+    ],
+  },
+  {
+    name: "Cuisine",
+    id: 200,
+    children: [
+      { name: "Italian", id: 201 },
+      { name: "French", id: 202 },
+      { name: "Mexican", id: 203 },
+      { name: "Japanese", id: 204 },
+      { name: "Chinese", id: 205 },
+      { name: "Korean", id: 206 },
+      { name: "Thai", id: 207 },
+      { name: "Malaysian", id: 208 },
+      { name: "Vietnamese", id: 209 },
+      { name: "Indian", id: 210 },
+      { name: "Pakistani", id: 211 },
+      { name: "Mediterranean", id: 212 },
+      { name: "American", id: 213 },
+      { name: "Southern", id: 214 },
+      { name: "Middle Eastern", id: 215 },
+      { name: "African", id: 216 },
+      { name: "Caribbean", id: 217 },
+      { name: "Creole", id: 218 },
+      { name: "Cajun", id: 219 },
+    ],
+  },
+  {
+    name: "Course",
+    id: 300,
+    children: [
+      { name: "Appetizers", id: 301 },
+      { name: "Main Course", id: 302 },
+      { name: "Side Dish", id: 303 },
+    ],
+  },
 ];
 
 export default function RecipeCreationScreen() {
@@ -126,7 +142,7 @@ export default function RecipeCreationScreen() {
         >
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={styles.keyboardAvoidingView}
+            style={styles.centerContainer}
           >
             <ScrollView contentContainerStyle={styles.scrollViewContent}>
               <View style={styles.headerContainer}>
@@ -179,7 +195,10 @@ export default function RecipeCreationScreen() {
                 selectedItems={selectedTags}
                 searchPlaceholderText="Search Tags"
                 confirmText="Apply Tags"
-                colors={{ primary: "#0D5F13" }}
+                colors={{
+                  primary: "#0D5F13",
+                  searchPlaceholderTextColor: "#BCD5AC",
+                }}
                 styles={multiSelectStyles}
                 alwaysShowSelectText={true}
                 selectToggleIconComponent={
@@ -188,6 +207,49 @@ export default function RecipeCreationScreen() {
                     size={24}
                     color="#0D5F13"
                   />
+                }
+                dropDownToggleIconDownComponent={
+                  <View
+                    style={{
+                      backgroundColor: "#FFF9E6",
+                      padding: 5,
+                      borderRadius: 5,
+                    }}
+                  >
+                    <MaterialIcons
+                      name="keyboard-arrow-down"
+                      size={24}
+                      color="#0D5F13"
+                      style={styles.iconBack}
+                    />
+                  </View>
+                }
+                searchIconComponent={
+                  <MaterialIcons
+                    name="search"
+                    size={24}
+                    color="#0D5F13"
+                    style={{ paddingHorizontal: 10 }}
+                  />
+                }
+                dropDownToggleIconUpComponent={
+                  <View
+                    style={{
+                      backgroundColor: "#FFF9E6",
+                      padding: 5,
+                      borderRadius: 5,
+                    }}
+                  >
+                    <MaterialIcons
+                      name="keyboard-arrow-up"
+                      size={24}
+                      color="#0D5F13"
+                      style={styles.iconBack}
+                    />
+                  </View>
+                }
+                noResultsComponent={
+                  <Text style={styles.noResultsText}> Sorry, no results </Text>
                 }
               />
 
@@ -203,6 +265,11 @@ export default function RecipeCreationScreen() {
 }
 
 const styles = StyleSheet.create({
+  iconBack: {
+    backgroundColor: "#FFF9E6",
+    padding: 5,
+    margin: -15,
+  },
   container: {
     flex: 1,
   },
@@ -212,13 +279,15 @@ const styles = StyleSheet.create({
   backgroundImageStyle: {
     opacity: 0.5,
   },
-  keyboardAvoidingView: {
+  centerContainer: {
     flex: 1,
+    justifyContent: "center",
   },
   scrollViewContent: {
     flexGrow: 1,
     padding: 20,
     paddingTop: 80,
+    justifyContent: "center",
   },
   headerContainer: {
     alignItems: "center",
@@ -311,11 +380,44 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontFamily: "Nunito_600SemiBold",
   },
+  noResultsText: {
+    color: "#0D5F13",
+    fontSize: 18,
+    fontFamily: "Nunito_400Regular",
+    alignSelf: "center",
+    paddingTop: 20,
+  },
 });
 
 const multiSelectStyles = {
+  container: {
+    backgroundColor: "#FFF9E6",
+    marginTop: 100,
+    marginBottom: 100,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: "#0D5F13",
+  },
+  listContainer: {
+    backgroundColor: "#FFF9E6",
+  },
+  itemContainer: {
+    backgroundColor: "#FFF9E6",
+  },
+  subItemContainer: {
+    backgroundColor: "#FFF9E6",
+  },
+  scrollView: {
+    backgroundColor: "#FFF9E6",
+  },
+  subSeparator: {
+    backgroundColor: "#FFF9E6",
+  },
+  separator: {
+    backgroundColor: "#FFF9E6",
+  },
   selectToggle: {
-    backgroundColor: "#BCD5AC",
+    backgroundColor: "#FFF9E6",
     borderColor: "#0D5F13",
     borderWidth: 2,
     padding: 12,
@@ -327,15 +429,45 @@ const multiSelectStyles = {
     fontFamily: "Nunito_600SemiBold",
   },
   chipContainer: {
-    backgroundColor: "#BCD5AC",
+    backgroundColor: "#FFF9E6",
   },
   chipText: {
     color: "#0D5F13",
+    fontFamily: "Nunito_600SemiBold",
   },
   itemText: {
-    color: "#333",
-  },
-  selectedItemText: {
     color: "#0D5F13",
+    fontFamily: "Nunito_600SemiBold",
+    fontSize: 15,
+  },
+  confirmText: {
+    color: "#FFF",
+    fontFamily: "Nunito_700Bold",
+  },
+  subItemText: {
+    color: "#0D5F13",
+    fontFamily: "Nunito_400Regular",
+    paddingLeft: 20,
+  },
+  selectedSubItem: {
+    backgroundColor: "#BCD5AC",
+    borderRadius: 4,
+    paddingVertical: 5,
+  },
+  item: {
+    backgroundColor: "#FFF9E6",
+    paddingHorizontal: 10,
+  },
+  subItem: {
+    backgroundColor: "#FFF9E6",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  searchTextInput: {
+    color: "#0D5F13",
+    fontFamily: "Nunito_400Regular",
+  },
+  searchBar: {
+    backgroundColor: "#FFF9E6",
   },
 };

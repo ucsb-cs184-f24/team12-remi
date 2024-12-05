@@ -51,7 +51,11 @@ async function signInWithUsername(username: string, password: string) {
     const userData = userDoc.data();
 
     // Use the email associated with the username to sign in
-    const userCredential = await signInWithEmailAndPassword(auth, userData.email, password);
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      userData.email,
+      password
+    );
     return userCredential.user;
   } catch (error) {
     console.error("Error signing in with username:", error);
@@ -123,7 +127,7 @@ export default function Index() {
               <Text style={Ustyles.logotext}>remi</Text>
             </ImageBackground>
             <KeyboardAvoidingView behavior="padding">
-            <TextInput
+              <TextInput
                 style={styles.input}
                 value={username}
                 onChangeText={setUsername}
@@ -159,13 +163,13 @@ export default function Index() {
               ) : (
                 <View style={Ustyles.buttonContainer}>
                   <TouchableOpacity style={Ustyles.button} onPress={signIn}>
-                    <Text style={Ustyles.header_2}>Sign In</Text>
+                    <Text style={Ustyles.buttonText}>Sign In</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={Ustyles.button}
-                    onPress={() => router.push("./(auth)/register")}
+                    onPress={() => router.push("/register")}
                   >
-                    <Text style={Ustyles.header_2}>Create Account</Text>
+                    <Text style={Ustyles.buttonText}>Create Account</Text>
                   </TouchableOpacity>
                 </View>
               )}
