@@ -221,7 +221,7 @@ export default function Register() {
                 <ActivityIndicator size={"small"} style={{ margin: 28 }} />
               ) : (
                 <TouchableOpacity style={styles.button} onPress={signUp}>
-                  <Text style={Ustyles.header_2}>Submit</Text>
+                  <Text style={Ustyles.buttonText}>Submit</Text>
                 </TouchableOpacity>
               )}
             </ScrollView>
@@ -303,15 +303,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   button: {
-    alignSelf: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 6,
-    borderWidth: 2,
     borderColor: "#0D5F13",
-    backgroundColor: "transparent",
-    marginVertical: 20,
+    borderWidth: 3,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    alignSelf: "center",
+    marginTop: 20,
   },
   buttonText: {
     color: "#fff",

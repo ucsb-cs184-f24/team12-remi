@@ -163,13 +163,13 @@ export default function Index() {
               ) : (
                 <View style={Ustyles.buttonContainer}>
                   <TouchableOpacity style={Ustyles.button} onPress={signIn}>
-                    <Text style={Ustyles.header_2}>Sign In</Text>
+                    <Text style={Ustyles.buttonText}>Sign In</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={Ustyles.button}
                     onPress={() => router.push("/register")}
                   >
-                    <Text style={Ustyles.header_2}>Create Account</Text>
+                    <Text style={Ustyles.buttonText}>Create Account</Text>
                   </TouchableOpacity>
                 </View>
               )}
