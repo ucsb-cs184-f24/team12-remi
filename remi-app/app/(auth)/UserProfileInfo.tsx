@@ -17,6 +17,7 @@ import {
   Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import Ustyles from "@/components/UniversalStyles";
 // import { signOut } from "firebase/auth";
 import { auth, db, storage } from "../../firebaseConfig";
 import {
@@ -77,6 +78,7 @@ const UserProfileInfo = () => {
   const [postsText, setPostsText] = useState("No recent activity found.");
   const [isFriend, setIsFriend] = useState(false);
   const [isMe, setIsMe] = useState(false);
+  const router = useRouter(); // Initialize router
   let content;
 
   console.log("This is the user we are at: ", username);
@@ -304,7 +306,13 @@ const UserProfileInfo = () => {
           style={styles.addFriendButton}
           onPress={() => addFriend()}
         >
-          <Text style={styles.addFriendButtonText}>Invite Friend</Text>
+           <Ionicons
+          name="person-add"
+          size={16}
+          color="#0D5F13"
+          style={styles.buttonIcon}
+        />
+          <Text style={[styles.buttonText, { color: "#0D5F13" }]}>Add Friend</Text>
         </TouchableOpacity>
       );
     }
@@ -315,7 +323,8 @@ const UserProfileInfo = () => {
         style={styles.removeFriendButton}
         onPress={() => removeFriend()}
       >
-        <Text style={styles.removeFriendButtonText}>Remove Friend</Text>
+
+        <Text style={[styles.buttonText, { color: "#871717" }]}>Remove Friend</Text>
       </TouchableOpacity>
     );
   }
@@ -331,8 +340,17 @@ const UserProfileInfo = () => {
           style={styles.backgroundImage}
           imageStyle={styles.backgroundImageStyle}
         >
-          <View style={styles.header}>
-            <Text style={styles.username}>{username}</Text>
+          <View style={styles.headerRow}>
+            <View style={styles.header1}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => router.back()}
+              >
+                <Ionicons name="arrow-back" size={24} color="#0D5F13" />
+              </TouchableOpacity>
+              <Text style={styles.username}>{username}</Text>
+            </View>
+
             {content}
           </View>
 
@@ -429,13 +447,6 @@ const styles = StyleSheet.create({
   },
   backgroundImageStyle: {
     opacity: 0.5,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 20,
-    paddingTop: 30,
   },
   username: {
     fontSize: 26,
@@ -534,6 +545,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginVertical: 10,
   },
+  buttonIcon: {
+    marginRight: 4,
+  },
   recentActivityTitle: {
     marginTop: 15,
     fontSize: 22,
@@ -550,23 +564,51 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   addFriendButton: {
-    backgroundColor: "rgba(188, 213, 172, 0.8)",
-    padding: 8,
-    borderRadius: 5,
-  },
-  addFriendButtonText: {
-    color: "#333",
-    fontWeight: "bold",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: "#0D5F13",
+    backgroundColor: "#e0f2d5",
   },
   removeFriendButton: {
-    backgroundColor: "#FFCCCC",
-    padding: 8,
-    borderRadius: 5,
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: "#871717",
+    backgroundColor: "#FFEBEE",
   },
-  removeFriendButtonText: {
-    color: "#333",
+  buttonText: {
     fontWeight: "bold",
+    fontSize: 14,
+    fontFamily: "Nunito-Bold",
+    textAlign: "center",
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: 50,
+    paddingBottom: 8,
+  },
+  headerText: {
+    fontFamily: "Nunito_700Bold",
+    fontWeight: "bold",
+    fontSize: 30,
+    color: "#0D5F13",
+  },
+  header1: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  backButton: {},
 });
 
 export default UserProfileInfo;
