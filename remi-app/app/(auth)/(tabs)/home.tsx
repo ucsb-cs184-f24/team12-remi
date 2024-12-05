@@ -140,6 +140,7 @@ interface RecipePostProps {
   hashtags: string;
   userHasCommented: boolean;
   handleUnsavePost?: (postID: string) => void; // Add this callback
+  deletePostCallback?: () => void; // Add this callback
 }
 
 interface Comment {
@@ -503,7 +504,12 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     setModalVisible(false); // Hide the modal
   };
 
-  const handleDeletePress = async (post_id: string, user_id: string) => {
+  const handleDeletePress = async (
+    post_id: string,
+    user_id: string,
+    isCallback: boolean = false,
+    deletePostCallback: (() => void) | null = null
+  ) => {
     console.log("trying to delete post");
     console.log("postID: ", post_id);
     // delete the doc with this postID
@@ -522,6 +528,9 @@ export const RecipePost: React.FC<RecipePostProps> = ({
 
       // // Call the callback to update the state in BookmarksPage
       // if (handleUnsavePost) handleUnsavePost(postID);
+      if (isCallback) {
+        deletePostCallback();
+      }
     } catch (error) {
       console.error("Error unbookmarking post:", error);
     }
@@ -750,7 +759,9 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                 name={"trash-outline"}
                 size={27}
                 color={"red"}
-                onPress={() => handleDeletePress(postID, userID)}
+                onPress={() =>
+                  handleDeletePress(postID, userID, true, deletePostCallback)
+                }
               />
             ) : (
               <Ionicons
