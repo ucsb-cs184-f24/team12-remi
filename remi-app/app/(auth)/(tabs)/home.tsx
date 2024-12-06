@@ -218,7 +218,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   // const [postComments, setPostComments] = useState<any[]>([]);
   const [postComments, setPostComments] = useState<Comment[]>([]);
   // const [loading, setLoading] = useState(true);
-  const [loadingStates, setLoadingStates] = useState<LoadingStates>({}); // State to track loading for each post
+  // const [loadingStates, setLoadingStates] = useState<LoadingStates>({}); // State to track loading for each post
   const router = useRouter();
   const [commentError, setCommentError] = useState<string | null>(null);
   const modalPosition = useRef(new Animated.Value(0)).current;
@@ -297,31 +297,31 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   // };
 
   // Handle image load finish (set loading state to false and remove from states)
-  const handleImageLoad = (post_id: string) => {
-    setLoadingStates((prev) => {
-      const newState = { ...prev };
-      delete newState[post_id]; // Remove the post_id from the loading states once the image is loaded
-      // console.log(
-      //   "image loaded, state set to false and removed from loadingStates for ",
-      //   post_id
-      // );
-      return newState;
-    });
-  };
+  // const handleImageLoad = (post_id: string) => {
+  //   setLoadingStates((prev) => {
+  //     const newState = { ...prev };
+  //     delete newState[post_id]; // Remove the post_id from the loading states once the image is loaded
+  //     // console.log(
+  //     //   "image loaded, state set to false and removed from loadingStates for ",
+  //     //   post_id
+  //     // );
+  //     return newState;
+  //   });
+  // };
 
-  const handleImageError = (post_id: string) => {
-    setLoadingStates((prev) => ({ ...prev, [post_id]: false })); // Handle error and stop showing loading symbol
-    // console.log("error: updated state for ", post_id);
-  };
+  // const handleImageError = (post_id: string) => {
+  //   setLoadingStates((prev) => ({ ...prev, [post_id]: false })); // Handle error and stop showing loading symbol
+  //   // console.log("error: updated state for ", post_id);
+  // };
 
-  const handleImageStartLoad = (post_id: string) => {
-    setLoadingStates((prev) => ({ ...prev, [post_id]: true }));
-    // console.log("initialized state to true for ", post_id);
-  };
+  // const handleImageStartLoad = (post_id: string) => {
+  //   setLoadingStates((prev) => ({ ...prev, [post_id]: true }));
+  //   // console.log("initialized state to true for ", post_id);
+  // };
 
-  useEffect(() => {
-    handleImageStartLoad(postID); // Trigger loading state as true when the component mounts
-  }, [postID]);
+  // useEffect(() => {
+  //   handleImageStartLoad(postID); // Trigger loading state as true when the component mounts
+  // }, [postID]);
 
   useEffect(() => {
     const keyboardWillShowListener = Keyboard.addListener(
@@ -620,7 +620,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               }),
             ]),
           ]).start();
-          
+
           if (postData.userId !== userId) {
             sendNotification(postData.userId, "liked", postData.title);
           }
@@ -940,11 +940,6 @@ export const RecipePost: React.FC<RecipePostProps> = ({
         <View style={Ustyles.leftColumn}>
           <TouchableOpacity onPress={handleImagePress}>
             <View style={Ustyles.imageContainer}>
-              {loadingStates[postID] && (
-                <View style={styles.spinnerContainer}>
-                  <ActivityIndicator size="large" color="#0D5F13" />
-                </View>
-              )}
               <ExpoImage
                 source={
                   mediaUrl
@@ -954,8 +949,6 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                 style={Ustyles.recipeImage}
                 placeholder={blurhash}
                 transition={200}
-                onLoad={() => handleImageLoad(postID)} // Updates loading state to false
-                onError={() => handleImageError(postID)} // Handles errors
               />
             </View>
           </TouchableOpacity>
@@ -1086,6 +1079,7 @@ const Home: React.FC = () => {
   const [hasMorePosts, setHasMorePosts] = useState(true);
   const lastCreatedAt = useRef(null);
   const [friendsListChange, setFriendsListChange] = useState(false);
+  const [hasNoFriends, setHasNoFriends] = useState(true);
   const POSTS_PER_PAGE = 3;
 
   const onRefresh = React.useCallback(async () => {
@@ -1143,7 +1137,7 @@ const Home: React.FC = () => {
 
           const userHasCommentedSnapshot = await getDocs(commentsQuery);
           const userHasCommented = !userHasCommentedSnapshot.empty;
-
+          setHasNoFriends(false);
           return {
             ...postData,
             postID: postId,
@@ -1214,6 +1208,7 @@ const Home: React.FC = () => {
             }
           } else {
             console.log("No posts found.");
+            setHasNoFriends(true);
           }
         });
 
@@ -1348,6 +1343,19 @@ const Home: React.FC = () => {
               </TouchableOpacity>
             </View>
           </View>
+          {hasNoFriends && (
+            <View style={styles.noFriendsContainer}>
+              <ExpoImage
+                source={require("../../../assets/placeholders/profile-icon.png")}
+                style={styles.noFriendsAvatar}
+                placeholder={blurhash}
+                transition={200}
+              />
+              <Text style={[styles.noFriendsText]}>
+                Add friends to see more posts!
+              </Text>
+            </View>
+          )}
           {newPostAvail && (
             <NewPostBanner onPress={handleNewPostsBannerPress} />
           )}
@@ -1393,6 +1401,19 @@ const Home: React.FC = () => {
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
+  noFriendsContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  noFriendsAvatar: {
+    width: Dimensions.get("window").width / 7.5,
+    height: Dimensions.get("window").width / 7.5,
+    borderRadius: Dimensions.get("window").width / 7.5 / 2,
+    borderWidth: 1,
+    borderColor: "#0D5F13",
+  },
   modalContainer2: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.9)",
@@ -1579,6 +1600,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "center",
     fontFamily: "Nunito_700Bold",
+  },
+  noFriendsText: {
+    textAlign: "center",
+    marginTop: 10,
+    color: "#0D5F13",
+    fontWeight: "bold",
   },
 
   inputContainer: {
