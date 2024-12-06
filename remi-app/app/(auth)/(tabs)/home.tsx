@@ -553,6 +553,32 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     setModalVisible(false); // Hide the modal
   };
 
+  const confirmDelete = async (
+    post_id: string,
+    user_id: string,
+    deletePostCallback: (() => void) | null = null
+  ) => {
+    Alert.alert(
+      "Confirm Delete",
+      "Are you sure you want to delete this post?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Delete cancelled"),
+          style: "cancel",
+        },
+        {
+          text: "Confirm",
+          onPress: () => {
+            console.log("Post deleted");
+            handleDeletePress(post_id, user_id, deletePostCallback);
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   const handleDeletePress = async (
     post_id: string,
     user_id: string,
@@ -856,7 +882,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                 size={27}
                 color={"red"}
                 onPress={() =>
-                  handleDeletePress(postID, userID, deletePostCallback)
+                  confirmDelete(postID, userID, deletePostCallback)
                 }
               />
             ) : (
