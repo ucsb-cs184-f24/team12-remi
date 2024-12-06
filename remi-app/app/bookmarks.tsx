@@ -174,6 +174,11 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   headerText: {
-    ...Ustyles.header_text,
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#0D5F13",
+    textAlign: "center",
+    marginBottom: 10,
+    fontFamily: "Nunito-Bold",
   },
 });
