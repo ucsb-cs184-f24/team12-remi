@@ -105,7 +105,7 @@ const Notifs = () => {
           collection(db, "RemiUsers"),
           where("email", "==", notification.from)
         );
-        const receiverRef = doc(db, "RemiUsers", user.uid);
+        const receiverRef = doc(db, "RemiUsers", user.uid); // how to fix possible null
 
         const senderSnapshot = await getDocs(senderRef);
         senderSnapshot.forEach(async (doc) => {
