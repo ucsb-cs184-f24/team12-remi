@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -6,15 +6,12 @@ import {
   FlatList,
   Alert,
   TouchableOpacity,
-  PanResponder,
-  Animated,
   ImageBackground,
 } from "react-native";
 import {
   collection,
   getDocs,
   getDoc,
-  writeBatch,
   doc,
   query,
   where,
@@ -23,72 +20,28 @@ import {
   arrayUnion,
 } from "firebase/firestore";
 import { db, auth } from "../firebaseConfig";
-import Ustyles from "../components/UniversalStyles";
 import Spacer from "../components/Spacer";
 import { Avatar } from "react-native-elements";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 
-// Define the type for FriendRequest
-interface FriendRequest {
+interface Notification {
   id: string;
   from: string;
   to: string;
   read_flag: boolean;
   username: string;
   profilePic: string | null;
+  isFriendRequest: boolean;
+  action?: string;
+  title?: string;
 }
-
-const Separator = () => {
-  return <View style={{ height: 10 }} />;
-};
 
 const Notifs = () => {
   const router = useRouter();
   const user = auth.currentUser;
-  const [notifications, setNotifications] = useState([]);
-  const [friendRequests, setFriendRequests] = useState([]);
-  const pan = useRef(new Animated.ValueXY()).current;
-
-  const panResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderMove: Animated.event([null, { dx: pan.x }], {
-      useNativeDriver: false,
-    }),
-    onPanResponderRelease: () => {
-      pan.flattenOffset();
-    },
-    onPanResponderGrant: () => {
-      let xValue = 0;
-
-      // Access the current animated value using addListener
-      const listenerId = pan.x.addListener((value) => {
-        xValue = value.value;
-      });
-
-      pan.setOffset({
-        x: xValue,
-        y: 0,
-      });
-
-      // Clean up the listener
-      pan.x.removeListener(listenerId);
-    },
-  });
-
-  const getUserInfo = async (email) => {
-    const q = query(collection(db, "RemiUsers"), where("email", "==", email));
-    const snapshot = await getDocs(q);
-    if (!snapshot.empty) {
-      const userDoc = snapshot.docs[0];
-      return {
-        username: userDoc.data().username,
-        profilePic: userDoc.data().profilePic,
-      };
-    }
-    return { username: "Unknown User", profilePic: null };
-  };
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -101,12 +54,24 @@ const Notifs = () => {
       const unsubscribe = onSnapshot(notificationsQuery, async (snapshot) => {
         const notificationsWithDetails = await Promise.all(
           snapshot.docs.map(async (document) => {
-            const notification = document.data();
+            const notification = document.data() as Notification;
             const isFriendRequest = notification.from.includes("@");
             let userInfo = { username: "Unknown User", profilePic: null };
 
-            if (!isFriendRequest) {
-              // Fetch user info for non-friend request notifications
+            if (isFriendRequest) {
+              const userQuery = query(
+                collection(db, "RemiUsers"),
+                where("email", "==", notification.from)
+              );
+              const userSnapshot = await getDocs(userQuery);
+              if (!userSnapshot.empty) {
+                const userData = userSnapshot.docs[0].data();
+                userInfo = {
+                  username: userData.username || notification.from,
+                  profilePic: userData.profilePic,
+                };
+              }
+            } else {
               const userDocRef = doc(db, "RemiUsers", notification.from);
               const userDoc = await getDoc(userDocRef);
               if (userDoc.exists()) {
@@ -115,9 +80,6 @@ const Notifs = () => {
                   profilePic: userDoc.data().profilePic,
                 };
               }
-            } else {
-              // Friend requests use email directly
-              userInfo.username = notification.from;
             }
 
             return {
@@ -136,14 +98,14 @@ const Notifs = () => {
     }
   }, [user]);
 
-  const handleAction = async (notification, accepted = false) => {
+  const handleAction = async (notification: Notification, accepted = false) => {
     try {
       if (notification.isFriendRequest && accepted) {
         const senderRef = query(
           collection(db, "RemiUsers"),
           where("email", "==", notification.from)
         );
-        const receiverRef = doc(db, "RemiUsers", user.uid);
+        const receiverRef = doc(db, "RemiUsers", user.uid); // how to fix possible null
 
         const senderSnapshot = await getDocs(senderRef);
         senderSnapshot.forEach(async (doc) => {
@@ -172,6 +134,46 @@ const Notifs = () => {
     }
   };
 
+  const renderNotification = ({ item, index }: { item: Notification; index: number }) => (
+    <View style={[styles.requestContainer, { marginTop: index === 0 ? 20 : 10 }]}>
+      <View style={styles.container}>
+        <View style={[styles.avatarContainer, { marginTop: item.isFriendRequest ? 0 : 0 }]}>
+          <Avatar
+            size={55} 
+            rounded
+            source={{ uri: item.profilePic || undefined }}
+            containerStyle={styles.avatar}
+          />
+        </View>
+        <View style={styles.chatBubbleContainer}>
+          <View style={styles.notifButton}>
+            <Text style={styles.notifText}>
+              {item.isFriendRequest
+                ? `${item.username} wants to add you as a friend!`
+                : `${item.username} ${item.action} your post '${item.title}'`}
+            </Text>
+          </View>
+          {item.isFriendRequest && (
+            <View style={styles.actionContainer}>
+              <TouchableOpacity
+                onPress={() => handleAction(item, true)}
+                style={styles.acceptButton}
+              >
+                <Text style={styles.acceptText}>Accept</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleAction(item, false)}
+                style={styles.rejectButton}
+              >
+                <Text style={styles.rejectText}>Reject</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+
   return (
     <LinearGradient
       colors={["#FFF9E6", "#FFF9E6"]}
@@ -192,55 +194,13 @@ const Notifs = () => {
         <Spacer size={60} />
         <Text style={styles.headerText}>Notifications</Text>
         {notifications.length === 0 ? (
-          <Text style={[styles.noRequestsText]}>No notifications.</Text>
+          <Text style={[styles.noRequestsText]}>No Notifications.</Text>
         ) : (
-          <FlatList
+          <FlatList 
             data={notifications}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.requestContainer}>
-                <View style={styles.container}>
-                  <Animated.View
-                    style={{
-                      transform: [{ translateX: pan.x }],
-                    }}
-                    {...panResponder.panHandlers}
-                  >
-                    <Avatar
-                      size={55}
-                      rounded
-                      source={{ uri: item.profilePic || undefined }}
-                      containerStyle={styles.avatar}
-                    />
-                  </Animated.View>
-                  <View style={styles.chatBubbleContainer}>
-                    <View style={styles.notifButton}>
-                      <Text style={styles.notifText}>
-                        {item.isFriendRequest
-                          ? `${item.username} wants to add you as a friend!`
-                          : `${item.username} ${item.action} your post '${item.title}'`}
-                      </Text>
-                    </View>
-                    {item.isFriendRequest && (
-                      <View style={styles.actionContainer}>
-                        <TouchableOpacity
-                          onPress={() => handleAction(item, true)}
-                          style={styles.acceptButton}
-                        >
-                          <Text style={styles.acceptText}>Accept</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => handleAction(item, false)}
-                          style={styles.rejectButton}
-                        >
-                          <Text style={styles.rejectText}>Reject</Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </View>
-            )}
+            renderItem={renderNotification}
+            contentContainerStyle={styles.notificationList}
           />
         )}
       </ImageBackground>
@@ -259,11 +219,11 @@ const styles = StyleSheet.create({
   },
   container: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     paddingHorizontal: 10,
   },
   requestContainer: {
-    marginBottom: 20,
+    marginBottom: 10,
   },
   actionContainer: {
     flexDirection: "row",
@@ -279,12 +239,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#0D5F13",
     backgroundColor: "#BCD5AC",
-    width: "90%",
+    width: "100%",
   },
   chatBubbleContainer: {
     alignItems: "center",
     flex: 1,
-    paddingRight: 50,
+    paddingLeft: 10,
+    paddingRight: 10,
   },
   acceptButton: {
     alignItems: "center",
@@ -322,10 +283,12 @@ const styles = StyleSheet.create({
     color: "#871717",
     alignSelf: "center",
   },
+  avatarContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 70,
+  },
   avatar: {
-    marginRight: -2,
-    marginLeft: 15,
-    marginTop: 0,
     borderWidth: 3,
     borderColor: "#0D5F13",
   },
@@ -349,6 +312,10 @@ const styles = StyleSheet.create({
   backgroundImageStyle: {
     opacity: 0.25,
   },
+  notificationList: {
+    paddingHorizontal: 10,
+  },
 });
 
 export default Notifs;
+

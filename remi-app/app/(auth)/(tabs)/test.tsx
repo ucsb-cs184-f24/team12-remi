@@ -10,6 +10,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   FlatList,
+  StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -172,6 +173,7 @@ export default function Explore() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF9E6" />
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Ionicons name="compass-outline" size={28} color="#006400" />
@@ -239,8 +241,8 @@ export default function Explore() {
                 tab === "posts"
                   ? "grid-outline"
                   : tab === "users"
-                  ? "people-outline"
-                  : "pricetag-outline"
+                    ? "people-outline"
+                    : "pricetag-outline"
               }
               size={28}
               color={activeTab === tab ? "#006400" : "#666"}
@@ -621,4 +623,3 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito-Regular",
   },
 });
-
