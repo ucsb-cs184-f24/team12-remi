@@ -209,7 +209,7 @@ const Notifs = () => {
             onPress={() =>
               router.push({
                 pathname: "/(auth)/UserProfileInfo",
-                params: { username: item.username },
+                params: { username: item.username, isFriendRequest: true },
               })
             }
           >

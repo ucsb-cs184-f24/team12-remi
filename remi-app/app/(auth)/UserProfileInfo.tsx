@@ -56,7 +56,7 @@ const CONTENT_WIDTH = width * 0.94;
 
 const UserProfileInfo = () => {
   const user = auth.currentUser; //This is us right now
-  const { username } = useLocalSearchParams(); // Retrieve the username from the URL
+  const { username, isFriendRequest = false } = useLocalSearchParams(); // Retrieve the username from the URL
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [error, setError] = useState("");
@@ -82,9 +82,11 @@ const UserProfileInfo = () => {
   let content;
 
   console.log("This is the user we are at: ", username);
+  console.log("isFriendRequest: ", isFriendRequest);
 
   useEffect(() => {
     console.log("What???");
+
     const fetchUserProfile = async () => {
       setLoading(true);
       setError("");
@@ -320,37 +322,43 @@ const UserProfileInfo = () => {
       </View>
     );
   }
-
-  if (!isFriend) {
-    if (isMe) {
-      content = <View></View>;
+  if (isFriendRequest) {
+    content = <View></View>;
+  } else {
+    if (!isFriend) {
+      if (isMe) {
+        content = <View></View>;
+      } else {
+        content = (
+          <TouchableOpacity
+            style={styles.addFriendButton}
+            onPress={() => addFriend()}
+          >
+            <Ionicons
+              name="person-add"
+              size={16}
+              color="#0D5F13"
+              style={styles.buttonIcon}
+            />
+            <Text style={[styles.buttonText, { color: "#0D5F13" }]}>
+              Add Friend
+            </Text>
+          </TouchableOpacity>
+        );
+      }
     } else {
+      // Not friends or yourself
       content = (
         <TouchableOpacity
-          style={styles.addFriendButton}
-          onPress={() => addFriend()}
+          style={styles.removeFriendButton}
+          onPress={() => removeFriend()}
         >
-           <Ionicons
-          name="person-add"
-          size={16}
-          color="#0D5F13"
-          style={styles.buttonIcon}
-        />
-          <Text style={[styles.buttonText, { color: "#0D5F13" }]}>Add Friend</Text>
+          <Text style={[styles.buttonText, { color: "#871717" }]}>
+            Remove Friend
+          </Text>
         </TouchableOpacity>
       );
     }
-  } else {
-    // Not friends or yourself
-    content = (
-      <TouchableOpacity
-        style={styles.removeFriendButton}
-        onPress={() => removeFriend()}
-      >
-
-        <Text style={[styles.buttonText, { color: "#871717" }]}>Remove Friend</Text>
-      </TouchableOpacity>
-    );
   }
 
   return (
