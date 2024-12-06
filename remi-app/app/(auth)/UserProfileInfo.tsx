@@ -215,6 +215,29 @@ const UserProfileInfo = () => {
   };
 
   const removeFriend = async () => {
+    // Implement remove friend logic here
+    Alert.alert(
+      "Confirm Remove",
+      "Are you sure you want to remove this friend?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Delete cancelled"),
+          style: "cancel",
+        },
+        {
+          text: "Confirm",
+          onPress: () => {
+            console.log("friend removed");
+            deleteFriend();
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const deleteFriend = async () => {
     try {
       console.log(
         `Removing friend relationship between ${user_email} and ${userEmail}`

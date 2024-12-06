@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router"; // Correct imports for routing
 import {
@@ -94,6 +95,29 @@ export const Friends = () => {
   }, []);
 
   const removeFriend = async (friendEmail: string) => {
+    // Implement remove friend logic here
+    Alert.alert(
+      "Confirm Remove",
+      "Are you sure you want to remove this friend?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Delete cancelled"),
+          style: "cancel",
+        },
+        {
+          text: "Confirm",
+          onPress: () => {
+            console.log("friend removed");
+            deleteFriend(friendEmail);
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const deleteFriend = async (friendEmail: string) => {
     const currentUserEmail = auth.currentUser?.email;
 
     if (!currentUserEmail) {
@@ -268,7 +292,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 14,
     fontFamily: "Nunito-Bold",
-    textAlign: 'center',
+    textAlign: "center",
     color: "#871717",
   },
 });

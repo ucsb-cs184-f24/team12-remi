@@ -17,6 +17,8 @@ import {
   query,
   where,
   addDoc,
+  updateDoc,
+  arrayRemove,
 } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "react-native-elements";
@@ -139,7 +141,85 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
 
   const handleRemoveFriend = (user: User) => {
     // Implement remove friend logic here
-    Alert.alert("Remove Friend", `Are you sure you want to remove ${user.username} from your friends?`);
+    Alert.alert(
+      "Confirm Remove",
+      "Are you sure you want to remove this friend?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Delete cancelled"),
+          style: "cancel",
+        },
+        {
+          text: "Confirm",
+          onPress: () => {
+            console.log("friend removed");
+            removeFriend(user.email);
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+
+    // Alert.alert("Remove Friend", `Are you sure you want to remove ${user.username} from your friends?`);
+  };
+
+  const removeFriend = async (friendEmail: string) => {
+    const currentUserEmail = auth.currentUser?.email;
+
+    if (!currentUserEmail) {
+      console.error("Current user email not available");
+      return;
+    }
+
+    try {
+      console.log(
+        `Removing friend relationship between ${currentUserEmail} and ${friendEmail}`
+      );
+
+      // Remove friend from current user's `friends_list`
+      const currentUserQuery = query(
+        collection(db, "RemiUsers"),
+        where("email", "==", currentUserEmail)
+      );
+
+      const currentUserSnapshot = await getDocs(currentUserQuery);
+      if (!currentUserSnapshot.empty) {
+        const currentUserDoc = currentUserSnapshot.docs[0].ref;
+        console.log("Current user document reference:", currentUserDoc.path);
+
+        await updateDoc(currentUserDoc, {
+          friends_list: arrayRemove(friendEmail),
+        });
+        console.log(
+          `Successfully removed ${friendEmail} from ${currentUserEmail}'s friends_list`
+        );
+      }
+
+      // Remove current user from friend's `friends_list`
+      const friendQuery = query(
+        collection(db, "RemiUsers"),
+        where("email", "==", friendEmail)
+      );
+
+      const friendSnapshot = await getDocs(friendQuery);
+      if (!friendSnapshot.empty) {
+        const friendDoc = friendSnapshot.docs[0].ref;
+        console.log("Friend document reference:", friendDoc.path);
+
+        await updateDoc(friendDoc, {
+          friends_list: arrayRemove(currentUserEmail),
+        });
+        console.log(
+          `Successfully removed ${currentUserEmail} from ${friendEmail}'s friends_list`
+        );
+      }
+
+      alert("Friend removed successfully");
+    } catch (error) {
+      console.error("Error removing friend:", error);
+      alert("Failed to remove friend");
+    }
   };
 
   const renderItem = ({ item }: { item: User }) => {
@@ -190,15 +270,24 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
             style={styles.removeButton}
             onPress={() => handleRemoveFriend(item)}
           >
-            <Text style={[styles.buttonText, { color: "#871717" }]}>Remove</Text>
+            <Text style={[styles.buttonText, { color: "#871717" }]}>
+              Remove
+            </Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={styles.inviteButton}
             onPress={() => handleInvite(item)}
           >
-            <Ionicons name="person-add" size={16} color="#0D5F13" style={styles.buttonIcon} />
-            <Text style={[styles.buttonText, { color: "#0D5F13" }]}>Invite</Text>
+            <Ionicons
+              name="person-add"
+              size={16}
+              color="#0D5F13"
+              style={styles.buttonIcon}
+            />
+            <Text style={[styles.buttonText, { color: "#0D5F13" }]}>
+              Invite
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -296,7 +385,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 14,
     fontFamily: "Nunito-Bold",
-    textAlign: 'center',
+    textAlign: "center",
   },
   buttonIcon: {
     marginRight: 4,
@@ -311,4 +400,3 @@ const styles = StyleSheet.create({
 });
 
 export default UsersTab;
-
