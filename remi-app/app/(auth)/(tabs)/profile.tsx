@@ -46,6 +46,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { RecipePost } from "./home";
+import { isSearchBarAvailableForCurrentPlatform } from "react-native-screens";
 
 const { width, height } = Dimensions.get("window");
 const MAX_BIO_LENGTH = 150;
@@ -128,6 +129,7 @@ export default function UserProfileComponent() {
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [refresh, setRefresh] = useState(false);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [isBookmarkVisible, setBookmarkVisible] = useState(false);
   const { image, pickImage } = useImagePicker();
@@ -239,6 +241,7 @@ export default function UserProfileComponent() {
         ...doc.data(),
       }));
       setUserPosts(posts);
+      console.log("FETCHED USER POSTS");
       setLoading(false);
     } catch (error) {
       console.error("Error fetching user posts:", error);
@@ -321,6 +324,12 @@ export default function UserProfileComponent() {
     router.push("../../bookmarks");
   };
 
+  const toggleRefresh = async () => {
+    await fetchUserPosts();
+    setRefresh((refresh) => !refresh);
+    console.log(refresh);
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -351,6 +360,7 @@ export default function UserProfileComponent() {
           </View>
 
           <FlatList
+            extraData={refresh}
             data={userPosts}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
@@ -369,6 +379,7 @@ export default function UserProfileComponent() {
                   caption={item.caption || ""}
                   hashtags={item.hashtags || ""}
                   userHasCommented={item.userHasCommented || false}
+                  deletePostCallback={toggleRefresh}
                 />
               </View>
             )}

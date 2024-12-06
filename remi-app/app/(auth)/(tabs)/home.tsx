@@ -140,6 +140,7 @@ interface RecipePostProps {
   hashtags: string;
   userHasCommented: boolean;
   handleUnsavePost?: (postID: string) => void; // Add this callback
+  deletePostCallback?: () => void; // Add this callback
 }
 
 interface Comment {
@@ -196,6 +197,9 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   mediaUrl,
   postID,
   userHasCommented: initialUserHasCommented,
+  deletePostCallback = () => {
+    console.log("No callback, post was deleted.");
+  }, // Default to null if not defined
 }) => {
   interface LoadingStates {
     [key: string]: boolean;
@@ -224,6 +228,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   const modalPosition = useRef(new Animated.Value(0)).current;
   const heartScale = useRef(new Animated.Value(1)).current;
   const glimmerOpacity = useRef(new Animated.Value(0)).current;
+  const currUser = auth?.currentUser;
 
   if (!postID) {
     console.error("postID is undefined");
@@ -548,6 +553,38 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     setModalVisible(false); // Hide the modal
   };
 
+  const handleDeletePress = async (
+    post_id: string,
+    user_id: string,
+    deletePostCallback: (() => void) | null = null
+  ) => {
+    console.log("trying to delete post");
+    console.log("postID: ", post_id);
+    // delete the doc with this postID
+    try {
+      // Remove bookmark from Firestore
+      const postsRef = collection(db, "Posts");
+      const q = query(postsRef, where("userId", "==", user_id));
+      const querySnapshot = await getDocs(q);
+
+      querySnapshot.forEach(async (doc) => {
+        if (doc.id == post_id) {
+          await deleteDoc(doc.ref);
+          console.log("deleted!");
+        }
+      });
+      console.log("removed post with postID:  ", post_id);
+
+      // // Call the callback to update the state in BookmarksPage
+      // if (handleUnsavePost) handleUnsavePost(postID);
+      if (deletePostCallback) {
+        deletePostCallback();
+      }
+    } catch (error) {
+      console.error("Error unbookmarking post:", error);
+    }
+  };
+
   // const handleAvatarPress =
   //   (user_name: string) => (event: GestureResponderEvent) => {
   //     console.log("pressed user avatar");
@@ -813,20 +850,31 @@ export const RecipePost: React.FC<RecipePostProps> = ({
             <Text style={Ustyles.engagementText}>{commentsCount}</Text>
           </View>
           <View style={Ustyles.engagementItem}>
-            <Ionicons
-              name={
-                savedBy.includes(auth.currentUser?.uid ?? "")
-                  ? "bookmark"
-                  : "bookmark-outline"
-              }
-              size={27}
-              color={
-                savedBy.includes(auth.currentUser?.uid ?? "")
-                  ? "#FBC02D"
-                  : "gray"
-              }
-              onPress={handleSavePress}
-            />
+            {userID == currUser?.uid ? (
+              <Ionicons
+                name={"trash-outline"}
+                size={27}
+                color={"red"}
+                onPress={() =>
+                  handleDeletePress(postID, userID, deletePostCallback)
+                }
+              />
+            ) : (
+              <Ionicons
+                name={
+                  savedBy.includes(auth.currentUser?.uid ?? "")
+                    ? "bookmark"
+                    : "bookmark-outline"
+                }
+                size={27}
+                color={
+                  savedBy.includes(auth.currentUser?.uid ?? "")
+                    ? "#FBC02D"
+                    : "gray"
+                }
+                onPress={handleSavePress}
+              />
+            )}
           </View>
           {/* Modal for adding a comment */}
           <Modal
