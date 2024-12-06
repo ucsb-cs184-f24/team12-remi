@@ -121,9 +121,7 @@ const useImagePicker = () => {
 
 export default function UserProfileComponent() {
   const user = auth.currentUser;
-  const [profilePic, setProfilePic] = useState(
-    "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png"
-  );
+  const [profilePic, setProfilePic] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [isEditingBio, setIsEditingBio] = useState(false);
@@ -153,7 +151,11 @@ export default function UserProfileComponent() {
             const userData = userSnapshot.data();
             setIsPublic(userData.visibility === "public");
             setUsername(userData.username || "");
-            setProfilePic(userData.profilePic || profilePic);
+            console.log(userData.profilePic);
+            if (userData.profilePic != "") {
+              setProfilePic(userData.profilePic);
+            }
+            console.log("What am I??: ", profilePic);
             setBio(userData.bio || "");
             setFriendsEmails(userData.friends_list || []);
 
@@ -250,6 +252,7 @@ export default function UserProfileComponent() {
 
   useEffect(() => {
     if (image) {
+      console.log("What am I in the useEffect? ", image);
       setProfilePic(image);
       updateProfilePicture(image);
     }
@@ -340,7 +343,7 @@ export default function UserProfileComponent() {
 
   return (
     <Animated.View style={[styles.container]}>
-       {/* <Animated.View style={[styles.container, { opacity: fadeAnim }]}></Animated.View> */}
+      {/* <Animated.View style={[styles.container, { opacity: fadeAnim }]}></Animated.View> */}
       <LinearGradient
         colors={["#FFF9E6", "#BCD5AC"]}
         style={styles.backgroundGradient}
@@ -396,7 +399,11 @@ export default function UserProfileComponent() {
                       onPress={pickImage}
                     >
                       <Image
-                        source={{ uri: profilePic }}
+                        source={
+                          profilePic === ""
+                            ? require("../../../assets/placeholders/profile-pic.png")
+                            : { uri: profilePic }
+                        }
                         style={styles.profileImage}
                       />
                       <View style={styles.editOverlay}>
