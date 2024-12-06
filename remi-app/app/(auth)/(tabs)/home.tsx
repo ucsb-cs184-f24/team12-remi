@@ -1298,6 +1298,7 @@ const Home: React.FC = () => {
 
   return (
     <SafeAreaView style={Ustyles.background} edges={["top"]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF9E6" />
       <View style={Ustyles.background}>
         <ScrollView
           ref={scrollViewRef}

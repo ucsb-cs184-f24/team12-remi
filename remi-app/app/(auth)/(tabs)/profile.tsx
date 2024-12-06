@@ -330,7 +330,8 @@ export default function UserProfileComponent() {
   }
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <Animated.View style={[styles.container]}>
+       {/* <Animated.View style={[styles.container, { opacity: fadeAnim }]}></Animated.View> */}
       <LinearGradient
         colors={["#FFF9E6", "#BCD5AC"]}
         style={styles.backgroundGradient}
