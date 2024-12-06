@@ -188,6 +188,9 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   mediaUrl,
   postID,
   userHasCommented: initialUserHasCommented,
+  deletePostCallback = () => {
+    console.log("No callback, post was deleted.");
+  }, // Default to null if not defined
 }) => {
   interface LoadingStates {
     [key: string]: boolean;
@@ -507,7 +510,6 @@ export const RecipePost: React.FC<RecipePostProps> = ({
   const handleDeletePress = async (
     post_id: string,
     user_id: string,
-    isCallback: boolean = false,
     deletePostCallback: (() => void) | null = null
   ) => {
     console.log("trying to delete post");
@@ -516,19 +518,20 @@ export const RecipePost: React.FC<RecipePostProps> = ({
     try {
       // Remove bookmark from Firestore
       const postsRef = collection(db, "Posts");
-      const q = query(postsRef, where(auth?.currentUser.uid, "==", user_id));
+      const q = query(postsRef, where("userId", "==", user_id));
       const querySnapshot = await getDocs(q);
 
       querySnapshot.forEach(async (doc) => {
         if (doc.id == post_id) {
           await deleteDoc(doc.ref);
+          console.log("deleted!");
         }
       });
       console.log("removed post with postID:  ", post_id);
 
       // // Call the callback to update the state in BookmarksPage
       // if (handleUnsavePost) handleUnsavePost(postID);
-      if (isCallback) {
+      if (deletePostCallback) {
         deletePostCallback();
       }
     } catch (error) {
@@ -760,7 +763,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                 size={27}
                 color={"red"}
                 onPress={() =>
-                  handleDeletePress(postID, userID, true, deletePostCallback)
+                  handleDeletePress(postID, userID, deletePostCallback)
                 }
               />
             ) : (
