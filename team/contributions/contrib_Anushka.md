@@ -1,4 +1,5 @@
 <img width="670" alt="Screenshot 2024-12-06 at 12 16 34 PM" src="https://github.com/user-attachments/assets/d8214038-47d2-4d00-8f79-c50174047adc">
+
 This is my github contributions for the project. While it may display a low number of commits and line changes, here's a more detailed breakdown of what I have worked on this quarter and why contributions may not be a reflection of that:
 I collaborated with Alex, Helen, and Peter on the home page and rendering posts for the recipes and integrating that with the database. 
 Also started the first create account page to give users an opportunity to create a username, email, and password and this was later expanded to have a section for uploading a profile picture.
