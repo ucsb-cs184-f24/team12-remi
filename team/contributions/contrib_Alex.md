@@ -9,4 +9,4 @@ My main contributions to the codebase were:
 - Deleting posts under recent activity
 - Showing data of a post from the database in different UI components of a Post, such as sliders, image, title, etc.
 
-I have a lot of lines of code / commits since I had the first few pushes to the database, and usually I would help merge PRs if they got approval.
+The commmit graph is accurate, but also I have a lot of lines of code / commits since I had the first few pushes to the database, and usually I would help merge PRs if they got approval.
