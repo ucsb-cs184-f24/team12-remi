@@ -277,11 +277,13 @@ export const RecipePost: React.FC<RecipePostProps> = ({
           createdAt: new Date(),
         });
 
+        console.log("comment count: ", postData.comments);
         // Update the comment count in the post document
         await updateDoc(postRef, {
           comments: postData.comments + 1, // Increment the current comment count
         });
-        setCommentsCount((prev) => prev + 1);
+        setCommentsCount(postData.comments + 1);
+        console.log("comment count: ", postData.comments);
         setUserHasCommented(true);
 
         // Send notification only if the commenter is not the post owner
