@@ -238,14 +238,8 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
             size={50}
             rounded
             source={(() => {
-              if (typeof item.profilePic === "object" && item.profilePic) {
-                if (item.profilePic) {
-                  return require("../../assets/placeholders/profile-pic.png");
-                } else {
-                  return { uri: item.profilePic };
-                }
-              } else if (typeof item.profilePic === "string") {
-                return { uri: item.profilePic };
+              if (item.profilePic == "") {
+                return require("../../assets/placeholders/profile-pic.png");
               } else {
                 return { uri: item.profilePic };
               }
