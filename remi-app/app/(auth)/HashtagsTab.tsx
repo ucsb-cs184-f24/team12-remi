@@ -42,14 +42,27 @@ const HashtagsTab: React.FC<HashtagsTabProps> = ({ selectedTags }) => {
     setLoading(true);
 
     try {
-      const postsRef = collection(db, "Posts");
+      const usersRef = collection(db, "RemiUsers");
+      const usersQuery = query(usersRef, where("visibility", "==", "public"));
+      const userSnapshot = await getDocs(usersQuery);
 
+      const publicUserIds = userSnapshot.docs.map((doc) => doc.id);
+
+      if (publicUserIds.length === 0) {
+        setPosts([]);
+        setError("No posts found for public users.");
+        setLoading(false);
+        return;
+      }
+
+      const postsRef = collection(db, "Posts");
       let postsQuery;
 
       if (selectedTags.length === 0) {
         // Default fetch logic when no tags are selected
         postsQuery = query(
           postsRef,
+          where("userId", "in", publicUserIds),
           orderBy("likesCount", "desc"), // Order by likes as an example
           limit(10) // Limit to top 10 posts
         );
@@ -57,7 +70,10 @@ const HashtagsTab: React.FC<HashtagsTabProps> = ({ selectedTags }) => {
         // Fetch posts matching selected tags
         const selectedTagIds = selectedTags.map((tag) => tag.id);
 
-        const snapshot = await getDocs(postsRef);
+        const snapshot = await getDocs(
+          query(postsRef, where("userId", "in", publicUserIds))
+        );
+
         const filteredPosts = snapshot.docs
           .map((doc) => {
             const data = doc.data() as Omit<RecipePostType, "id">;
@@ -138,7 +154,8 @@ const HashtagsTab: React.FC<HashtagsTabProps> = ({ selectedTags }) => {
               onRefresh={onRefresh}
               colors={["#0D5F13"]}
             />
-          }>
+          }
+        >
           {posts.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No posts found</Text>
