@@ -40,12 +40,17 @@ import ConditionalKeyboardAvoidingView from "./(auth)/ConditionalKeyboardAvoidin
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const profilePicPlaceholder = require("../assets/placeholders/profile-pic.png");
   const [profilePic, setProfilePic] = useState<any>(profilePicPlaceholder);
   const router = useRouter(); // Initialize router
-
+  const [passwordMismatch, setPasswordMismatch] = useState(false);
+  const handleConfirmPasswordChange = (value: string) => {
+    setConfirmPassword(value);
+    setPasswordMismatch(value !== password); // Check if passwords match
+  };
   // Image Picker Handler
   const pickImage = async () => {
     try {
@@ -96,6 +101,10 @@ export default function Register() {
   };
 
   const signUp = async () => {
+    if (passwordMismatch) {
+      alert("Passwords do not match!");
+      return;
+    }
     setLoading(true);
     try {
       const usernameExists = await checkIfUsernameExists(username);
@@ -152,17 +161,14 @@ export default function Register() {
       <ConditionalKeyboardAvoidingView>
         <LinearGradient
           colors={["#FFF9E6", "#BCD5AC"]}
-          style={styles.backgroundGradient}
-        >
+          style={styles.backgroundGradient}>
           <ImageBackground
             source={require("../assets/images/background-lineart.png")}
             style={styles.backgroundImage}
-            imageStyle={styles.backgroundImageStyle}
-          >
+            imageStyle={styles.backgroundImageStyle}>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => router.back()}
-            >
+              onPress={() => router.back()}>
               <Ionicons name="arrow-back" size={24} color="#0D5F13" />
               <Text style={styles.backButtonText}>Back to Login</Text>
             </TouchableOpacity>
@@ -171,8 +177,7 @@ export default function Register() {
             <ScrollView contentContainerStyle={styles.scrollContent}>
               <TouchableOpacity
                 style={styles.profileImageContainer}
-                onPress={pickImage}
-              >
+                onPress={pickImage}>
                 <View style={styles.outerCircle}>
                   <Image
                     source={
@@ -212,6 +217,16 @@ export default function Register() {
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
+                autoCorrect={false}
+                autoCapitalize="none"
+                secureTextEntry
+                placeholderTextColor="#BCD5AC"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChangeText={handleConfirmPasswordChange}
                 autoCorrect={false}
                 autoCapitalize="none"
                 secureTextEntry
