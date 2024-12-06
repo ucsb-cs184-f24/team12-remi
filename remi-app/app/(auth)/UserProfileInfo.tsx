@@ -186,11 +186,12 @@ const UserProfileInfo = () => {
       const existingInviteQuery = query(
         notificationsRef,
         where("from", "==", user.email),
-        where("to", "==", user_email),
+        where("to", "==", userEmail),
         where("read_flag", "==", true)
       );
       console.log("user: ", user);
-
+      console.log("Their email: ", userEmail);
+      console.log("My email : ", user.email);
       const querySnapshot = await getDocs(existingInviteQuery);
       console.log("username: ", curr_username);
 
