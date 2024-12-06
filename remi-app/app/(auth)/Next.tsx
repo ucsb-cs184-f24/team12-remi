@@ -189,6 +189,7 @@ export default function RecipeSubmissionPage() {
       const mediaUrl = await uploadImageToStorage(decodedImage);
       const docRef = doc(db, "Posts", `${Date.now()}`);
       await setDoc(docRef, {
+        comments: 0,
         title,
         caption,
         hashtags: selectedTags,
