@@ -17,6 +17,8 @@ import {
   query,
   where,
   addDoc,
+  updateDoc,
+  arrayRemove,
 } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "react-native-elements";
@@ -137,9 +139,91 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
     }
   };
 
+  const handleRemoveFriend = (user: User) => {
+    // Implement remove friend logic here
+    Alert.alert(
+      "Confirm Remove",
+      "Are you sure you want to remove this friend?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Delete cancelled"),
+          style: "cancel",
+        },
+        {
+          text: "Confirm",
+          onPress: () => {
+            console.log("friend removed");
+            removeFriend(user.email);
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+
+    // Alert.alert("Remove Friend", `Are you sure you want to remove ${user.username} from your friends?`);
+  };
+
+  const removeFriend = async (friendEmail: string) => {
+    const currentUserEmail = auth.currentUser?.email;
+
+    if (!currentUserEmail) {
+      console.error("Current user email not available");
+      return;
+    }
+
+    try {
+      console.log(
+        `Removing friend relationship between ${currentUserEmail} and ${friendEmail}`
+      );
+
+      // Remove friend from current user's `friends_list`
+      const currentUserQuery = query(
+        collection(db, "RemiUsers"),
+        where("email", "==", currentUserEmail)
+      );
+
+      const currentUserSnapshot = await getDocs(currentUserQuery);
+      if (!currentUserSnapshot.empty) {
+        const currentUserDoc = currentUserSnapshot.docs[0].ref;
+        console.log("Current user document reference:", currentUserDoc.path);
+
+        await updateDoc(currentUserDoc, {
+          friends_list: arrayRemove(friendEmail),
+        });
+        console.log(
+          `Successfully removed ${friendEmail} from ${currentUserEmail}'s friends_list`
+        );
+      }
+
+      // Remove current user from friend's `friends_list`
+      const friendQuery = query(
+        collection(db, "RemiUsers"),
+        where("email", "==", friendEmail)
+      );
+
+      const friendSnapshot = await getDocs(friendQuery);
+      if (!friendSnapshot.empty) {
+        const friendDoc = friendSnapshot.docs[0].ref;
+        console.log("Friend document reference:", friendDoc.path);
+
+        await updateDoc(friendDoc, {
+          friends_list: arrayRemove(currentUserEmail),
+        });
+        console.log(
+          `Successfully removed ${currentUserEmail} from ${friendEmail}'s friends_list`
+        );
+      }
+
+      alert("Friend removed successfully");
+    } catch (error) {
+      console.error("Error removing friend:", error);
+      alert("Failed to remove friend");
+    }
+  };
+
   const renderItem = ({ item }: { item: User }) => {
     const isAlreadyFriend = currentUserFriends.includes(item.email);
-    // console.log(item.profilePic.uri)
     return (
       <View style={styles.item}>
         <TouchableOpacity
@@ -155,17 +239,15 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
             rounded
             source={(() => {
               if (typeof item.profilePic === "object" && item.profilePic) {
-                // If profilePic is an object with a `uri` key
                 if (item.profilePic) {
-                  return require("../../assets/placeholders/profile-pic.png"); // Local asset fallback
+                  return require("../../assets/placeholders/profile-pic.png");
                 } else {
-                  return { uri: item.profilePic }; // External URL
+                  return { uri: item.profilePic };
                 }
               } else if (typeof item.profilePic === "string") {
-                // If profilePic is a string (likely a direct URL)
                 return { uri: item.profilePic };
               } else {
-                return { uri: item.profilePic }; // External URL
+                return { uri: item.profilePic };
               }
             })()}
             containerStyle={styles.avatarContainer}
@@ -184,16 +266,28 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
           </TouchableOpacity>
         </View>
         {isAlreadyFriend ? (
-          <View style={styles.friendStatusContainer}>
-            <Ionicons name="checkmark-circle" size={24} color="#6CAB44" />
-            <Text style={styles.alreadyFriendText}>Friends</Text>
-          </View>
+          <TouchableOpacity
+            style={styles.removeButton}
+            onPress={() => handleRemoveFriend(item)}
+          >
+            <Text style={[styles.buttonText, { color: "#871717" }]}>
+              Remove
+            </Text>
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={styles.inviteButton}
-            onPress={() => handleInvite(item)}>
-            <Ionicons name="person-add" size={20} color="#FFFFFF" />
-            <Text style={styles.inviteButtonText}>Invite</Text>
+            onPress={() => handleInvite(item)}
+          >
+            <Ionicons
+              name="person-add"
+              size={16}
+              color="#0D5F13"
+              style={styles.buttonIcon}
+            />
+            <Text style={[styles.buttonText, { color: "#0D5F13" }]}>
+              Invite
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -213,19 +307,20 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#0D5F13" />
       </View>
     );
   }
 
   return searchQuery.trim() === "" ? (
-    <Friends /> // Render the Friends component
+    <Friends />
   ) : (
     <FlatList
       data={filteredFriends}
       renderItem={renderItem}
       keyExtractor={(item) => item.email}
       ListEmptyComponent={<Text style={styles.emptyText}>No users found</Text>}
+      contentContainerStyle={styles.listContent}
     />
   );
 };
@@ -235,17 +330,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFF9E6",
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
   item: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
+    marginBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#E0E0E0",
+    paddingBottom: 16,
   },
   avatarContainer: {
     marginRight: 16,
     borderWidth: 2,
-    borderColor: "#006400",
+    borderColor: "#0D5F13", // Dark green color
   },
   userInfo: {
     flex: 1,
@@ -256,43 +361,41 @@ const styles = StyleSheet.create({
     color: "#333333",
     fontFamily: "Nunito-Bold",
   },
-  friendStatusContainer: {
-    flexDirection: "row",
+  removeButton: {
     alignItems: "center",
-  },
-  alreadyFriendText: {
-    marginLeft: 4,
-    fontSize: 14,
-    color: "#6CAB44",
-    fontWeight: "bold",
-    fontFamily: "Nunito-Bold",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: "#871717",
+    backgroundColor: "#FFEBEE",
   },
   inviteButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#006400",
+    justifyContent: "center",
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingVertical: 6,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: "#0D5F13",
+    backgroundColor: "#E8F5E9",
   },
-  inviteButtonText: {
-    color: "#FFFFFF",
-    marginLeft: 4,
-    fontSize: 14,
+  buttonText: {
     fontWeight: "bold",
+    fontSize: 14,
     fontFamily: "Nunito-Bold",
+    textAlign: "center",
+  },
+  buttonIcon: {
+    marginRight: 4,
   },
   emptyText: {
     textAlign: "center",
     marginTop: 20,
     fontSize: 16,
-    color: "#888888",
+    color: "#666",
     fontFamily: "Nunito-Regular",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
 });
 
