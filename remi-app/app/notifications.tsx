@@ -82,6 +82,10 @@ const Notifs = () => {
               }
             }
 
+            // // Update the read_flag to false
+            // const notificationDocRef = doc(db, "Notifications", document.id);
+            // await updateDoc(notificationDocRef, { read_flag: false });
+
             return {
               id: document.id,
               ...notification,
@@ -92,11 +96,61 @@ const Notifs = () => {
         );
 
         setNotifications(notificationsWithDetails);
+        //updateNotifications(notificationsWithDetails);
+        // updateNotifications(document);
       });
 
       return () => unsubscribe();
     }
   }, [user]);
+
+  // const updateNotifications = async (document: Document) => {
+  //   // Update the read_flag to false
+  //   const notificationDocRef = doc(db, "Notifications", document.id);
+  //   await updateDoc(notificationDocRef, { read_flag: false });
+  // };
+
+  const updateNotifications = async (notifications: Notification[]) => {
+    console.log("update notifications!");
+    router.back();
+    try {
+      for (const notification of notifications) {
+        const { from, to, read_flag } = notification;
+
+        // Skip if read_flag is already false
+        if (!read_flag) continue;
+        if (from.includes("@")) continue;
+
+        try {
+          // Query Notifications collection for matching documents
+          const notificationsQuery = query(
+            collection(db, "Notifications"),
+            where("from", "==", from),
+            where("to", "==", to),
+            where("read_flag", "==", true)
+          );
+
+          // Fetch query results
+          const querySnapshot = await getDocs(notificationsQuery);
+
+          // Update each matching document's read_flag to false
+          for (const docSnapshot of querySnapshot.docs) {
+            const notificationRef = doc(db, "Notifications", docSnapshot.id);
+            await updateDoc(notificationRef, { read_flag: false });
+          }
+        } catch (innerError) {
+          console.error(
+            `Error updating notification from '${from}' to '${to}':`,
+            innerError
+          );
+        }
+      }
+
+      console.log("All notifications processed successfully!");
+    } catch (error) {
+      console.error("Error processing notifications:", error);
+    }
+  };
 
   const handleAction = async (notification: Notification, accepted = false) => {
     try {
@@ -134,16 +188,38 @@ const Notifs = () => {
     }
   };
 
-  const renderNotification = ({ item, index }: { item: Notification; index: number }) => (
-    <View style={[styles.requestContainer, { marginTop: index === 0 ? 20 : 10 }]}>
+  const renderNotification = ({
+    item,
+    index,
+  }: {
+    item: Notification;
+    index: number;
+  }) => (
+    <View
+      style={[styles.requestContainer, { marginTop: index === 0 ? 20 : 10 }]}
+    >
       <View style={styles.container}>
-        <View style={[styles.avatarContainer, { marginTop: item.isFriendRequest ? 0 : 0 }]}>
-          <Avatar
-            size={55} 
-            rounded
-            source={{ uri: item.profilePic || undefined }}
-            containerStyle={styles.avatar}
-          />
+        <View
+          style={[
+            styles.avatarContainer,
+            { marginTop: item.isFriendRequest ? 0 : 0 },
+          ]}
+        >
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: "/(auth)/UserProfileInfo",
+                params: { username: item.username },
+              })
+            }
+          >
+            <Avatar
+              size={55}
+              rounded
+              source={{ uri: item.profilePic || undefined }}
+              containerStyle={styles.avatar}
+            />
+          </TouchableOpacity>
         </View>
         <View style={styles.chatBubbleContainer}>
           <View style={styles.notifButton}>
@@ -186,7 +262,7 @@ const Notifs = () => {
       >
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => updateNotifications(notifications)}
         >
           <Spacer size={26} />
           <Ionicons name="arrow-back" size={30} color="#0D5F13" />
@@ -196,7 +272,7 @@ const Notifs = () => {
         {notifications.length === 0 ? (
           <Text style={[styles.noRequestsText]}>No Notifications.</Text>
         ) : (
-          <FlatList 
+          <FlatList
             data={notifications}
             keyExtractor={(item) => item.id}
             renderItem={renderNotification}
@@ -284,8 +360,8 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   avatarContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     width: 70,
   },
   avatar: {
@@ -318,4 +394,3 @@ const styles = StyleSheet.create({
 });
 
 export default Notifs;
-
