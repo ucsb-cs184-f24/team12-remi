@@ -157,14 +157,24 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
               if (typeof item.profilePic === "object" && item.profilePic) {
                 // If profilePic is an object with a `uri` key
                 if (item.profilePic) {
+                  console.log("default!");
                   return require("../../assets/placeholders/profile-pic.png"); // Local asset fallback
                 } else {
+                  console.log("External first version?");
                   return { uri: item.profilePic }; // External URL
                 }
               } else if (typeof item.profilePic === "string") {
                 // If profilePic is a string (likely a direct URL)
+                console.log("If profilePic is a string ", item.profilePic);
                 return { uri: item.profilePic };
               } else {
+                console.log("this is a problem");
+                console.log(
+                  "external URI ",
+                  item.profilePic,
+                  " username: ",
+                  item.username
+                );
                 return { uri: item.profilePic }; // External URL
               }
             })()}
@@ -191,7 +201,8 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
         ) : (
           <TouchableOpacity
             style={styles.inviteButton}
-            onPress={() => handleInvite(item)}>
+            onPress={() => handleInvite(item)}
+          >
             <Ionicons name="person-add" size={20} color="#FFFFFF" />
             <Text style={styles.inviteButtonText}>Invite</Text>
           </TouchableOpacity>

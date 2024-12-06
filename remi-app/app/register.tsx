@@ -44,7 +44,7 @@ export default function Register() {
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const profilePicPlaceholder = require("../assets/placeholders/profile-pic.png");
-  const [profilePic, setProfilePic] = useState<any>(profilePicPlaceholder);
+  const [profilePic, setProfilePic] = useState<string>(profilePicPlaceholder);
   const router = useRouter(); // Initialize router
   const [passwordMismatch, setPasswordMismatch] = useState(false);
   const handleConfirmPasswordChange = (value: string) => {
@@ -124,11 +124,14 @@ export default function Register() {
       // Upload profile picture if one is chosen
       let mediaUrl = null;
       if (profilePic) {
+        console.log("I have entered this case!");
         // If profilePic is not already a URL, upload it to storage
-        if (typeof profilePic === "string" && !profilePic.startsWith("http")) {
+        console.log("What am i? ", profilePic);
+        if (typeof profilePic === "string") {
+          console.log("Shuold not have entered here!");
           mediaUrl = await uploadImageToStorage(profilePic);
         } else {
-          mediaUrl = null; // No upload needed for local placeholder or external URLs
+          mediaUrl = null;
         }
       }
 
@@ -137,7 +140,7 @@ export default function Register() {
         email: email,
         friends_list: [],
         visibility: "private",
-        profilePic: mediaUrl || profilePic || "",
+        profilePic: mediaUrl || "",
       });
 
       alert("Account created successfully!");
@@ -161,14 +164,17 @@ export default function Register() {
       <ConditionalKeyboardAvoidingView>
         <LinearGradient
           colors={["#FFF9E6", "#BCD5AC"]}
-          style={styles.backgroundGradient}>
+          style={styles.backgroundGradient}
+        >
           <ImageBackground
             source={require("../assets/images/background-lineart.png")}
             style={styles.backgroundImage}
-            imageStyle={styles.backgroundImageStyle}>
+            imageStyle={styles.backgroundImageStyle}
+          >
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => router.back()}>
+              onPress={() => router.back()}
+            >
               <Ionicons name="arrow-back" size={24} color="#0D5F13" />
               <Text style={styles.backButtonText}>Back to Login</Text>
             </TouchableOpacity>
@@ -177,7 +183,8 @@ export default function Register() {
             <ScrollView contentContainerStyle={styles.scrollContent}>
               <TouchableOpacity
                 style={styles.profileImageContainer}
-                onPress={pickImage}>
+                onPress={pickImage}
+              >
                 <View style={styles.outerCircle}>
                   <Image
                     source={
