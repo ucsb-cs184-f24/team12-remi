@@ -1,5 +1,6 @@
 import React from "react";
 import { TouchableOpacity, StyleSheet, Text } from "react-native";
+import Ustyles from "@/components/UniversalStyles";
 
 interface NewPostBannerProps {
   onPress: () => void;
@@ -13,7 +14,8 @@ export const NewPostBanner: React.FC<NewPostBannerProps> = ({ onPress }) => {
       accessibilityRole="button"
       accessibilityLabel="New posts available. Tap to refresh."
     >
-      <Text style={styles.bannerText}>New posts available</Text>
+      <Text style={styles.bannerText}>New posts available!
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -36,5 +38,6 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 16,
     fontWeight: "bold",
+    fontFamily: "Nunito_700Bold",
   },
 });
