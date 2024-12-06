@@ -1318,6 +1318,12 @@ const Home: React.FC = () => {
               friendsList.current = friendsIds;
               setFriendsListChange(!friendsListChange);
               console.log("Updated friendsList:", friendsIds);
+            } else {
+              friendsList.current = [];
+              postsArrRef.current = [];
+              setFriendsListChange(!friendsListChange);
+              setHasNoFriends(true);
+              console.log("Updated friendsList to empty!");
             }
           } else {
             console.log("No such document!");
