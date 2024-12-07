@@ -68,3 +68,6 @@ Submit a pull request :D
 
 ## License
 You can find our MIT license under our LICENSE.md: https://github.com/ucsb-cs184-f24/team12-remi/blob/main/LICENSE.md
+
+## Deployment
+https://github.com/ucsb-cs184-f24/team12-remi/releases/tag/v1.5.0
