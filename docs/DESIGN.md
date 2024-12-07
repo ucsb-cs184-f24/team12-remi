@@ -39,6 +39,13 @@ We wanted to use a consistent theme of beige and green through our components an
 
 # External Resources
 https://reactnative.dev/docs/getting-started
+StackOverflow
+ChatGPT
+v0
+Youtube
+Medium
+Reddit
+Visual Inspirations: Instagram, Beli
 
 # Testing
 Throughout the design and implementation process of Remi, there was a lot of testing and evaluation done to ensure the behavior displayed from our app matched the expected behavior. Much of the testing was done simply through live displaying the app on Expo Go while we were making changes. We would test on both Android and iOS devices to ensure cross-compatibility on all implemented functionality and designs. 
