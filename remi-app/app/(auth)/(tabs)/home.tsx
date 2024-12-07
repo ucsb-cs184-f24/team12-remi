@@ -869,25 +869,29 @@ export const RecipePost: React.FC<RecipePostProps> = ({
           </Animated.View>
           <View style={Ustyles.engagementItem}>
             {/* Comment Icon */}
+            <TouchableOpacity onPress={handleCommentsPress}>
             <Ionicons
               name={userHasCommented ? "chatbox" : "chatbox-outline"} // Filled icon when user has commented
               size={27}
               color={userHasCommented ? "green" : "gray"} // Filled green when user has commented
-              onPress={handleCommentsPress} // Opens the comment modal
+              // Opens the comment modal
             />
+            </TouchableOpacity>
             <Text style={Ustyles.engagementText}>{commentsCount}</Text>
           </View>
           <View style={Ustyles.engagementItem}>
             {userID == currUser?.uid ? (
+              <TouchableOpacity onPress={() =>
+                confirmDelete(postID, userID, deletePostCallback)}>
               <Ionicons
                 name={"trash-outline"}
                 size={27}
                 color={"red"}
-                onPress={() =>
-                  confirmDelete(postID, userID, deletePostCallback)
-                }
+                
               />
+              </TouchableOpacity>
             ) : (
+              <TouchableOpacity onPress={handleSavePress} >
               <Ionicons
                 name={
                   savedBy.includes(auth.currentUser?.uid ?? "")
@@ -900,8 +904,8 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                     ? "#FBC02D"
                     : "gray"
                 }
-                onPress={handleSavePress}
               />
+              </TouchableOpacity>
             )}
           </View>
           {/* Modal for adding a comment */}
