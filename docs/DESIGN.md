@@ -34,7 +34,7 @@ Finally on Sec 09, 12/6/24, the team worked on small bug fixes before the code f
 
 # UX Considerations and User Flows
 ![Remi User Workflows](https://github.com/user-attachments/assets/6894b955-8ead-4750-8424-d51d01f51903)
-We wanted to use a consistent theme of beige and green through our components and different page backgrounds. We used Figma to start designing different pages like the home screen, login/create account, and more. Attached below is the link:
+We wanted to use a consistent theme of beige and green through our components and different page backgrounds. We used Figma to start designing different pages like the home screen, login/create account, and more.
 <img width="545" alt="Screen Shot 2024-11-20 at 2 38 21 PM" src="https://github.com/user-attachments/assets/35bc9fb0-cc92-40cd-80d2-18a72d7d1913">
 
 # External Resources
