@@ -25,7 +25,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from "expo-linear-gradient";
 import Spacer from "../components/Spacer";
 
-export const Friends = () => {
+interface FriendsProps {
+  hideHeader?: boolean;
+}
+
+export const Friends: React.FC<FriendsProps> = ({ hideHeader = false }) => {
   const router = useRouter();
   const { friendsEmails } = useLocalSearchParams();
   const [friends, setFriends] = useState<any[]>([]);
@@ -181,71 +185,80 @@ export const Friends = () => {
   }
 
   return (
-    <LinearGradient
-      colors={["#FFF9E6", "#FFF9E6"]}
-      style={styles.backgroundGradient}
-    >
-      <ImageBackground
-        source={require("../assets/images/background-lineart.png")}
-        style={styles.backgroundImage}
-        imageStyle={styles.backgroundImageStyle}
+    <View style={styles.container}>
+      <LinearGradient
+        colors={["#FFF9E6", "#FFF9E6"]}
+        style={styles.backgroundGradient}
       >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
+        <ImageBackground
+          source={require("../assets/images/background-lineart.png")}
+          style={styles.backgroundImage}
+          imageStyle={styles.backgroundImageStyle}
         >
-          <Spacer size={26} />
-          <Ionicons name="arrow-back" size={30} color="#0D5F13" />
-        </TouchableOpacity>
-        <Spacer size={60} />
-        <Text style={styles.headerText}>Friends</Text>
-        {friends.length === 0 ? (
-          <Text style={styles.noFriendsText}>No friends found</Text>
-        ) : (
-          <FlatList
-            data={friends}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.friendItem}>
-                <TouchableOpacity
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(auth)/UserProfileInfo",
-                      params: { username: item.username },
-                    })
-                  }
-                >
-                  <Image
-                    source={
-                      item.profilePic
-                        ? { uri: item.profilePic }
-                        : require("../assets/placeholders/profile-pic.png")
+          {!hideHeader && (
+            <>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => router.back()}
+              >
+                <Spacer size={26} />
+                <Ionicons name="arrow-back" size={30} color="#0D5F13" />
+              </TouchableOpacity>
+              <Spacer size={60} />
+              <Text style={styles.headerText}>Friends</Text>
+            </>
+          )}
+          {friends.length === 0 ? (
+            <Text style={styles.noFriendsText}>No friends found</Text>
+          ) : (
+            <FlatList
+              data={friends}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View style={styles.friendItem}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      router.push({
+                        pathname: "/(auth)/UserProfileInfo",
+                        params: { username: item.username },
+                      })
                     }
-                    style={styles.profilePic}
-                  />
-                </TouchableOpacity>
-                <View style={styles.friendInfo}>
-                  <Text style={styles.friendName}>
-                    {item.username || "No Name"}
-                  </Text>
+                  >
+                    <Image
+                      source={
+                        item.profilePic
+                          ? { uri: item.profilePic }
+                          : require("../assets/placeholders/profile-pic.png")
+                      }
+                      style={styles.profilePic}
+                    />
+                  </TouchableOpacity>
+                  <View style={styles.friendInfo}>
+                    <Text style={styles.friendName}>
+                      {item.username || "No Name"}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => removeFriend(item.email)}
+                  >
+                    <Text style={styles.removeButtonText}>Remove</Text>
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  style={styles.removeButton}
-                  onPress={() => removeFriend(item.email)}
-                >
-                  <Text style={styles.removeButtonText}>Remove</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            contentContainerStyle={styles.friendsList}
-          />
-        )}
-      </ImageBackground>
-    </LinearGradient>
+              )}
+              contentContainerStyle={styles.friendsList}
+            />
+          )}
+        </ImageBackground>
+      </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   backgroundGradient: {
     flex: 1,
   },
@@ -283,6 +296,7 @@ const styles = StyleSheet.create({
   },
   friendsList: {
     paddingHorizontal: 20,
+    paddingTop: 20,
   },
   friendItem: {
     flexDirection: "row",
