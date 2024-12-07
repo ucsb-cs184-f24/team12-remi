@@ -52,24 +52,7 @@ export default function RootLayout() {
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="poo" options={{ headerShown: false }} />
-      {/* <Stack.Screen name="friends" options={{ headerShown: false }} /> */}
-
-      <Stack.Screen
-        name="friends"
-        options={{
-          headerTitle: "Friends",
-          headerBackTitle: "Back",
-          headerStyle: {
-            backgroundColor: "#FFF9E6",
-          },
-          headerTitleStyle: {
-            fontFamily: "Nunito_700Bold",
-            fontSize: 25,
-            color: "#0D5F13",
-          },
-          headerTintColor: "#0D5F13",
-        }}
-      />
+      <Stack.Screen name="friends" options={{ headerShown: false }} />
 
       <Stack.Screen
         name="notifications"

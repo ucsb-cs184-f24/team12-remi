@@ -8,8 +8,9 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
+  ImageBackground,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router"; // Correct imports for routing
+import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   collection,
   query,
@@ -18,16 +19,17 @@ import {
   getDocs,
   updateDoc,
   arrayRemove,
-  doc,
 } from "firebase/firestore";
-import { db, auth } from "../firebaseConfig"; // Adjust the path based on your project structure
+import { db, auth } from "../firebaseConfig";
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from "expo-linear-gradient";
+import Spacer from "../components/Spacer";
 
 export const Friends = () => {
   const router = useRouter();
-  const { friendsEmails } = useLocalSearchParams(); // Get params passed from profile.tsx
+  const { friendsEmails } = useLocalSearchParams();
   const [friends, setFriends] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const currentUserEmailTwo = auth.currentUser?.email;
 
   useEffect(() => {
     const currentUserEmail = auth.currentUser?.email;
@@ -41,7 +43,6 @@ export const Friends = () => {
 
     console.log("Setting up real-time listener for friends list");
 
-    // Listen for changes to the current user's `friends_list`
     const currentUserQuery = query(
       collection(db, "RemiUsers"),
       where("email", "==", currentUserEmail)
@@ -66,10 +67,9 @@ export const Friends = () => {
         return;
       }
 
-      // Query the `RemiUsers` collection to fetch friend details
       const friendsQuery = query(
         collection(db, "RemiUsers"),
-        where("email", "in", friendsList) // Query users based on the updated `friends_list`
+        where("email", "in", friendsList)
       );
 
       getDocs(friendsQuery)
@@ -90,12 +90,11 @@ export const Friends = () => {
 
     return () => {
       console.log("Cleaning up real-time listener");
-      unsubscribe(); // Cleanup the listener on unmount
+      unsubscribe();
     };
   }, []);
 
   const removeFriend = async (friendEmail: string) => {
-    // Implement remove friend logic here
     Alert.alert(
       "Confirm Remove",
       "Are you sure you want to remove this friend?",
@@ -130,7 +129,6 @@ export const Friends = () => {
         `Removing friend relationship between ${currentUserEmail} and ${friendEmail}`
       );
 
-      // Remove friend from current user's `friends_list`
       const currentUserQuery = query(
         collection(db, "RemiUsers"),
         where("email", "==", currentUserEmail)
@@ -149,7 +147,6 @@ export const Friends = () => {
         );
       }
 
-      // Remove current user from friend's `friends_list`
       const friendQuery = query(
         collection(db, "RemiUsers"),
         where("email", "==", friendEmail)
@@ -183,69 +180,96 @@ export const Friends = () => {
     );
   }
 
-  if (friends.length === 0) {
-    return (
-      <View style={styles.noFriendsContainer}>
-        <Text style={styles.noFriendsText}>No friends found</Text>
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.container}>
-      {/* Friends List */}
-      <FlatList
-        data={friends}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.friendItem}>
-            <TouchableOpacity
-              onPress={() =>
-                router.push({
-                  pathname: "/(auth)/UserProfileInfo",
-                  params: { username: item.username },
-                })
-              }
-            >
-              <Image
-                source={
-                  item.profilePic
-                    ? { uri: item.profilePic }
-                    : require("../assets/placeholders/profile-pic.png") // Adjust the path as per your project structure
-                }
-                style={styles.profilePic}
-              />
-            </TouchableOpacity>
-            <View style={styles.friendInfo}>
-              <Text style={styles.friendName}>
-                {item.username || "No Name"}
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.removeButton}
-              onPress={() => removeFriend(item.email)}
-            >
-              <Text style={styles.removeButtonText}>Remove</Text>
-            </TouchableOpacity>
-          </View>
+    <LinearGradient
+      colors={["#FFF9E6", "#FFF9E6"]}
+      style={styles.backgroundGradient}
+    >
+      <ImageBackground
+        source={require("../assets/images/background-lineart.png")}
+        style={styles.backgroundImage}
+        imageStyle={styles.backgroundImageStyle}
+      >
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Spacer size={26} />
+          <Ionicons name="arrow-back" size={30} color="#0D5F13" />
+        </TouchableOpacity>
+        <Spacer size={60} />
+        <Text style={styles.headerText}>Friends</Text>
+        {friends.length === 0 ? (
+          <Text style={styles.noFriendsText}>No friends found</Text>
+        ) : (
+          <FlatList
+            data={friends}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={styles.friendItem}>
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(auth)/UserProfileInfo",
+                      params: { username: item.username },
+                    })
+                  }
+                >
+                  <Image
+                    source={
+                      item.profilePic
+                        ? { uri: item.profilePic }
+                        : require("../assets/placeholders/profile-pic.png")
+                    }
+                    style={styles.profilePic}
+                  />
+                </TouchableOpacity>
+                <View style={styles.friendInfo}>
+                  <Text style={styles.friendName}>
+                    {item.username || "No Name"}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.removeButton}
+                  onPress={() => removeFriend(item.email)}
+                >
+                  <Text style={styles.removeButtonText}>Remove</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            contentContainerStyle={styles.friendsList}
+          />
         )}
-      />
-    </View>
+      </ImageBackground>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  backgroundGradient: {
     flex: 1,
-    backgroundColor: "#FFF9E6",
-    padding: 20,
+  },
+  backgroundImage: {
+    flex: 1,
+  },
+  backgroundImageStyle: {
+    opacity: 0.25,
+  },
+  backButton: {
+    position: "absolute",
+    top: 40,
+    left: 25,
+    zIndex: 1,
+  },
+  headerText: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#0D5F13",
+    textAlign: "center",
+    marginBottom: 10,
+    fontFamily: "Nunito-Bold",
   },
   loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  noFriendsContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -253,6 +277,12 @@ const styles = StyleSheet.create({
   noFriendsText: {
     fontSize: 16,
     color: "#666",
+    fontFamily: "Nunito-Regular",
+    textAlign: "center",
+    marginTop: 20,
+  },
+  friendsList: {
+    paddingHorizontal: 20,
   },
   friendItem: {
     flexDirection: "row",
@@ -266,7 +296,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderWidth: 2,
-    borderColor: "#0D5F13", // Dark green color
+    borderColor: "#0D5F13",
     borderRadius: 25,
     marginRight: 16,
   },
@@ -298,3 +328,4 @@ const styles = StyleSheet.create({
 });
 
 export default Friends;
+

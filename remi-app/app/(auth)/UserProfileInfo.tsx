@@ -5,11 +5,8 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   Dimensions,
   Platform,
-  Switch,
-  TextInput,
   Animated,
   ImageBackground,
   FlatList,
@@ -17,9 +14,7 @@ import {
   Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import Ustyles from "@/components/UniversalStyles";
-// import { signOut } from "firebase/auth";
-import { auth, db, storage } from "../../firebaseConfig";
+import { auth, db } from "../../firebaseConfig";
 import {
   collection,
   addDoc,
@@ -33,32 +28,21 @@ import {
   onSnapshot,
   updateDoc,
   arrayUnion,
-  deleteDoc,
   arrayRemove,
   Query,
   orderBy,
 } from "firebase/firestore";
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  uploadBytesResumable,
-} from "firebase/storage";
-import Modal from "react-native-modal";
 import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { RecipePost } from "./(tabs)/home";
-import { Float } from "react-native/Libraries/Types/CodegenTypes";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 const CONTENT_WIDTH = width * 0.94;
 
 const UserProfileInfo = () => {
-  const user = auth.currentUser; //This is us right now
-  const { username, isFriendRequest = false } = useLocalSearchParams(); // Retrieve the username from the URL
+  const user = auth.currentUser;
+  const { username, isFriendRequest = false } = useLocalSearchParams();
   const [loading, setLoading] = useState(false);
-  const [userInfo, setUserInfo] = useState(null);
   const [error, setError] = useState("");
   const [bio, setBio] = useState("");
   const [profilePic, setProfilePic] = useState("");
@@ -76,20 +60,12 @@ const UserProfileInfo = () => {
   const [postsText, setPostsText] = useState("No recent activity found.");
   const [isFriend, setIsFriend] = useState(false);
   const [isMe, setIsMe] = useState(false);
-  const router = useRouter(); // Initialize router
-  let content;
-
-  console.log("This is the user we are at: ", username);
-  console.log("isFriendRequest: ", isFriendRequest);
+  const router = useRouter();
 
   useEffect(() => {
-    console.log("What???");
-
     const fetchUserProfile = async () => {
       setLoading(true);
       setError("");
-      setUserInfo(null);
-      console.log("fetching user info...");
       try {
         const usersRef = collection(db, "RemiUsers");
         const q = query(usersRef, where("username", "==", username));
@@ -99,7 +75,6 @@ const UserProfileInfo = () => {
           setError("User not found");
         } else {
           const userData = querySnapshot.docs[0].data();
-          // console.log(userData);
           setBio(userData.bio || "");
           if (userData.bio) {
             setHasBio(true);
@@ -129,27 +104,20 @@ const UserProfileInfo = () => {
             setPostCount(snapshot.size);
           });
 
-          if (visibility == "public") {
-            setIsPrivate(false);
-          }
+          setIsPrivate(visibility !== "public");
 
           if (
-            visibility == "public" ||
+            visibility === "public" ||
             userData.friends_list.includes(user_email) ||
-            user_email == userData.email // you are the user checking your own profile
+            user_email === userData.email
           ) {
             fetchUserPosts(postsQuery);
           } else {
-            setPostsText("Users's posts are private.");
+            setPostsText("User's posts are private.");
           }
 
-          if (userData.friends_list.includes(user_email)) {
-            // if you're friends
-            setIsFriend(true);
-          }
-          if (user_email == userData.email) {
-            setIsMe(true);
-          }
+          setIsFriend(userData.friends_list.includes(user_email));
+          setIsMe(user_email === userData.email);
 
           return () => {
             unsubscribePosts();
@@ -166,21 +134,17 @@ const UserProfileInfo = () => {
           useNativeDriver: true,
         }).start();
       }
-      setLoading(false);
     };
     fetchUserProfile();
   }, [username, fadeAnim]);
 
   const fetchUsername = async (user_id: string) => {
-    console.log("fetching username...");
     const usersRef = doc(db, "RemiUsers", user_id);
     const userSnapshot = await getDoc(usersRef);
     if (userSnapshot.exists()) {
       const userData = userSnapshot.data();
-      console.log("the username we fetched is: ", userData.username);
       setCurrUsername(userData.username);
     }
-    console.log("usersRef: ", usersRef);
   };
 
   const addFriend = async () => {
@@ -194,11 +158,7 @@ const UserProfileInfo = () => {
         where("to", "==", userEmail),
         where("read_flag", "==", true)
       );
-      console.log("user: ", user);
-      console.log("Their email: ", userEmail);
-      console.log("My email : ", user.email);
       const querySnapshot = await getDocs(existingInviteQuery);
-      console.log("username: ", curr_username);
 
       if (!querySnapshot.empty) {
         Alert.alert(
@@ -207,7 +167,6 @@ const UserProfileInfo = () => {
         );
         return;
       }
-      console.log("user.email: ", user.email);
 
       await addDoc(notificationsRef, {
         from: user.email,
@@ -221,7 +180,6 @@ const UserProfileInfo = () => {
   };
 
   const removeFriend = async () => {
-    // Implement remove friend logic here
     Alert.alert(
       "Confirm Remove",
       "Are you sure you want to remove this friend?",
@@ -234,7 +192,6 @@ const UserProfileInfo = () => {
         {
           text: "Confirm",
           onPress: () => {
-            console.log("friend removed");
             deleteFriend();
           },
         },
@@ -245,11 +202,6 @@ const UserProfileInfo = () => {
 
   const deleteFriend = async () => {
     try {
-      console.log(
-        `Removing friend relationship between ${user_email} and ${userEmail}`
-      );
-
-      // Remove friend from current user's `friends_list`
       const currentUserQuery = query(
         collection(db, "RemiUsers"),
         where("email", "==", user_email)
@@ -258,17 +210,11 @@ const UserProfileInfo = () => {
       const currentUserSnapshot = await getDocs(currentUserQuery);
       if (!currentUserSnapshot.empty) {
         const currentUserDoc = currentUserSnapshot.docs[0].ref;
-        console.log("Current user document reference:", currentUserDoc.path);
-
         await updateDoc(currentUserDoc, {
           friends_list: arrayRemove(userEmail),
         });
-        console.log(
-          `Successfully removed ${userEmail} from ${user_email}'s friends_list`
-        );
       }
 
-      // Remove current user from friend's `friends_list`
       const friendQuery = query(
         collection(db, "RemiUsers"),
         where("email", "==", userEmail)
@@ -277,14 +223,9 @@ const UserProfileInfo = () => {
       const friendSnapshot = await getDocs(friendQuery);
       if (!friendSnapshot.empty) {
         const friendDoc = friendSnapshot.docs[0].ref;
-        console.log("Friend document reference:", friendDoc.path);
-
         await updateDoc(friendDoc, {
           friends_list: arrayRemove(user_email),
         });
-        console.log(
-          `Successfully removed ${user_email} from ${userEmail}'s friends_list`
-        );
       }
 
       alert("Friend removed successfully");
@@ -299,7 +240,6 @@ const UserProfileInfo = () => {
       const querySnapshot = await getDocs(postsQuery);
 
       if (querySnapshot.empty) {
-        console.log("No posts found for this user.");
         setUserPosts([]);
         return;
       }
@@ -309,8 +249,6 @@ const UserProfileInfo = () => {
         ...doc.data(),
       }));
       setUserPosts(posts);
-      console.log("user posts: ", posts);
-      setLoading(false);
     } catch (error) {
       console.error("Error fetching user posts:", error);
     }
@@ -323,44 +261,34 @@ const UserProfileInfo = () => {
       </View>
     );
   }
-  if (isFriendRequest) {
-    content = <View></View>;
-  } else {
+
+  const renderActionButton = () => {
+    if (isFriendRequest || isMe) {
+      return null;
+    }
     if (!isFriend) {
-      if (isMe) {
-        content = <View></View>;
-      } else {
-        content = (
-          <TouchableOpacity
-            style={styles.addFriendButton}
-            onPress={() => addFriend()}
-          >
-            <Ionicons
-              name="person-add"
-              size={16}
-              color="#0D5F13"
-              style={styles.buttonIcon}
-            />
-            <Text style={[styles.buttonText, { color: "#0D5F13" }]}>
-              Add Friend
-            </Text>
-          </TouchableOpacity>
-        );
-      }
-    } else {
-      // Not friends or yourself
-      content = (
-        <TouchableOpacity
-          style={styles.removeFriendButton}
-          onPress={() => removeFriend()}
-        >
-          <Text style={[styles.buttonText, { color: "#871717" }]}>
-            Remove Friend
+      return (
+        <TouchableOpacity style={styles.addFriendButton} onPress={addFriend}>
+          <Ionicons
+            name="person-add"
+            size={16}
+            color="#0D5F13"
+            style={styles.buttonIcon}
+          />
+          <Text style={[styles.buttonText, { color: "#0D5F13" }]}>
+            Add Friend
           </Text>
         </TouchableOpacity>
       );
     }
-  }
+    return (
+      <TouchableOpacity style={styles.removeFriendButton} onPress={removeFriend}>
+        <Text style={[styles.buttonText, { color: "#871717" }]}>
+          Remove Friend
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
@@ -383,8 +311,7 @@ const UserProfileInfo = () => {
               </TouchableOpacity>
               <Text style={styles.username}>{username}</Text>
             </View>
-
-            {content}
+            {renderActionButton()}
           </View>
 
           <FlatList
@@ -439,12 +366,10 @@ const UserProfileInfo = () => {
                       </View>
                     </View>
                   </View>
-                  {hasBio ? (
+                  {hasBio && (
                     <View style={styles.bioContainer}>
                       <Text style={styles.bioText}>{bio}</Text>
                     </View>
-                  ) : (
-                    <View></View>
                   )}
                 </View>
                 <View style={styles.recentActivityTitleContainer}>
@@ -492,9 +417,9 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
   },
   profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
     borderWidth: 3,
     borderColor: "#0D5F13",
   },
@@ -538,17 +463,15 @@ const styles = StyleSheet.create({
   },
   profileTopSection: {
     flexDirection: "row",
-    marginBottom: 20,
-  },
-  profileImageContainer: {
-    marginRight: 20,
-    position: "relative",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
   },
   statsContainer: {
-    flex: 1,
     flexDirection: "row",
     justifyContent: "space-around",
-    alignItems: "center",
+    flex: 1,
+    marginLeft: 20,
   },
   statItem: {
     alignItems: "center",
@@ -560,33 +483,32 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
   },
   statLabel: {
-    fontSize: 17,
+    fontSize: 18,
     color: "#0D5F13",
-    // fontFamily: "Nunito_700Bold",
+    // fontFamily: "Nunito_400Regular",
   },
   bioContainer: {
     backgroundColor: "rgba(188, 213, 172, 0.8)",
     borderRadius: 15,
     padding: 15,
+    marginTop: 5,
   },
   bioText: {
     fontSize: 16,
     lineHeight: 22,
-    flex: 1,
     color: "#333",
-    // fontFamily: "Nunito_500Bold",
+    fontFamily: "Nunito_400Regular",
   },
   recentActivityTitleContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: 10,
+    marginVertical: 15,
   },
   buttonIcon: {
     marginRight: 4,
   },
   recentActivityTitle: {
-    marginTop: 15,
     fontSize: 22,
     fontWeight: "bold",
     color: "#0D5F13",
@@ -594,7 +516,6 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
   },
   recentActivityIcon: {
-    marginTop: 15,
     marginRight: 8,
   },
   flatListContent: {
@@ -631,7 +552,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingTop: 50,
+    paddingTop: 60,
     paddingBottom: 8,
   },
   headerText: {
@@ -645,7 +566,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
-  backButton: {},
+  backButton: {
+    padding: 5,
+  },
 });
 
 export default UserProfileInfo;
+
