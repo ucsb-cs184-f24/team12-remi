@@ -10,7 +10,7 @@ My main contributions to the codebase were:
 - Deleting posts under recent activity
 - Showing data of a post from the database in different UI components of a Post, such as sliders, image, title, etc.
 
-The commmit graph is accurate, but also I have a lot of lines of code / commits since I had the first few pushes to the database, and usually I would help merge PRs if they got approval.
+The commmit graph is accurate, but also I have a lot of lines of code / commits since I had the first few pushes to the database, and usually I would help merge PRs if they got approval. In addition to my code contributions, I also worked a lot on documentation for meetings/standups/retros and also the design document.
 
 **Anushka Vijay**  
 <img width="670" alt="Screenshot 2024-12-06 at 12 16 34 PM" src="https://github.com/user-attachments/assets/d8214038-47d2-4d00-8f79-c50174047adc">
