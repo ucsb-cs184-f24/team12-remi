@@ -228,6 +228,7 @@ export default function Register() {
                 autoCapitalize="none"
                 secureTextEntry
                 placeholderTextColor="#BCD5AC"
+                textContentType="oneTimeCode"
               />
               <TextInput
                 style={styles.input}
@@ -238,6 +239,7 @@ export default function Register() {
                 autoCapitalize="none"
                 secureTextEntry
                 placeholderTextColor="#BCD5AC"
+                textContentType="oneTimeCode"
               />
               {loading ? (
                 <ActivityIndicator size={"small"} style={{ margin: 28 }} />
