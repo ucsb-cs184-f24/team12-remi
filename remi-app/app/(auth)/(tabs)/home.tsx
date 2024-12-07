@@ -1429,7 +1429,7 @@ const Home: React.FC = () => {
           {hasNoFriends && (
             <View style={styles.noFriendsContainer}>
               <ExpoImage
-                source={require("../../../assets/placeholders/profile-icon.png")}
+                source={require("../../../assets/placeholders/Group_3.png")}
                 style={styles.noFriendsAvatar}
                 placeholder={blurhash}
                 transition={200}

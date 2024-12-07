@@ -346,15 +346,15 @@ const UserProfileInfo = () => {
                     <View style={styles.statsContainer}>
                       <View style={styles.statItem}>
                         <Text style={styles.statNumber}>{friendCount}</Text>
-                        <Text style={styles.statLabel}>{friendCount}</Text>
+                        <Text style={styles.statLabel}>friends</Text>
                       </View>
                       <View style={styles.statItem}>
                         <Text style={styles.statNumber}>{postCount}</Text>
-                        <Text style={styles.statLabel}>{postCount}</Text>
+                        <Text style={styles.statLabel}>posts</Text>
                       </View>
                       <View style={styles.statItem}>
                         <Text style={styles.statNumber}>{likesCount}</Text>
-                        <Text style={styles.statLabel}>{likesCount}</Text>
+                        <Text style={styles.statLabel}>likes</Text>
                       </View>
                     </View>
                   </View>
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     flex: 1,
-    marginLeft: 15,
+    marginLeft: 20,
   },
   statItem: {
     alignItems: "center",
@@ -475,15 +475,15 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
   },
   statLabel: {
-    fontSize: 16,
+    fontSize: 18,
     color: "#0D5F13",
-    fontFamily: "Nunito_400Regular",
+    // fontFamily: "Nunito_400Regular",
   },
   bioContainer: {
     backgroundColor: "rgba(188, 213, 172, 0.8)",
     borderRadius: 15,
     padding: 15,
-    marginTop: 15,
+    marginTop: 5,
   },
   bioText: {
     fontSize: 16,
@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingTop: 50,
+    paddingTop: 60,
     paddingBottom: 8,
   },
   headerText: {
