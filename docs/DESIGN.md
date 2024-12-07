@@ -12,11 +12,25 @@ During our 11/2/24 Sprint Planning, we finalized all the features and functional
 
 At Section06, we held our second retro led by Alex. Our biggest point of discussion was regarding documentation, especially on the Kanban board. We decided that moving forward, it would be best that we keep better track of the changes we made and the functionality we added by creating issues on the Kanban Board as consistently as possible. We also asssessed that our decision from the last retro to create PR updates and request reviews was a great success.
 
+At Lecture 16, 11/25/24, the team assessed what features we wanted before the code freeze deadline. These would include the following list:
+- Notify page
+- UI Profile pictures everywhere
+- Style the pop up modal for see notes
+- Fonts in add recipe
+- Default stuff for users and hashtags on explore
+- Style bookmarks page
+- Style tags selecting menu
+- Click on users in explore page
+- Confirm password on create user delete post functionality notifs when you get a comment and a like make sign in and create account buttons round make back arrows consistent
+
+At Lecture 17, 12/2/24, the team confirmed the status of these features, and documented exactly who was on which feature. In addition, we decided to do intensive testing on main.
+
+Finally on Sec 09, 12/6/24, the team worked on small bug fixes before the code freeze deadline. In addition, to make the UI nicer for newer users we decided to change the default "look" or message on different pages of the app. This would include adding a new default profile picture and message on the home page saying "Add more friends to see some posts."
+
 # Difficulties Encountered
-- Uploading Images to Firebase Storage
-- Android not working vs. IOS
-- Design of the Explore Page
-- Refreshing
+- Uploading Images to Firebase Storage: The team figured out how to get images stored in the Firebase Storage, to allow for persistent image fetching. Previously the team was trying to use packages that require custom native code which can only be done with Expo Dev, so instead the team pivoted to using Expo Image Picker which was compaitable with Expo Go.
+- Android Source URI: The way in which source URI was sent for Android vs IOS is different -- gets double encoded for Android. Thus, the team had a hotfix to unencode.
+- Design of the Explore Page: Our team struggled in figuring out a unique design for our explore page. At first we considered doing something similar to Instagram's Explore Page in showing large collections of posts, or Tinder's way of having swipable public posts -- in the end, we wanted something to effortlessly search through posts via filter, via hashtags, and for users in general. Thus, we came up with our own design.
 
 # UX Considerations and User Flows
 ![Remi User Workflows](https://github.com/user-attachments/assets/6894b955-8ead-4750-8424-d51d01f51903)
