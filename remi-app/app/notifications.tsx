@@ -216,7 +216,11 @@ const Notifs = () => {
             <Avatar
               size={55}
               rounded
-              source={{ uri: item.profilePic || undefined }}
+              source={
+                item.profilePic === ""
+                  ? require("../assets/placeholders/Group_3.png")
+                  : { uri: item.profilePic }
+              }
               containerStyle={styles.avatar}
             />
           </TouchableOpacity>

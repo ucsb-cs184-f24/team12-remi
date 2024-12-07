@@ -173,14 +173,13 @@ const getUserInfo = async (
       return {
         username: userData.username || "Unknown User",
 
-        profilePic:
-          userData.profilePic || "../../../assets/placeholders/Group_3.png",
+        profilePic: userData.profilePic || "",
       };
     }
   } catch (error) {
     console.error("Error fetching user data:", error);
   }
-  return { username: "Unknown User", profilePic: "/placeholder-user.jpg" };
+  return { username: "Unknown User", profilePic: "" };
 };
 
 export const RecipePost: React.FC<RecipePostProps> = ({
@@ -870,41 +869,39 @@ export const RecipePost: React.FC<RecipePostProps> = ({
           <View style={Ustyles.engagementItem}>
             {/* Comment Icon */}
             <TouchableOpacity onPress={handleCommentsPress}>
-            <Ionicons
-              name={userHasCommented ? "chatbox" : "chatbox-outline"} // Filled icon when user has commented
-              size={27}
-              color={userHasCommented ? "green" : "gray"} // Filled green when user has commented
-              // Opens the comment modal
-            />
+              <Ionicons
+                name={userHasCommented ? "chatbox" : "chatbox-outline"} // Filled icon when user has commented
+                size={27}
+                color={userHasCommented ? "green" : "gray"} // Filled green when user has commented
+                // Opens the comment modal
+              />
             </TouchableOpacity>
             <Text style={Ustyles.engagementText}>{commentsCount}</Text>
           </View>
           <View style={Ustyles.engagementItem}>
             {userID == currUser?.uid ? (
-              <TouchableOpacity onPress={() =>
-                confirmDelete(postID, userID, deletePostCallback)}>
-              <Ionicons
-                name={"trash-outline"}
-                size={27}
-                color={"red"}
-                
-              />
+              <TouchableOpacity
+                onPress={() =>
+                  confirmDelete(postID, userID, deletePostCallback)
+                }
+              >
+                <Ionicons name={"trash-outline"} size={27} color={"red"} />
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity onPress={handleSavePress} >
-              <Ionicons
-                name={
-                  savedBy.includes(auth.currentUser?.uid ?? "")
-                    ? "bookmark"
-                    : "bookmark-outline"
-                }
-                size={27}
-                color={
-                  savedBy.includes(auth.currentUser?.uid ?? "")
-                    ? "#FBC02D"
-                    : "gray"
-                }
-              />
+              <TouchableOpacity onPress={handleSavePress}>
+                <Ionicons
+                  name={
+                    savedBy.includes(auth.currentUser?.uid ?? "")
+                      ? "bookmark"
+                      : "bookmark-outline"
+                  }
+                  size={27}
+                  color={
+                    savedBy.includes(auth.currentUser?.uid ?? "")
+                      ? "#FBC02D"
+                      : "gray"
+                  }
+                />
               </TouchableOpacity>
             )}
           </View>
@@ -952,7 +949,11 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                                 <TouchableWithoutFeedback onPress={() => {}}>
                                   <View style={styles.commentItem}>
                                     <Image
-                                      source={{ uri: item.profilePic }}
+                                      source={
+                                        item.profilePic === ""
+                                          ? require("../../../assets/placeholders/Group_3.png")
+                                          : { uri: item.profilePic }
+                                      }
                                       style={Ustyles.avatar}
                                     />
                                     <View style={styles.commentTextContent}>
@@ -1052,7 +1053,6 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                   style={styles.backgroundImage}
                   imageStyle={styles.backgroundImageStyle}
                 >
-                  {" "}
                   <View style={styles.notesInnerContent}>
                     <Text style={styles.notesHeader}>Chef's Notes:</Text>
                     <ScrollView contentContainerStyle={styles.notesScroll}>
@@ -1693,7 +1693,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     color: "#0D5F13",
     fontWeight: "bold",
-    fontFamily:"Nunito_700Bold",
+    fontFamily: "Nunito_700Bold",
     fontSize: 20,
   },
 
