@@ -43,7 +43,7 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
-  const profilePicPlaceholder = require("../assets/placeholders/profile-pic.png");
+  const profilePicPlaceholder = require("../assets/placeholders/Group_3.png");
   const [profilePic, setProfilePic] = useState<string>(profilePicPlaceholder);
   const router = useRouter(); // Initialize router
   const [passwordMismatch, setPasswordMismatch] = useState(false);

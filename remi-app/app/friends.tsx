@@ -228,7 +228,7 @@ export const Friends: React.FC<FriendsProps> = ({ hideHeader = false }) => {
                       source={
                         item.profilePic
                           ? { uri: item.profilePic }
-                          : require("../assets/placeholders/profile-pic.png")
+                          : require("../assets/placeholders/Group_3.png")
                       }
                       style={styles.profilePic}
                     />

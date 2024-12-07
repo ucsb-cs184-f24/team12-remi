@@ -174,7 +174,7 @@ const getUserInfo = async (
         username: userData.username || "Unknown User",
 
         profilePic:
-          userData.profilePic || "../../../assets/placeholders/profile-pic.png",
+          userData.profilePic || "../../../assets/placeholders/Group_3.png",
       };
     }
   } catch (error) {
@@ -804,7 +804,7 @@ export const RecipePost: React.FC<RecipePostProps> = ({
               source={
                 profilePic
                   ? { uri: profilePic }
-                  : require("../../../assets/placeholders/profile-pic.png")
+                  : require("../../../assets/placeholders/Group_3.png")
               }
               style={Ustyles.avatar}
               placeholder={blurhash}

@@ -401,7 +401,7 @@ export default function UserProfileComponent() {
                       <Image
                         source={
                           profilePic === ""
-                            ? require("../../../assets/placeholders/profile-pic.png")
+                            ? require("../../../assets/placeholders/Group_3.png")
                             : { uri: profilePic }
                         }
                         style={styles.profileImage}
@@ -679,7 +679,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
     marginTop: 5,
-    fontFamily: "Nunito_400Regular"
+    fontFamily: "Nunito_400Regular",
   },
   saveButton: {
     flexDirection: "row",
