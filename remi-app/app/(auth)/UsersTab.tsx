@@ -7,6 +7,7 @@ import {
   Alert,
   ActivityIndicator,
   StyleSheet,
+  ImageBackground,
 } from "react-native";
 import { db, auth } from "../../firebaseConfig";
 import {
@@ -24,6 +25,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "react-native-elements";
 import { useRouter } from "expo-router";
 import { Friends } from "../friends";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface User {
   friends_list: Array<string>;
@@ -140,7 +142,6 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
   };
 
   const handleRemoveFriend = (user: User) => {
-    // Implement remove friend logic here
     Alert.alert(
       "Confirm Remove",
       "Are you sure you want to remove this friend?",
@@ -160,8 +161,6 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
       ],
       { cancelable: true }
     );
-
-    // Alert.alert("Remove Friend", `Are you sure you want to remove ${user.username} from your friends?`);
   };
 
   const removeFriend = async (friendEmail: string) => {
@@ -306,16 +305,33 @@ const UsersTab: React.FC<UsersTabProps> = ({ searchQuery }) => {
     );
   }
 
-  return searchQuery.trim() === "" ? (
-    <Friends />
-  ) : (
-    <FlatList
-      data={filteredFriends}
-      renderItem={renderItem}
-      keyExtractor={(item) => item.email}
-      ListEmptyComponent={<Text style={styles.emptyText}>No users found</Text>}
-      contentContainerStyle={styles.listContent}
-    />
+  return (
+    <View style={styles.container}>
+      {searchQuery.trim() === "" ? (
+        <Friends hideHeader={true} />
+      ) : (
+        <LinearGradient
+          colors={["#FFF9E6", "#FFF9E6"]}
+          style={styles.backgroundGradient}
+        >
+          <ImageBackground
+            source={require("../../assets/images/background-lineart.png")}
+            style={styles.backgroundImage}
+            imageStyle={styles.backgroundImageStyle}
+          >
+            <FlatList
+              data={filteredFriends}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.email}
+              ListEmptyComponent={
+                <Text style={styles.emptyText}>No users found</Text>
+              }
+              contentContainerStyle={styles.listContent}
+            />
+          </ImageBackground>
+        </LinearGradient>
+      )}
+    </View>
   );
 };
 
@@ -323,6 +339,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFF9E6",
+  },
+  backgroundGradient: {
+    flex: 1,
+  },
+  backgroundImage: {
+    flex: 1,
+  },
+  backgroundImageStyle: {
+    opacity: 0.25,
   },
   loadingContainer: {
     flex: 1,
@@ -332,6 +357,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 20,
     paddingTop: 20,
+    paddingBottom: 20,
   },
   item: {
     flexDirection: "row",
@@ -391,6 +417,10 @@ const styles = StyleSheet.create({
     color: "#666",
     fontFamily: "Nunito-Regular",
   },
+  friendsWrapper: {
+    flex: 1,
+  },
 });
 
 export default UsersTab;
+
