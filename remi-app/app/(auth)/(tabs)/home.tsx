@@ -1689,6 +1689,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
     color: "#0D5F13",
     fontWeight: "bold",
+    fontFamily:"Nunito_700Bold",
+    fontSize: 20,
   },
 
   inputContainer: {
