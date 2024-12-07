@@ -26,3 +26,7 @@ We wanted to use a consistent theme of beige and green through our components an
 # External Resources
 https://reactnative.dev/docs/getting-started
 
+# Testing
+Throughout the design and implementation process of Remi, there was a lot of testing and evaluation done to ensure the behavior displayed from our app matched the expected behavior. Much of the testing was done simply through live displaying the app on Expo Go while we were making changes. We would test on both Android and iOS devices to ensure cross-compatibility on all implemented functionality and designs. 
+
+We also documented some Unit and A/B testing we had done in the past. Raina did A/B testing to determine which design choice for the profile page was the most visually appealing and functional. She created a version A and version B of a profile page and allowed the team to vote on which version was the best. Version B ended up being the final design to be implemented. Sunhu did unit testing on the logout functionality to determine if the user was successfully able to log and as a result, not able to do anything that a logged in user could. He created a test script that mocked up a sign out button design that called the sign out function used in the profile page, which successfully passed. Documentation on Raina and Sunhu's testing can be found in https://github.com/ucsb-cs184-f24/team12-remi/tree/main/team/rainakakani21/HW04 and https://github.com/ucsb-cs184-f24/team12-remi/tree/main/team/SunhuChoi.
