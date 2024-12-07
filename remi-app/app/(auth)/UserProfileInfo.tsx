@@ -346,7 +346,7 @@ const UserProfileInfo = () => {
                     <Image
                       source={
                         profilePic === ""
-                          ? require("../../assets/placeholders/profile-pic.png")
+                          ? require("../../assets/placeholders/Group_3.png")
                           : { uri: profilePic }
                       }
                       style={styles.profileImage}
