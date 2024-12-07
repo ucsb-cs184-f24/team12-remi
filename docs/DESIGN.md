@@ -12,7 +12,17 @@ During our 11/2/24 Sprint Planning, we finalized all the features and functional
 
 At Section06, we held our second retro led by Alex. Our biggest point of discussion was regarding documentation, especially on the Kanban board. We decided that moving forward, it would be best that we keep better track of the changes we made and the functionality we added by creating issues on the Kanban Board as consistently as possible. We also asssessed that our decision from the last retro to create PR updates and request reviews was a great success.
 
+# Difficulties Encountered
+- Uploading Images to Firebase Storage
+- Android not working vs. IOS
+- Design of the Explore Page
+- Refreshing
+
 # UX Considerations and User Flows
 ![Remi User Workflows](https://github.com/user-attachments/assets/6894b955-8ead-4750-8424-d51d01f51903)
 We wanted to use a consistent theme of beige and green through our components and different page backgrounds. We used Figma to start designing different pages like the home screen, login/create account, and more. Attached below is the link:
 <img width="545" alt="Screen Shot 2024-11-20 at 2 38 21 PM" src="https://github.com/user-attachments/assets/35bc9fb0-cc92-40cd-80d2-18a72d7d1913">
+
+# External Resources
+https://reactnative.dev/docs/getting-started
+
