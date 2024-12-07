@@ -45,9 +45,7 @@ const UserProfileInfo = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [bio, setBio] = useState("");
-  const [profilePic, setProfilePic] = useState(
-    "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png"
-  );
+  const [profilePic, setProfilePic] = useState("");
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [friendCount, setFriendCount] = useState(0);
   const [postCount, setPostCount] = useState(0);
@@ -78,8 +76,14 @@ const UserProfileInfo = () => {
         } else {
           const userData = querySnapshot.docs[0].data();
           setBio(userData.bio || "");
-          setHasBio(!!userData.bio);
-          setProfilePic(userData.profilePic || profilePic);
+          if (userData.bio) {
+            setHasBio(true);
+          }
+          // console.log(querySnapshot.docs[0].id);
+          console.log(userData.profilePic);
+          if (userData.profilePic != "") {
+            setProfilePic(userData.profilePic);
+          }
           setFriendCount(userData.friends_list.length || 0);
           setVisibility(userData.visibility || "private");
           setUserEmail(userData.email || "");
@@ -340,7 +344,11 @@ const UserProfileInfo = () => {
                 <View style={styles.profileSection}>
                   <View style={styles.profileTopSection}>
                     <Image
-                      source={{ uri: profilePic }}
+                      source={
+                        profilePic === ""
+                          ? require("../../assets/placeholders/profile-pic.png")
+                          : { uri: profilePic }
+                      }
                       style={styles.profileImage}
                     />
                     <View style={styles.statsContainer}>

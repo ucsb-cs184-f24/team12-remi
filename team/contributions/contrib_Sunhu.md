@@ -5,4 +5,5 @@ I think my contributions graph is accurate, with maybe some line counts being in
 - Profile page view when you click someone's profile pic
 - A lot of bug fixes that deal with Android compatability problems
 - Functionality to delete posts
-- Allowing users to see post images and adding a separate notifications page. 
+- Allowing users to see post images and adding a separate notifications page
+- Unit testing to make sure log out functionality was successful 

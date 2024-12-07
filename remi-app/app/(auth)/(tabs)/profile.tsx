@@ -121,9 +121,7 @@ const useImagePicker = () => {
 
 export default function UserProfileComponent() {
   const user = auth.currentUser;
-  const [profilePic, setProfilePic] = useState(
-    "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png"
-  );
+  const [profilePic, setProfilePic] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [isEditingBio, setIsEditingBio] = useState(false);
@@ -153,7 +151,11 @@ export default function UserProfileComponent() {
             const userData = userSnapshot.data();
             setIsPublic(userData.visibility === "public");
             setUsername(userData.username || "");
-            setProfilePic(userData.profilePic || profilePic);
+            console.log(userData.profilePic);
+            if (userData.profilePic != "") {
+              setProfilePic(userData.profilePic);
+            }
+            console.log("What am I??: ", profilePic);
             setBio(userData.bio || "");
             setFriendsEmails(userData.friends_list || []);
 
@@ -250,6 +252,7 @@ export default function UserProfileComponent() {
 
   useEffect(() => {
     if (image) {
+      console.log("What am I in the useEffect? ", image);
       setProfilePic(image);
       updateProfilePicture(image);
     }
@@ -340,7 +343,7 @@ export default function UserProfileComponent() {
 
   return (
     <Animated.View style={[styles.container]}>
-       {/* <Animated.View style={[styles.container, { opacity: fadeAnim }]}></Animated.View> */}
+      {/* <Animated.View style={[styles.container, { opacity: fadeAnim }]}></Animated.View> */}
       <LinearGradient
         colors={["#FFF9E6", "#BCD5AC"]}
         style={styles.backgroundGradient}
@@ -396,7 +399,11 @@ export default function UserProfileComponent() {
                       onPress={pickImage}
                     >
                       <Image
-                        source={{ uri: profilePic }}
+                        source={
+                          profilePic === ""
+                            ? require("../../../assets/placeholders/profile-pic.png")
+                            : { uri: profilePic }
+                        }
                         style={styles.profileImage}
                       />
                       <View style={styles.editOverlay}>
@@ -451,20 +458,22 @@ export default function UserProfileComponent() {
                   <View style={styles.bioContainer}>
                     {isEditingBio ? (
                       <View style={styles.bioEditContainer}>
-                        <TextInput
-                          ref={bioInputRef}
-                          style={styles.bioInput}
-                          value={bio}
-                          onChangeText={(text) =>
-                            setBio(text.slice(0, MAX_BIO_LENGTH))
-                          }
-                          placeholder="Enter your bio"
-                          multiline
-                          maxLength={MAX_BIO_LENGTH}
-                        />
-                        <Text style={styles.characterCount}>
-                          {MAX_BIO_LENGTH - bio.length} characters remaining
-                        </Text>
+                        <View>
+                          <TextInput
+                            ref={bioInputRef}
+                            style={styles.bioInput}
+                            value={bio}
+                            onChangeText={(text) =>
+                              setBio(text.slice(0, MAX_BIO_LENGTH))
+                            }
+                            placeholder="Enter your bio"
+                            multiline
+                            maxLength={MAX_BIO_LENGTH}
+                          />
+                          <Text style={styles.characterCount}>
+                            {MAX_BIO_LENGTH - bio.length} characters remaining
+                          </Text>
+                        </View>
                         <TouchableOpacity
                           style={styles.saveButton}
                           onPress={saveBio}
@@ -643,7 +652,7 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 17,
     color: "#0D5F13",
-    // fontFamily: "Nunito_700Bold",
+    fontFamily: "Nunito_400Regular",
   },
   bioContainer: {
     backgroundColor: "rgba(188, 213, 172, 0.8)",
@@ -652,6 +661,7 @@ const styles = StyleSheet.create({
   },
   bioEditContainer: {
     width: "100%",
+    gap: 10,
     alignItems: "stretch",
   },
   bioInput: {
@@ -662,23 +672,32 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#FFF",
     borderRadius: 10,
+    fontFamily: "Nunito_400Regular",
   },
   characterCount: {
     alignSelf: "flex-end",
     fontSize: 12,
     color: "#666",
     marginTop: 5,
+    fontFamily: "Nunito_400Regular"
   },
   saveButton: {
-    backgroundColor: "#FFCCCB",
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: "#0D5F13",
+    backgroundColor: "#e0f2d5",
   },
   saveButtonText: {
-    color: "#333",
     fontWeight: "bold",
+    fontSize: 14,
+    fontFamily: "Nunito-Bold",
+    textAlign: "center",
+    color: "#0D5F13",
   },
   bioTextContainer: {
     flexDirection: "row",
@@ -689,8 +708,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
     flex: 1,
-    color: "#333",
-    // fontFamily: "Nunito_500Bold",
+    color: "#0D5F13",
+    fontFamily: "Nunito_400Regular",
   },
   editIcon: {
     marginLeft: 8,
