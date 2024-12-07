@@ -192,6 +192,7 @@ export default function Explore() {
             placeholderTextColor="#636363"
             value={searchQuery}
             onChangeText={handleSearch}
+            autoCorrect={false}
           />
           {activeTab === "posts" && (
             <TouchableOpacity
