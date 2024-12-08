@@ -514,10 +514,10 @@ const styles = StyleSheet.create({
   },
   suggestionsContainer: {
     maxHeight: 200,
-    backgroundColor: "#FFF",
-    borderWidth: 1,
-    borderColor: "#DDD",
-    borderRadius: 5,
+    backgroundColor: "#FFF9E6",
+    borderWidth: 2,
+    borderColor: "#0D5F13",
+    borderRadius: 15,
     margin: 16,
   },
   suggestionItem: {
@@ -527,7 +527,7 @@ const styles = StyleSheet.create({
   },
   suggestionText: {
     fontSize: 16,
-    color: "#333",
+    color: "#0D5F13",
     fontFamily: "Nunito-Regular",
   },
   selectedTagsContainer: {
