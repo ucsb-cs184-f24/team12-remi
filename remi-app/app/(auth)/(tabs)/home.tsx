@@ -918,7 +918,14 @@ export const RecipePost: React.FC<RecipePostProps> = ({
                   <Animated.View
                     style={[
                       styles.commentContainer,
-                      { transform: [{ translateY: modalPosition }] },
+                      {
+                        transform: [
+                          {
+                            translateY:
+                              Platform.OS === "android" ? 0 : modalPosition,
+                          },
+                        ],
+                      },
                     ]} // TODO: figure out why lineargradient not applying to borders
                   >
                     <LinearGradient
